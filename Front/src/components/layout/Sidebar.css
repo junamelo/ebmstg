@@ -1,0 +1,80 @@
+.sidebar {
+  width: 230px;
+  min-height: calc(100vh - 64px);
+  background-color: var(--moov-white);
+  border-right: 1px solid var(--moov-gray);
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 16px;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+}
+
+/* Bandeau rôle */
+.sidebar-role-band {
+  padding: 9px 18px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: white;
+  margin-bottom: 12px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 12px;
+  flex: 1;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--border-radius);
+  color: var(--moov-gray-dark);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition);
+  text-decoration: none;
+}
+
+.sidebar-link:hover {
+  background-color: #f0f4ff;
+  color: #002a7a;
+}
+
+.sidebar-link.active {
+  color: white;
+  font-weight: 600;
+}
+
+.sidebar-link.active:hover {
+  filter: brightness(0.92);
+  color: white;
+}
+
+.sidebar-icon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.75;
+  transition: opacity var(--transition);
+}
+
+.sidebar-link:hover .sidebar-icon,
+.sidebar-link.active .sidebar-icon {
+  opacity: 1;
+}
+
+.sidebar-footer {
+  padding: 0 24px;
+  color: var(--moov-gray);
+  font-size: 11px;
+  text-align: center;
+}

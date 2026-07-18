@@ -1,0 +1,422 @@
+/* ═══════════════════════════════
+   KPI ADMIN
+═══════════════════════════════ */
+.admin-dashboard {
+  gap: 24px;
+}
+
+.kpi-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+/* Raccourcis admin */
+.admin-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.shortcut-card {
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: var(--moov-text);
+  border: 2px solid transparent;
+  transition: all var(--transition);
+}
+
+.shortcut-card:hover {
+  border-color: var(--moov-orange);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  color: var(--moov-text);
+}
+
+.shortcut-icon {
+  font-size: 36px;
+}
+
+.shortcut-card div {
+  flex: 1;
+}
+
+.shortcut-card strong {
+  display: block;
+  font-size: 15px;
+  color: var(--moov-blue);
+  margin-bottom: 2px;
+}
+
+.shortcut-card p {
+  font-size: 12px;
+  color: var(--moov-gray-dark);
+}
+
+.shortcut-arrow {
+  font-size: 20px;
+  color: var(--moov-orange);
+}
+
+/* Page admin générique */
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Zone upload PDF */
+.upload-zone {
+  border: 2px dashed var(--moov-gray);
+  border-radius: var(--border-radius-lg);
+  padding: 48px;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  background-color: var(--moov-gray-light);
+}
+
+.upload-zone:hover,
+.upload-zone.drag-over {
+  border-color: var(--moov-orange);
+  background-color: #fff5ef;
+}
+
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.upload-zone h3 {
+  font-size: 16px;
+  color: var(--moov-blue);
+  margin-bottom: 8px;
+}
+
+.upload-zone p {
+  color: var(--moov-gray-dark);
+  font-size: 13px;
+}
+
+/* Barre de progression */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--moov-gray);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moov-orange), var(--moov-orange-light));
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Gestion tarifs */
+.tarif-actif-card {
+  background: linear-gradient(135deg, var(--moov-orange), var(--moov-orange-dark));
+  color: white;
+  border-radius: var(--border-radius-lg);
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tarif-actif-values {
+  display: flex;
+  gap: 32px;
+}
+
+.tarif-value-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tarif-value-item span {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.tarif-value-item strong {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .admin-shortcuts {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══════════════════════════════
+   GESTION COMPTES — Style tableau moderne
+═══════════════════════════════ */
+.comptes-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.comptes-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+/* Filtres */
+.comptes-filtres {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.comptes-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border: 1.5px solid var(--moov-gray);
+  border-radius: var(--border-radius);
+  padding: 8px 14px;
+  transition: border-color 0.2s;
+}
+
+.comptes-search:focus-within {
+  border-color: var(--moov-blue);
+}
+
+.comptes-search input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 14px;
+  background: transparent;
+  color: var(--moov-text);
+}
+
+.comptes-select {
+  padding: 9px 14px;
+  border: 1.5px solid var(--moov-gray);
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  background: white;
+  color: var(--moov-text);
+  cursor: pointer;
+  outline: none;
+  min-width: 180px;
+  transition: border-color 0.2s;
+}
+
+.comptes-select:focus {
+  border-color: var(--moov-blue);
+}
+
+/* Tableau */
+.comptes-table-wrap {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  border: 1px solid var(--moov-gray);
+}
+
+.comptes-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.comptes-table thead tr {
+  background: #f8f9fc;
+  border-bottom: 1px solid #e8edf5;
+}
+
+.comptes-table thead th {
+  padding: 12px 18px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #888;
+  text-transform: uppercase;
+}
+
+/* Ligne normale */
+.comptes-row {
+  border-bottom: 1px solid #f0f3f9;
+  transition: background 0.15s;
+  cursor: default;
+}
+
+.comptes-row:last-child {
+  border-bottom: none;
+}
+
+.comptes-row:hover {
+  background: #f0f7ff;
+}
+
+/* Ligne active (hover) */
+.comptes-row--active {
+  background: #002a7a !important;
+  color: white;
+}
+
+.comptes-row--active .comptes-nom,
+.comptes-row--active .comptes-email,
+.comptes-row--active .comptes-td-muted,
+.comptes-row--active .comptes-td-mono {
+  color: white !important;
+}
+
+.comptes-row--active .comptes-role-badge {
+  background: rgba(255,255,255,0.15) !important;
+  color: white !important;
+}
+
+.comptes-row--active .comptes-statut {
+  background: rgba(255,255,255,0.15) !important;
+  color: white !important;
+}
+
+.comptes-table td {
+  padding: 14px 18px;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+/* Cellule nom */
+.comptes-cell-nom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.comptes-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.comptes-nom {
+  font-weight: 600;
+  color: var(--moov-text);
+  font-size: 14px;
+}
+
+.comptes-email {
+  font-size: 12px;
+  color: #888;
+  margin-top: 1px;
+}
+
+/* Badge rôle */
+.comptes-role-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Cellules texte */
+.comptes-td-muted {
+  color: #666;
+  font-size: 13px;
+}
+
+.comptes-td-mono {
+  font-family: monospace;
+  font-size: 13px;
+  color: #444;
+}
+
+/* Statut */
+.comptes-statut {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.comptes-statut--actif {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.comptes-statut--suspendu {
+  background: #fde8e8;
+  color: #b91c1c;
+}
+
+/* Actions (icônes) — apparaissent au hover */
+.comptes-actions {
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.comptes-actions--visible {
+  opacity: 1;
+}
+
+.comptes-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.comptes-action-btn--edit {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.comptes-action-btn--edit:hover {
+  background: #3730a3;
+  color: white;
+}
+
+.comptes-action-btn--check {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.comptes-action-btn--check:hover {
+  background: #065f46;
+  color: white;
+}
+
+.comptes-action-btn--delete {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.comptes-action-btn--delete:hover {
+  background: #991b1b;
+  color: white;
+}

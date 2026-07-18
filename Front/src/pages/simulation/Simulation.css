@@ -1,0 +1,357 @@
+.simulation-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Layout principal avec illustration */
+.simulation-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 32px;
+  align-items: start;
+}
+
+/* Illustration */
+.simulation-illustration {
+  position: sticky;
+  top: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.simulation-illustration-img {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  border-radius: 16px;
+  filter: drop-shadow(0 8px 24px rgba(0, 42, 122, 0.12));
+}
+
+/* Grille formulaire + résultat */
+.simulation-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.simulation-form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .simulation-layout {
+    grid-template-columns: 1fr;
+  }
+  .simulation-illustration {
+    display: none;
+  }
+}
+.tarifs-info {
+  background-color: var(--moov-gray-light);
+  border-radius: var(--border-radius);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.tarifs-info h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--moov-gray-dark);
+  margin-bottom: 12px;
+}
+
+.tarifs-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.tarif-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--moov-gray-dark);
+}
+
+.tarif-item strong {
+  color: var(--moov-orange);
+  font-size: 14px;
+}
+
+/* Hint sous les champs */
+.form-hint {
+  font-size: 12px;
+  color: var(--moov-orange);
+  margin-top: 4px;
+  display: block;
+  font-weight: 600;
+}
+
+/* Aperçu total en temps réel */
+.apercu-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #fff5ef, #ffe8d6);
+  border: 2px solid var(--moov-orange);
+  border-radius: var(--border-radius);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.apercu-total strong {
+  font-size: 20px;
+}
+
+.simulation-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Résultat */
+.resultat-card {
+  background: linear-gradient(135deg, white 0%, #f8faff 100%);
+  border: 2px solid var(--moov-blue);
+}
+
+.resultat-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.resultat-ligne {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--moov-gray);
+  font-size: 14px;
+  color: var(--moov-gray-dark);
+}
+
+.resultat-ligne strong {
+  color: var(--moov-text);
+  font-size: 15px;
+}
+
+.resultat-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, var(--moov-blue), #0052cc);
+  color: white;
+  border-radius: var(--border-radius);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.resultat-montant {
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.resultat-note {
+  font-size: 12px;
+  color: var(--moov-gray-dark);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════
+   SERVICES OPTIONNELS — Accordéon
+═══════════════════════════════════════ */
+
+/* Accordéon principal */
+.sim-accordion {
+  border: 1.5px solid var(--moov-gray);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.sim-accordion-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f7f9fc;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #002a7a;
+  transition: background 0.15s;
+}
+
+.sim-accordion-header:hover {
+  background: #eef2fb;
+}
+
+.sim-accordion-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sim-accordion-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: #e05500;
+  color: white;
+}
+
+.sim-accordion-body {
+  border-top: 1px solid var(--moov-gray);
+}
+
+/* Service item */
+.sim-service-item {
+  border-bottom: 1px solid #f0f3f9;
+}
+
+.sim-service-item:last-of-type {
+  border-bottom: none;
+}
+
+.sim-service-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: white;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.sim-service-header:hover {
+  background: #f7f9fc;
+}
+
+.sim-service-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sim-service-nom {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.sim-service-desc {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.sim-service-chosen {
+  font-size: 11px;
+  color: #e05500;
+  font-weight: 600;
+  background: #fff0e8;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* Liste des options */
+.sim-options-list {
+  background: #fafbff;
+  border-top: 1px solid #f0f3f9;
+}
+
+.sim-option-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+  border-bottom: 1px solid #f5f7fc;
+}
+
+.sim-option-row:last-child {
+  border-bottom: none;
+}
+
+.sim-option-row:hover {
+  background: #fff5ef;
+}
+
+.sim-option-row--active {
+  background: #fff5ef;
+}
+
+.sim-option-row-check {
+  font-size: 14px;
+  color: #ccc;
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.sim-option-row--active .sim-option-row-check {
+  color: #e05500;
+}
+
+.sim-option-row-nom {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.sim-option-row--active .sim-option-row-nom {
+  color: #e05500;
+  font-weight: 600;
+}
+
+.sim-option-row-tarif {
+  font-size: 13px;
+  font-weight: 700;
+  color: #002a7a;
+  white-space: nowrap;
+}
+
+.sim-option-row-tarif span {
+  font-size: 11px;
+  font-weight: 400;
+  color: #999;
+}
+
+/* Total services */
+.sim-accordion-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: #fff5ef;
+  font-size: 13px;
+  color: #666;
+  border-top: 1px solid #ffe0cc;
+}
+
+.sim-accordion-total strong {
+  color: #e05500;
+  font-size: 14px;
+}

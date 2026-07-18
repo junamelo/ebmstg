@@ -1,0 +1,177 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, var(--moov-blue) 0%, #004db3 100%);
+  color: white;
+  padding: 0 24px;
+  height: 64px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar-logo {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.navbar-logo-img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+
+.navbar-logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+.navbar-logo-link:hover {
+  opacity: 0.85;
+}
+
+.logo-moov {
+  color: var(--moov-orange);
+  text-transform: uppercase;
+}
+
+.logo-africa {
+  color: white;
+  text-transform: uppercase;
+}
+
+.navbar-title {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.75);
+  border-left: 1px solid rgba(255,255,255,0.3);
+  padding-left: 12px;
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.role-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-admin {
+  background-color: var(--moov-orange);
+  color: white;
+}
+
+.badge-agent {
+  background-color: #6d28d9;
+  color: white;
+}
+
+.badge-payeur {
+  background-color: #28a745;
+  color: white;
+}
+
+.badge-employe {
+  background-color: rgba(255,255,255,0.2);
+  color: white;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--border-radius);
+  position: relative;
+  transition: background-color var(--transition);
+}
+
+.user-menu:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  background-color: var(--moov-orange);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.chevron {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  min-width: 180px;
+  overflow: hidden;
+  z-index: 1001;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  color: var(--moov-text);
+  font-size: 14px;
+  transition: background-color var(--transition);
+  width: 100%;
+  border: none;
+  background: none;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background-color: var(--moov-gray-light);
+  color: var(--moov-orange);
+}
+
+.dropdown-logout {
+  color: var(--moov-danger);
+}
+
+.dropdown-logout:hover {
+  background-color: #fdf0f0;
+  color: var(--moov-danger);
+}
+
+.dropdown-divider {
+  border: none;
+  border-top: 1px solid var(--moov-gray);
+  margin: 0;
+}

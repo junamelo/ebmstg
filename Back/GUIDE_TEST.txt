@@ -1,0 +1,200 @@
+================================================================
+GUIDE DE TEST DU BACKEND MOOV AFRICA
+================================================================
+
+� COMMENT LANCER LE SERVEUR
+----------------------------
+1. Ouvre un terminal dans le dossier Back
+2. Exécute : python manage.py runserver
+3. Le serveur démarre sur http://localhost:8000
+
+⚠️ Si le serveur est déjà en cours :
+   - Ouvre le terminal et appuie sur Ctrl+C pour l'arrêter
+   - Relance : python manage.py runserver
+
+�📡 INFORMATIONS DE CONNEXION
+----------------------------
+URL du serveur : http://localhost:8000
+Swagger UI : http://localhost:8000/api/docs/
+Admin Django : http://localhost:8000/admin/
+
+🔐 IDENTIFIANTS DE TEST
+-----------------------
+Email : admin@moov.tg
+Mot de passe : admin123
+Rôle : SUPER_ADMIN
+
+🚀 ÉTAPE 1 : CONNEXION
+------------------------
+1. Ouvre : http://localhost:8000/api/docs/
+2. Déplie : POST /api/auth/login/
+3. Clique sur "Try it out"
+4. Remplis les champs :
+   - email : admin@moov.tg
+   - password : admin123
+5. Clique sur "Execute"
+6. Copie le token "access" dans la réponse
+
+🔑 ÉTAPE 2 : AUTHENTIFICATION
+------------------------------
+1. Clique sur le bouton 🔒 "Authorize" en haut à droite
+2. Colle dans le champ "Value" :
+   Bearer TON_TOKEN_ICI
+   (ex: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...)
+3. Clique sur "Authorize" puis "Close"
+
+📊 ÉTAPE 3 : TESTER LES ENDPOINTS
+---------------------------------
+
+=== AUTHENTIFICATION ===
+
+1. Profil utilisateur
+   - Endpoint : GET /api/auth/profile/
+   - Clique sur "Try it out" → "Execute"
+   - Tu verras tes informations utilisateur
+
+2. Inscription (optionnel)
+   - Endpoint : POST /api/auth/register/
+   - Body :
+     {
+       "email": "test@example.com",
+       "username": "testuser",
+       "password": "password123",
+       "password_confirm": "password123",
+       "first_name": "Test",
+       "last_name": "User",
+       "role": "EMPLOYE",
+       "telephone": "90000001"
+     }
+
+=== ENTREPRISES (COMPANIES) ===
+
+1. Créer une entreprise
+   - Endpoint : POST /api/billing/companies/
+   - Body :
+     {
+       "compte": "CT-000001",
+       "raison_sociale": "Entreprise Test",
+       "code_commercial": "7000",
+       "nom_commercial": "Commercial Name",
+       "categorie": "PE",
+       "adresse": "123 Rue Example",
+       "adresse2": "contact@example.com",
+       "statut": "ACTIF"
+     }
+
+2. Lister les entreprises
+   - Endpoint : GET /api/billing/companies/
+   - Clique sur "Try it out" → "Execute"
+
+3. Voir une entreprise spécifique
+   - Endpoint : GET /api/billing/companies/{id}/
+   - Remplace {id} par l'ID (ex: 1)
+   - Clique sur "Try it out" → "Execute"
+
+4. Modifier une entreprise
+   - Endpoint : PUT /api/billing/companies/{id}/
+   - Remplace {id} par l'ID
+   - Body :
+     {
+       "compte": "CT-000001",
+       "raison_sociale": "Entreprise Modifiée",
+       "categorie": "GE",
+       "statut": "ACTIF"
+     }
+
+5. Supprimer une entreprise
+   - Endpoint : DELETE /api/billing/companies/{id}/
+   - Remplace {id} par l'ID
+   - Clique sur "Try it out" → "Execute"
+
+=== LIGNES (LINES) ===
+
+1. Créer une ligne
+   - Endpoint : POST /api/billing/lines/
+   - Body :
+     {
+       "company": 1,
+       "msisdn": "79000000",
+       "utilisateur": "Employé Test",
+       "forfait": 15000.00,
+       "cycle": "MON1",
+       "option_blackberry": "BB15_6",
+       "option_nolimit": "AI50",
+       "est_incognito": false,
+       "facture_detaillee": true,
+       "est_non_revenu": false,
+       "statut": "ACTIF"
+     }
+
+2. Lister les lignes
+   - Endpoint : GET /api/billing/lines/
+   - Clique sur "Try it out" → "Execute"
+
+3. Voir une ligne spécifique
+   - Endpoint : GET /api/billing/lines/{id}/
+   - Remplace {id} par l'ID
+   - Clique sur "Try it out" → "Execute"
+
+4. Modifier une ligne
+   - Endpoint : PUT /api/billing/lines/{id}/
+   - Remplace {id} par l'ID
+   - Body :
+     {
+       "company": 1,
+       "msisdn": "79000000",
+       "utilisateur": "Employé Modifié",
+       "forfait": 20000.00,
+       "cycle": "MON1",
+       "statut": "ACTIF"
+     }
+
+5. Supprimer une ligne
+   - Endpoint : DELETE /api/billing/lines/{id}/
+   - Remplace {id} par l'ID
+   - Clique sur "Try it out" → "Execute"
+
+📋 CATÉGORIES CLIENT
+--------------------
+GE : Grande Entreprise
+PE : Petite Entreprise
+P : Particulier
+OI : Organisme International
+EP : Entreprise Publique
+A : Association
+NR : Non Revenu
+
+📋 CYCLES DE FACTURATION
+-------------------------
+HYB1 : Hybride 1
+HYB2 : Hybride 2
+MON1 : Mensuel 1
+
+📋 RÔLES UTILISATEURS
+----------------------
+SUPER_ADMIN : Administrateur système
+AGENT_FACTURATION : Agent de facturation
+PAYEUR : Payeur (entreprise)
+EMPLOYE : Employé (ligne individuelle)
+
+⚠️ NOTES IMPORTANTES
+--------------------
+- Le token JWT expire après 2 heures
+- Le token refresh expire après 7 jours
+- Si tu as une erreur 401, reconnecte-toi pour obtenir un nouveau token
+- Tous les endpoints sauf login/register nécessitent une authentification
+
+🔄 REDÉMARRER LE SERVEUR
+-------------------------
+Si le serveur ne répond pas :
+1. Ouvre un terminal dans le dossier Back
+2. Arrête le serveur : Ctrl+C
+3. Redémarre : python manage.py runserver
+
+📚 DOCUMENTATION COMPLÈTE
+--------------------------
+Voir le fichier README.md pour plus de détails sur l'architecture et la configuration.
+
+================================================================
+FIN DU GUIDE DE TEST
+================================================================

@@ -1,0 +1,365 @@
+/* =========================================
+   TABLER ICONS — doit être avant @tailwind
+   ========================================= */
+@import '@tabler/icons-webfont/dist/tabler-icons.min.css';
+
+/* =========================================
+   TAILWIND DIRECTIVES
+   ========================================= */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================
+   VARIABLES — Couleurs Moov Africa Togo
+   ========================================= */
+:root {
+  --moov-orange: #FF6600;
+  --moov-orange-dark: #cc5200;
+  --moov-orange-light: #ff8533;
+  --moov-blue: #003087;
+  --moov-blue-light: #0052cc;
+  --moov-white: #ffffff;
+  --moov-gray-light: #f5f5f5;
+  --moov-gray: #e0e0e0;
+  --moov-gray-dark: #666666;
+  --moov-text: #1a1a1a;
+  --moov-success: #28a745;
+  --moov-danger: #dc3545;
+  --moov-warning: #ffc107;
+
+  --border-radius: 8px;
+  --border-radius-lg: 12px;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.15);
+  --transition: 0.2s ease;
+}
+
+/* =========================================
+   RESET & BASE
+   ========================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  color: var(--moov-text);
+  background-color: var(--moov-gray-light);
+  line-height: 1.6;
+}
+
+a {
+  color: var(--moov-blue);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--moov-orange);
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 14px;
+}
+
+/* =========================================
+   BOUTONS
+   ========================================= */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color var(--transition), transform var(--transition);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background-color: var(--moov-orange);
+  color: var(--moov-white);
+}
+
+.btn-primary:hover {
+  background-color: var(--moov-orange-dark);
+}
+
+.btn-secondary {
+  background-color: var(--moov-blue);
+  color: var(--moov-white);
+}
+
+.btn-secondary:hover {
+  background-color: var(--moov-blue-light);
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--moov-orange);
+  border: 2px solid var(--moov-orange);
+}
+
+.btn-outline:hover {
+  background-color: var(--moov-orange);
+  color: var(--moov-white);
+}
+
+.btn-danger {
+  background-color: var(--moov-danger);
+  color: var(--moov-white);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn-lg {
+  padding: 14px 28px;
+  font-size: 16px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* =========================================
+   FORMULAIRES
+   ========================================= */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--moov-text);
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--moov-gray);
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  background-color: var(--moov-white);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--moov-orange);
+  box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.15);
+}
+
+.form-control.error {
+  border-color: var(--moov-danger);
+}
+
+.form-error {
+  color: var(--moov-danger);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* =========================================
+   CARDS
+   ========================================= */
+.card {
+  background-color: var(--moov-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+
+.card-header {
+  border-bottom: 1px solid var(--moov-gray);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--moov-blue);
+}
+
+/* =========================================
+   BADGES / STATUTS
+   ========================================= */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-success {
+  background-color: #d4edda;
+  color: var(--moov-success);
+}
+
+.badge-danger {
+  background-color: #f8d7da;
+  color: var(--moov-danger);
+}
+
+.badge-warning {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.badge-info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+/* =========================================
+   TABLES
+   ========================================= */
+.table-container {
+  overflow-x: auto;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--moov-gray);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--moov-white);
+}
+
+thead {
+  background-color: var(--moov-blue);
+  color: var(--moov-white);
+}
+
+thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--moov-gray);
+  transition: background-color var(--transition);
+}
+
+tbody tr:hover {
+  background-color: #fff5ef;
+}
+
+tbody td {
+  padding: 12px 16px;
+  font-size: 14px;
+}
+
+/* =========================================
+   ALERTES
+   ========================================= */
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--border-radius);
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+/* =========================================
+   UTILITAIRES
+   ========================================= */
+.text-center { text-align: center; }
+.text-right  { text-align: right; }
+.text-muted  { color: var(--moov-gray-dark); }
+.text-orange { color: var(--moov-orange); }
+.text-blue   { color: var(--moov-blue); }
+
+.mt-1 { margin-top: 8px; }
+.mt-2 { margin-top: 16px; }
+.mt-3 { margin-top: 24px; }
+.mb-1 { margin-bottom: 8px; }
+.mb-2 { margin-bottom: 16px; }
+.mb-3 { margin-bottom: 24px; }
+
+.flex { display: flex; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.gap-1 { gap: 8px; }
+.gap-2 { gap: 16px; }
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--moov-gray);
+  border-top-color: var(--moov-orange);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px;
+  color: var(--moov-gray-dark);
+}
+
+/* =========================================
+   PAGINATION
+   ========================================= */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 0 4px;
+}
