@@ -98,12 +98,6 @@ export default function DashboardEmploye() {
             </span>
           </div>
         </div>
-        <div className="hero-card__right">
-          <div className="hero-card__amount-label">Solde ce mois</div>
-          <div className="hero-card__amount">{stats.soldeFactureMois.toLocaleString('fr-FR')}</div>
-          <div className="hero-card__amount-unit">FCFA</div>
-          <Link to="/factures" className="hero-card__cta">Voir ma facture →</Link>
-        </div>
       </div>
 
       <div className="section-title">Ma ligne</div>
@@ -139,10 +133,14 @@ export default function DashboardEmploye() {
         )}
       </div>
 
+
       <div className="card">
         <div className="card-header flex-between">
           <h2 className="card-title">Historique de mes simulations</h2>
-          <Link to="/simulation" className="btn btn-outline btn-sm">Nouvelle simulation</Link>
+          <div className="card-header-actions">
+            <Link to="/simulation/historique" className="btn btn-outline btn-sm">Voir tout</Link>
+            <Link to="/simulation" className="btn btn-primary btn-sm">Nouvelle simulation</Link>
+          </div>
         </div>
         {stats.dernieresSimulations && stats.dernieresSimulations.length > 0 ? (
           <div className="table-container">

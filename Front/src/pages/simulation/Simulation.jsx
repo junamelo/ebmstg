@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { getTarifsActifs, simulerFacturation } from '../../services/simulationService'
 import { mockGetServices } from '../../services/mockApi'
 import illustrationSimulation from '../../assets/illustration-simulation.png'
@@ -96,8 +97,17 @@ export default function Simulation() {
   return (
     <div className="simulation-page">
       <div className="page-header">
-        <h1 className="page-title">Simulation de facturation</h1>
-        <p className="text-muted">Estimez le montant de votre prochaine facture.</p>
+        <div>
+          <h1 className="page-title">Simulation de facturation</h1>
+          <p className="text-muted">Estimez le montant de votre prochaine facture.</p>
+        </div>
+        <Link to="/simulation/historique" className="btn btn-outline">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Voir l'historique
+        </Link>
       </div>
 
       <div className="simulation-layout">

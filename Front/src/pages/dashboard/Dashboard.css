@@ -586,6 +586,14 @@
 }
 
 /* ═══════════════════════════════
+   CARD HEADER ACTIONS
+═══════════════════════════════ */
+.card-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ═══════════════════════════════
    EMPTY STATE
 ═══════════════════════════════ */
 .empty-state {
@@ -798,4 +806,14 @@
 
 @media (max-width: 640px) {
   .hero-card__illustration { display: none; }
+}
+
+/* ═══════════════════════════════
+   HERO ILLUSTRATION
+═══════════════════════════════ */
+.hero-illustration {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  object-fit: contain;
 }

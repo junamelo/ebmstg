@@ -11,6 +11,7 @@ import ForgotPassword from './pages/auth/ForgotPassword'
 import Dashboard from './pages/dashboard/Dashboard'
 import Factures from './pages/factures/Factures'
 import Simulation from './pages/simulation/Simulation'
+import HistoriqueSimulations from './pages/simulation/HistoriqueSimulations'
 
 // Pages admin (Super Admin uniquement)
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="factures" element={<Factures />} />
             <Route path="simulation" element={<Simulation />} />
+            <Route path="simulation/historique" element={<HistoriqueSimulations />} />
           </Route>
 
           {/* Routes protégées — Agent Facturation uniquement */}

@@ -108,15 +108,15 @@ export default function DashboardPayeur() {
       <div className="dashboard-actions">
         <Link to="/factures" className="action-card action-primary">
           <div>
-            <strong>Factures sommaires</strong>
-            <p>Consultez les factures individuelles par ligne</p>
+            <strong>Voir ma facture</strong>
+            <p>Consultez et téléchargez votre dernière facture</p>
           </div>
           <span className="action-arrow">→</span>
         </Link>
         <Link to="/simulation" className="action-card action-secondary">
           <div>
-            <strong>Simuler</strong>
-            <p>Estimez le montant prévisionnel de votre flotte</p>
+            <strong>Simuler ma facturation</strong>
+            <p>Estimez votre prochaine facture avant la fin du cycle</p>
           </div>
           <span className="action-arrow">→</span>
         </Link>
@@ -195,7 +195,45 @@ export default function DashboardPayeur() {
         </>
       )}
 
-
+      <div className="section-title">Historique de mes simulations</div>
+      <div className="card">
+        <div className="card-header flex-between">
+          <h2 className="card-title">Dernières simulations</h2>
+          <div className="card-header-actions">
+            <Link to="/simulation/historique" className="btn btn-outline btn-sm">Voir tout</Link>
+            <Link to="/simulation" className="btn btn-primary btn-sm">Nouvelle simulation</Link>
+          </div>
+        </div>
+        {stats.dernieresSimulations && stats.dernieresSimulations.length > 0 ? (
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Montant estimé</th>
+                  <th>Taux consommation</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.dernieresSimulations.slice(0, 3).map((sim, idx) => (
+                  <tr key={idx}>
+                    <td>{sim.date}</td>
+                    <td className="text-orange"><strong>{sim.montant.toLocaleString('fr-FR')} FCFA</strong></td>
+                    <td>{sim.tauxConsommation}%</td>
+                    <td><button className="btn btn-secondary btn-sm">Voir détails</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <p>Aucune simulation effectuée récemment.</p>
+            <Link to="/simulation" className="btn btn-primary btn-sm">Faire ma première simulation</Link>
+          </div>
+        )}
+      </div>
 
     </div>
   )
