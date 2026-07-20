@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { login as loginService } from '../../services/authService'
 import { enregistrerVisite } from '../../services/deviceService'
 import illustrationFactures from '../../assets/illustration-factures.svg'
+import logoMoov from '../../assets/logo-moov.png'
 import './Login.css'
 
 export default function Login() {
@@ -50,18 +51,22 @@ export default function Login() {
       {/* ── Panneau gauche : branding ── */}
       <div className="login-left">
 
+        {/* Logo Moov Africa — coin supérieur droit du panneau bleu */}
+        <div className="login-branding-logo">
+          <img src={logoMoov} alt="Moov Africa" className="login-branding-logo-img" />
+        </div>
+
         {/* Losanges style Moov Africa */}
         <div className="login-triangles">
 
           {/* ── COIN HAUT-GAUCHE ── */}
-          {/* Stratégie : carré ancré au coin, tourné à 45° via CSS transform-origin */}
           <div style={{
             position: 'absolute',
             top: '-30px',
             left: '-30px',
-            width: '280px',
-            height: '280px',
-            borderRadius: '45px',
+            width: '220px',
+            height: '220px',
+            borderRadius: '38px',
             background: 'linear-gradient(135deg, #78b4dc, #2d6ea8)',
             transform: 'rotate(45deg)',
             transformOrigin: 'center',
@@ -71,9 +76,9 @@ export default function Login() {
             position: 'absolute',
             top: '-10px',
             left: '-10px',
-            width: '260px',
-            height: '260px',
-            borderRadius: '42px',
+            width: '200px',
+            height: '200px',
+            borderRadius: '34px',
             background: 'linear-gradient(135deg, #fac278, #f08020)',
             transform: 'rotate(45deg)',
             transformOrigin: 'center',
