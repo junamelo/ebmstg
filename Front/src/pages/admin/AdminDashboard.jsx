@@ -299,6 +299,93 @@ export default function AdminDashboard() {
         ))}
       </div>
 
+      {/* ── Historique des simulations ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.35 }}
+        className="bg-white rounded-xl border border-zinc-200 overflow-hidden"
+      >
+        <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-900">Historique des simulations</h2>
+            <p className="text-sm text-zinc-400 mt-0.5">Simulations récentes de tous les utilisateurs</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Filtre par rôle */}
+            <select className="px-3 py-1.5 text-xs border border-zinc-200 rounded-lg bg-white text-zinc-600">
+              <option value="">Tous les rôles</option>
+              <option value="EMPLOYE">Employés</option>
+              <option value="PAYEUR">Payeurs</option>
+            </select>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-zinc-50 text-xs uppercase tracking-wider text-zinc-500">
+              <tr>
+                <th className="px-6 py-3 text-left font-semibold">Utilisateur</th>
+                <th className="px-6 py-3 text-left font-semibold">Rôle</th>
+                <th className="px-6 py-3 text-left font-semibold">Entreprise</th>
+                <th className="px-6 py-3 text-left font-semibold">Date</th>
+                <th className="px-6 py-3 text-left font-semibold">Montant</th>
+                <th className="px-6 py-3 text-left font-semibold">Taux conso.</th>
+                <th className="px-6 py-3 text-left font-semibold">Statut</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-50">
+              {stats.simulationsGlobales?.slice(0, 8).map((sim, idx) => (
+                <tr key={idx} className="hover:bg-zinc-50 transition-colors">
+                  <td className="px-6 py-4 font-medium text-zinc-900">{sim.utilisateur}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
+                      sim.role === 'EMPLOYE' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {sim.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-zinc-600">{sim.entreprise}</td>
+                  <td className="px-6 py-4 text-sm text-zinc-500">{sim.date}</td>
+                  <td className="px-6 py-4 text-sm font-semibold text-zinc-900">{sim.montant}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full ${
+                            sim.tauxConsommation >= 80 ? 'bg-red-500' :
+                            sim.tauxConsommation >= 60 ? 'bg-orange-500' :
+                            'bg-green-500'
+                          }`}
+                          style={{ width: `${Math.min(sim.tauxConsommation, 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-zinc-600 w-8">{sim.tauxConsommation}%</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
+                      sim.tauxConsommation >= 80 ? 'bg-red-100 text-red-700' :
+                      sim.tauxConsommation >= 60 ? 'bg-orange-100 text-orange-700' :
+                      'bg-green-100 text-green-700'
+                    }`}>
+                      {sim.tauxConsommation >= 80 ? 'Critique' :
+                       sim.tauxConsommation >= 60 ? 'Modéré' : 'Optimal'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {stats.simulationsGlobales?.length > 8 && (
+          <div className="p-4 border-t border-zinc-100 bg-zinc-50 text-center">
+            <button className="text-sm text-[#002a7a] hover:text-[#e05500] font-medium transition-colors">
+              Voir toutes les simulations ({stats.simulationsGlobales.length})
+            </button>
+          </div>
+        )}
+      </motion.div>
+
       {/* ── Dernières connexions ── */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

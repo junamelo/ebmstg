@@ -475,6 +475,20 @@ export const MOCK_STATS_ADMIN = {
   nbEmployes: 58342,
   nbAgentsFacturation: 12,
   nbSuperAdmins: 3,
+  simulationsGlobales: [
+    { utilisateur: 'TOTSOVI Eyram', role: 'EMPLOYE', entreprise: 'BIOSPARTNERS', date: '20/07/2026 14:25', montant: '127 850 FCFA', tauxConsommation: 73 },
+    { utilisateur: 'ADIKO Samuel', role: 'EMPLOYE', entreprise: 'MENSAN Tech Solutions', date: '20/07/2026 13:45', montant: '89 420 FCFA', tauxConsommation: 52 },
+    { utilisateur: 'BIOSPARTNERS', role: 'PAYEUR', entreprise: 'BIOSPARTNERS', date: '20/07/2026 12:30', montant: '435 680 FCFA', tauxConsommation: 68 },
+    { utilisateur: 'DOSSOU Marie', role: 'EMPLOYE', entreprise: 'GLOBAL TRADING SARL', date: '20/07/2026 11:50', montant: '156 230 FCFA', tauxConsommation: 87 },
+    { utilisateur: 'GLOBAL TRADING SARL', role: 'PAYEUR', entreprise: 'GLOBAL TRADING SARL', date: '20/07/2026 10:15', montant: '298 750 FCFA', tauxConsommation: 45 },
+    { utilisateur: 'KOFFI Adjoa', role: 'EMPLOYE', entreprise: 'AGRI-TECH SARL', date: '19/07/2026 16:20', montant: '92 340 FCFA', tauxConsommation: 61 },
+    { utilisateur: 'MENSAN Tech Solutions', role: 'PAYEUR', entreprise: 'MENSAN Tech Solutions', date: '19/07/2026 15:05', montant: '567 890 FCFA', tauxConsommation: 74 },
+    { utilisateur: 'ADJEI Kofi', role: 'EMPLOYE', entreprise: 'TOGO LOGISTICS', date: '19/07/2026 14:30', montant: '78 650 FCFA', tauxConsommation: 38 },
+    { utilisateur: 'TOGO LOGISTICS', role: 'PAYEUR', entreprise: 'TOGO LOGISTICS', date: '19/07/2026 13:15', montant: '234 120 FCFA', tauxConsommation: 55 },
+    { utilisateur: 'AMEGAH Grace', role: 'EMPLOYE', entreprise: 'ECOBANK TOGO', date: '19/07/2026 12:45', montant: '143 780 FCFA', tauxConsommation: 81 },
+    { utilisateur: 'LAWSON Jean', role: 'EMPLOYE', entreprise: 'CFAO MOTORS', date: '19/07/2026 11:20', montant: '102 560 FCFA', tauxConsommation: 49 },
+    { utilisateur: 'ECOBANK TOGO', role: 'PAYEUR', entreprise: 'ECOBANK TOGO', date: '19/07/2026 10:50', montant: '789 430 FCFA', tauxConsommation: 92 },
+  ],
   dernieresConnexions: [
     { nom: 'Responsable BIOSPARTNERS', role: 'PAYEUR',            date: '17/07/2026 14:23', ip: '41.78.12.45'  },
     { nom: 'Eyram TOTSOVI',            role: 'EMPLOYE',           date: '17/07/2026 13:58', ip: '41.78.12.89'  },
@@ -517,6 +531,11 @@ export const MOCK_STATS_PAYEUR = {
     { msisdn: '79 34 27 37', utilisateur: 'BIOSPARTNERS (3)', forfait: 'M2B', montant: 102_340, statut: 'ACTIF', blackberry: 'BB15_1', noLimit: 'AI00' },
   ],
   lignesASurveiller: [],
+  dernieresSimulations: [
+    { date: '15/07/2026', montant: 1_325_450, tauxConsommation: 68 },
+    { date: '08/07/2026', montant: 1_198_320, tauxConsommation: 62 },
+    { date: '30/06/2026', montant: 1_285_780, tauxConsommation: 71 },
+  ],
 }
 
 // ─── STATISTIQUES EMPLOYÉ (KPI Employé) ──────────────────────
