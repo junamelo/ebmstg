@@ -139,47 +139,6 @@ export default function DashboardEmploye() {
         )}
       </div>
 
-      <div className="section-title">Ma dernière facture</div>
-      <SoldeCard
-        montant={stats.soldeFactureMois}
-        joursRestants={stats.joursRestantsCycle}
-        dateFinCycle={stats.dateFinCycle}
-      />
-
-      <div className="card">
-        <div className="card-header">
-          <h2 className="card-title">Consommation du mois en cours</h2>
-        </div>
-        <div className="jauges-employe-grid">
-          <JaugeCirculaire
-            pourcentage={pctData}
-            couleur="var(--moov-blue)"
-            label="Data"
-            detail={`${stats.dataConsomme} Go / ${stats.dataInclus} Go`}
-          />
-          <JaugeCirculaire
-            pourcentage={pctAppel}
-            couleur="var(--moov-orange)"
-            label="Appels"
-            detail={`${stats.minutesConsommees} min / ${stats.minutesIncluses} min`}
-          />
-          <JaugeCirculaire
-            pourcentage={pctSms}
-            couleur="#6f42c1"
-            label="SMS"
-            detail={`${stats.smsConsommes} SMS / ${stats.smsInclus} SMS`}
-          />
-        </div>
-        <p className="text-muted" style={{ fontSize: 12, marginTop: 12, textAlign: 'center' }}>
-          Source : Table Line + Package (forfait inclus)
-        </p>
-        {(pctData >= 90 || pctAppel >= 90 || pctSms >= 90) && (
-          <div className="alert alert-warning" style={{ marginTop: 16 }}>
-            Attention : vous approchez de la limite de votre forfait sur un ou plusieurs services.
-          </div>
-        )}
-      </div>
-
       <div className="card">
         <div className="card-header flex-between">
           <h2 className="card-title">Historique de mes simulations</h2>
