@@ -3,43 +3,6 @@ import { Link } from 'react-router-dom'
 import { getStatsAgentFacturation } from '../../services/adminService'
 import './Dashboard.css'
 
-function StatutPublicationCard({ statut, nbFactures, date }) {
-  const getStatutBadge = () => {
-    switch(statut) {
-      case 'TRAITEE': return { classe: 'badge-success', texte: 'Traitée' }
-      case 'EN_COURS': return { classe: 'badge-warning', texte: 'En cours' }
-      case 'ERREUR': return { classe: 'badge-danger', texte: 'Erreur' }
-      default: return { classe: 'badge-secondary', texte: 'Inconnue' }
-    }
-  }
-
-  const badge = getStatutBadge()
-
-  return (
-    <div className="statut-publication-card">
-      <div className="statut-pub-header">
-        <h3>Publication du mois en cours</h3>
-        <span className={`badge ${badge.classe}`}>{badge.texte}</span>
-      </div>
-      <div className="statut-pub-body">
-        <div className="stat-item">
-          <span className="stat-label">Factures générées</span>
-          <span className="stat-value">{nbFactures.toLocaleString('fr-FR')}</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-label">Date de publication</span>
-          <span className="stat-value">{date}</span>
-        </div>
-      </div>
-      {statut === 'ERREUR' && (
-        <div className="alert alert-danger" style={{ marginTop: 12, fontSize: 13 }}>
-          Certaines factures n'ont pas pu être générées. Vérifiez les logs.
-        </div>
-      )}
-    </div>
-  )
-}
-
 function AlerteCard({ titre, count, type }) {
   const couleurs = {
     danger: 'var(--moov-danger)',
@@ -81,13 +44,6 @@ export default function DashboardAgentFacturation() {
           {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </div>
       </div>
-
-      <div className="section-title">Statut de la publication</div>
-      <StatutPublicationCard
-        statut={stats.statutPublication}
-        nbFactures={stats.nbFacturesGenerees}
-        date={stats.datePublication}
-      />
 
       <div className="section-title">Alertes et anomalies</div>
       <div className="alertes-grid">

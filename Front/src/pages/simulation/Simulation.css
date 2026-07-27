@@ -4,6 +4,118 @@
   gap: 24px;
 }
 
+/* ═══════════════════════════════════════
+   SÉLECTION DU TYPE DE CLIENT
+═══════════════════════════════════════ */
+.type-client-selection {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 0;
+}
+
+.type-client-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 24px;
+  background: white;
+  border: 2px solid var(--moov-gray);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: center;
+}
+
+.type-client-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.type-client-card--hyb:hover {
+  border-color: var(--moov-blue);
+  background: linear-gradient(135deg, white 0%, #f8faff 100%);
+}
+
+.type-client-card--op:hover {
+  border-color: var(--moov-orange);
+  background: linear-gradient(135deg, white 0%, #fff8f4 100%);
+}
+
+.type-client-icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.25s ease;
+}
+
+.type-client-card--hyb .type-client-icon {
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  color: var(--moov-blue);
+}
+
+.type-client-card--op .type-client-icon {
+  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+  color: var(--moov-orange);
+}
+
+.type-client-card:hover .type-client-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.type-client-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--moov-text);
+  margin: 0;
+}
+
+.type-client-card--hyb .type-client-title {
+  color: var(--moov-blue);
+}
+
+.type-client-card--op .type-client-title {
+  color: var(--moov-orange);
+}
+
+.type-client-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--moov-gray-dark);
+  margin: 0;
+}
+
+.type-client-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.type-client-card--hyb .type-client-badge {
+  background: var(--moov-blue);
+  color: white;
+}
+
+.type-client-card--op .type-client-badge {
+  background: var(--moov-orange);
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .type-client-selection {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Layout principal avec illustration */
 .simulation-layout {
   display: grid;

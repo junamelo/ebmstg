@@ -27,46 +27,7 @@ function CustomTooltip({ active, payload, label }) {
   )
 }
 
-function StatutPublicationHero({ statut, nbFactures, date }) {
-  const variants = {
-    TRAITEE: { bg: 'from-emerald-500/10 to-emerald-600/5', badge: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300', icon: '✓' },
-    EN_COURS: { bg: 'from-amber-500/10 to-amber-600/5', badge: 'bg-amber-500/20 text-amber-700 dark:text-amber-300', icon: '⏳' },
-    ERREUR: { bg: 'from-rose-500/10 to-rose-600/5', badge: 'bg-rose-500/20 text-rose-700 dark:text-rose-300', icon: '✕' }
-  }
-  const v = variants[statut] || variants.ERREUR
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${v.bg} border border-zinc-200/50 dark:border-zinc-800/50 p-8`}
-    >
-      <div className="relative z-10">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">Publication du mois</p>
-            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-              {nbFactures.toLocaleString('fr-FR')} factures
-            </h2>
-          </div>
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${v.badge} backdrop-blur-sm font-semibold text-sm`}>
-            <span>{v.icon}</span>
-            <span>{statut === 'TRAITEE' ? 'Traitée' : statut === 'EN_COURS' ? 'En cours' : 'Erreur'}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16" height="16">
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <path d="M16 2v4M8 2v4M3 10h18" />
-          </svg>
-          <span>Publiée le {date}</span>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
+// ── Composant AlerteMetric ─────────────────────
 function AlerteMetric({ titre, count, type, delay }) {
   const colors = {
     danger: 'border-rose-200 dark:border-rose-900/30 bg-rose-50/50 dark:bg-rose-950/20',
@@ -133,13 +94,6 @@ export default function AgentDashboard() {
           Gestion des publications et opérations de facturation
         </p>
       </motion.div>
-
-      {/* Statut Hero */}
-      <StatutPublicationHero
-        statut={stats.statutPublication}
-        nbFactures={stats.nbFacturesGenerees}
-        date={stats.datePublication}
-      />
 
       {/* Graphique des publications */}
       <motion.div
@@ -298,12 +252,22 @@ export default function AgentDashboard() {
         </Link>
 
         <Link
+          to="/agent/services"
+          className="group relative overflow-hidden rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 transition-all hover:border-[#e05500] hover:shadow-lg hover:shadow-[#e05500]/10"
+        >
+          <div className="relative z-10">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-1">Gérer les services</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">Configurer SMS, Data et Voix avec paliers</p>
+          </div>
+        </Link>
+
+        <Link
           to="/agent/forfaits"
           className="group relative overflow-hidden rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 transition-all hover:border-[#e05500] hover:shadow-lg hover:shadow-[#e05500]/10"
         >
           <div className="relative z-10">
             <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-1">Gérer les forfaits</h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Créer et modifier les forfaits</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">BlackBerry, No Limit, options...</p>
           </div>
         </Link>
       </motion.div>
@@ -317,7 +281,7 @@ export default function AgentDashboard() {
       >
         <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Historique des publications</h2>
-          <Link to="/agent/publication" className="text-sm font-medium text-[#002a7a] hover:text-[#003087] dark:text-[#78b4dc] transition-colors">
+          <Link to="/agent/publication/historique" className="text-sm font-medium text-[#002a7a] hover:text-[#003087] dark:text-[#78b4dc] transition-colors">
             Voir tout →
           </Link>
         </div>

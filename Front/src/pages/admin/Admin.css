@@ -420,3 +420,135 @@
   background: #991b1b;
   color: white;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   MODAL GESTION DES LIGNES
+════════════════════════════════════════════════════════════════ */
+.lignes-selector {
+  background: #fafafa;
+}
+
+.lignes-selector .ligne-item {
+  transition: background-color 0.15s ease;
+}
+
+.lignes-selector .ligne-item:hover {
+  background: white;
+}
+
+.etape-indicator {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.etape-number {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+}
+
+.etape-number.active {
+  background: #002a7a;
+}
+
+.etape-number.completed {
+  background: #16a34a;
+}
+
+.lignes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .lignes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.methode-ajout {
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  transition: border-color 0.15s ease;
+}
+
+.methode-ajout:hover {
+  border-color: #002a7a;
+}
+
+.apercu-lignes {
+  border: 2px dashed #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.apercu-lignes.has-content {
+  border-style: solid;
+  border-color: #e5e7eb;
+  background: white;
+  padding: 0;
+}
+
+.table-lignes {
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.table-lignes th,
+.table-lignes td {
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.table-lignes th {
+  background: #f9fafb;
+  font-weight: 500;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table-lignes tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.table-lignes tbody tr:hover {
+  background: #f9fafb;
+}
+
+.numero-ligne {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.statut-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.statut-badge.disponible {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statut-badge.nouveau {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.statut-badge.defaut {
+  background: #f3f4f6;
+  color: #374151;
+}

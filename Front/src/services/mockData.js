@@ -76,8 +76,8 @@ export const MOCK_SERVICES = [
 export const MOCK_USERS = [
   {
     id: '1',
-    nom: 'KOSSIGAN',
-    prenom: 'Prodige',
+    nom: '',
+    prenom: 'ban ben',
     email: 'p.kossigan@moov-africa.tg',
     role: 'SUPER_ADMIN',
     login: 'admin@moov.tg',
@@ -400,7 +400,7 @@ export const MOCK_FACTURES = [
 
 // ─── COMPTES UTILISATEURS (pour l'admin) ─────────────────────
 export const MOCK_COMPTES = [
-  { id: '1', nom: 'KOSSIGAN', prenom: 'Prodige', login: 'admin@moov.tg', role: 'SUPER_ADMIN', raisonSociale: null, estActif: true },
+  { id: '1', nom: '', prenom: 'ban ben', login: 'admin@moov.tg', role: 'SUPER_ADMIN', raisonSociale: null, estActif: true },
   // Comptes réels basés sur les données Excel
   { id: '2', nom: 'BIOSPARTNERS',    prenom: 'Responsable', login: 'A0007612',    role: 'PAYEUR',            raisonSociale: 'BIOSPARTNERS',                estActif: true  },
   { id: '3', nom: 'TOTSOVI',         prenom: 'Eyram',       login: '79342735',    role: 'EMPLOYE',           raisonSociale: 'BIOSPARTNERS',                estActif: true  },
@@ -492,7 +492,7 @@ export const MOCK_STATS_ADMIN = {
   dernieresConnexions: [
     { nom: 'Responsable BIOSPARTNERS', role: 'PAYEUR',            date: '17/07/2026 14:23', ip: '41.78.12.45'  },
     { nom: 'Eyram TOTSOVI',            role: 'EMPLOYE',           date: '17/07/2026 13:58', ip: '41.78.12.89'  },
-    { nom: 'Prodige KOSSIGAN',         role: 'SUPER_ADMIN',       date: '17/07/2026 10:15', ip: '192.168.1.12' },
+    { nom: 'ban ben',                  role: 'SUPER_ADMIN',       date: '17/07/2026 10:15', ip: '192.168.1.12' },
     { nom: 'Koffi ATTIOGBE',           role: 'AGENT_FACTURATION', date: '17/07/2026 09:42', ip: '192.168.1.34' },
     { nom: 'Responsable LCT',          role: 'PAYEUR',            date: '16/07/2026 16:30', ip: '41.78.56.20'  },
   ],

@@ -6,6 +6,9 @@ import illustrationSimulation from '../../assets/illustration-simulation.png'
 import './Simulation.css'
 
 export default function Simulation() {
+  // Type de client
+  const [typeClient, setTypeClient] = useState('') // '', 'HYB', 'OP'
+  
   const [tarifs, setTarifs]           = useState(null)
   const [services, setServices]       = useState([])
   const [optionsChoisies, setOptionsChoisies] = useState([])
@@ -18,13 +21,22 @@ export default function Simulation() {
   const [erreur, setErreur]           = useState('')
 
   useEffect(() => {
+    console.log('[Simulation] Chargement initial...')
     Promise.all([getTarifsActifs(), mockGetServices()])
       .then(([t, s]) => {
+        console.log('[Simulation] Tarifs:', t)
+        console.log('[Simulation] Services:', s)
         setTarifs(t)
         setServices(s.filter(srv => srv.actif))
       })
-      .catch(() => setErreur('Impossible de charger les tarifs.'))
-      .finally(() => setChargementInit(false))
+      .catch((err) => {
+        console.error('[Simulation] Erreur chargement:', err)
+        setErreur('Impossible de charger les tarifs.')
+      })
+      .finally(() => {
+        console.log('[Simulation] Chargement terminé')
+        setChargementInit(false)
+      })
   }, [])
 
   // ── Sélection / désélection d'une option de service ──────────
@@ -48,40 +60,39 @@ export default function Simulation() {
   // ── Calcul aperçu en temps réel ───────────────────────────────
   const calculApercu = () => {
     if (!tarifs) return null
-    const minutes = parseFloat(form.minutesAppel) || 0
-    const sms     = parseFloat(form.nombreSms)    || 0
-    const data    = parseFloat(form.volumeDataGo) || 0
-    const montantAppels   = minutes * tarifs.prixParMinute
-    const montantSms      = sms * tarifs.prixParSms
-    const montantData     = data * tarifs.prixParGo
     const montantServices = optionsChoisies.reduce((acc, o) => acc + o.tarif, 0)
-    return { montantAppels, montantSms, montantData, montantServices,
-             total: montantAppels + montantSms + montantData + montantServices }
+    return { 
+      montantAppels: 0, 
+      montantSms: 0, 
+      montantData: 0, 
+      montantServices,
+      total: montantServices 
+    }
   }
 
   const apercu = calculApercu()
 
-  // ── Soumission ────────────────────────────────────────────────
-  const handleSubmit = async (e) => {
+  // ── Soumission HYBRIDE ────────────────────────────────────────
+  const handleSubmitHybride = async (e) => {
     e.preventDefault()
     setErreur('')
-    const minutes = parseFloat(form.minutesAppel) || 0
-    const sms     = parseFloat(form.nombreSms)    || 0
-    const data    = parseFloat(form.volumeDataGo) || 0
     const services_montant = optionsChoisies.reduce((acc, o) => acc + o.tarif, 0)
 
-    if (minutes === 0 && sms === 0 && data === 0 && optionsChoisies.length === 0) {
-      setErreur('Veuillez saisir au moins une valeur de consommation ou choisir un service.')
+    if (optionsChoisies.length === 0) {
+      setErreur('Veuillez sélectionner au moins un service.')
       return
     }
     setChargement(true)
     try {
-      const res = await simulerFacturation({ minutesAppel: minutes, nombreSms: sms, volumeDataGo: data })
+      // Simulation avec uniquement les services
       setResultat({
-        ...res,
+        montantAppels: 0,
+        montantSms: 0,
+        montantData: 0,
         montantServices: services_montant,
-        montantTotal: res.montantTotal + services_montant,
+        montantTotal: services_montant,
         servicesChoisis: [...optionsChoisies],
+        typeClient: 'HYB'
       })
     } catch {
       setErreur('Erreur lors de la simulation. Réessayez.')
@@ -90,28 +101,155 @@ export default function Simulation() {
     }
   }
 
+  // ── Soumission OPEN ───────────────────────────────────────────
+  const handleSubmitOpen = async (e) => {
+    e.preventDefault()
+    setErreur('')
+
+    const minutes = parseFloat(form.minutesAppel) || 0
+    const sms = parseFloat(form.nombreSms) || 0
+    const dataGo = parseFloat(form.volumeDataGo) || 0
+    const services_montant = optionsChoisies.reduce((acc, o) => acc + o.tarif, 0)
+
+    if (minutes === 0 && sms === 0 && dataGo === 0 && optionsChoisies.length === 0) {
+      setErreur('Veuillez entrer au moins une consommation prévue ou sélectionner un service.')
+      return
+    }
+
+    setChargement(true)
+    try {
+      if (!tarifs) {
+        setErreur('Tarifs non disponibles.')
+        return
+      }
+
+      // Calcul selon les tarifs unitaires
+      const montantAppels = minutes * tarifs.prixParMinute
+      const montantSms = sms * tarifs.prixParSms
+      const montantData = dataGo * tarifs.prixParGo
+
+      setResultat({
+        montantAppels,
+        montantSms,
+        montantData,
+        montantServices: services_montant,
+        montantTotal: montantAppels + montantSms + montantData + services_montant,
+        servicesChoisis: [...optionsChoisies],
+        consommationPrevue: { minutes, sms, dataGo },
+        typeClient: 'OP'
+      })
+    } catch {
+      setErreur('Erreur lors de la simulation. Réessayez.')
+    } finally {
+      setChargement(false)
+    }
+  }
+
+  // ── Réinitialisation ──────────────────────────────────────────
+  const handleReset = () => {
+    setForm({ minutesAppel: '', nombreSms: '', volumeDataGo: '' })
+    setOptionsChoisies([])
+    setResultat(null)
+    setErreur('')
+  }
+
   if (chargementInit) {
+    console.log('[Simulation] Affichage écran de chargement')
     return <div className="loading-overlay"><div className="spinner"></div><span>Chargement...</span></div>
   }
 
+  // ── Écran de sélection du type de client ─────────────────────
+  if (!typeClient) {
+    console.log('[Simulation] Affichage écran de sélection du type')
+    return (
+      <div className="simulation-page">
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Simulation de facturation</h1>
+            <p className="text-muted">Choisissez d'abord votre type de client pour accéder à la simulation adaptée.</p>
+          </div>
+        </div>
+
+        <div className="type-client-selection">
+          <button
+            className="type-client-card type-client-card--hyb"
+            onClick={() => setTypeClient('HYB')}
+          >
+            <div className="type-client-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                <line x1="12" y1="22.08" x2="12" y2="12"/>
+              </svg>
+            </div>
+            <h3 className="type-client-title">Client HYBRIDE</h3>
+            <p className="type-client-description">
+              Simulation basée sur votre consommation réelle passée. Sélectionnez uniquement les services optionnels que vous souhaitez ajouter.
+            </p>
+            <div className="type-client-badge">Facturation basée sur l'historique</div>
+          </button>
+
+          <button
+            className="type-client-card type-client-card--op"
+            onClick={() => setTypeClient('OP')}
+          >
+            <div className="type-client-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </div>
+            <h3 className="type-client-title">Client OPEN (Postpayé)</h3>
+            <p className="type-client-description">
+              Simulation prévisionnelle. Entrez la consommation que vous prévoyez en voix, SMS et data pour estimer votre facture future.
+            </p>
+            <div className="type-client-badge">Facturation prévisionnelle</div>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ──  Page principale de simulation ────────────────────────────
+  console.log('[Simulation] Affichage page principale, typeClient:', typeClient)
+  console.log('[Simulation] Services disponibles:', services.length)
+  console.log('[Simulation] Tarifs:', tarifs)
+  
   return (
     <div className="simulation-page">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Simulation de facturation</h1>
-          <p className="text-muted">Estimez le montant de votre prochaine facture.</p>
+          <h1 className="page-title">
+            Simulation de facturation 
+            {typeClient === 'HYB' && ' - Client HYBRIDE'}
+            {typeClient === 'OP' && ' - Client OPEN'}
+          </h1>
+          <p className="text-muted">
+            {typeClient === 'HYB' && 'Sélectionnez les services optionnels pour estimer votre facture.'}
+            {typeClient === 'OP' && 'Entrez vos prévisions de consommation pour estimer votre facture.'}
+          </p>
         </div>
-        <Link to="/simulation/historique" className="btn btn-outline">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-          Voir l'historique
-        </Link>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button 
+            className="btn btn-outline"
+            onClick={() => { setTypeClient(''); handleReset() }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            Changer de type
+          </button>
+          <Link to="/simulation/historique" className="btn btn-outline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Historique
+          </Link>
+        </div>
       </div>
 
       <div className="simulation-layout">
-
         {/* Illustration */}
         <div className="simulation-illustration">
           <img src={illustrationSimulation} alt="Illustration simulation" className="simulation-illustration-img" />
@@ -119,172 +257,309 @@ export default function Simulation() {
 
         {/* Formulaire + résultat */}
         <div className="simulation-grid">
+          
+          {/* ══════════════════════════════════════════════════
+              SIMULATION HYBRIDE
+          ══════════════════════════════════════════════════ */}
+          {typeClient === 'HYB' && (
+            <div className="card simulation-form-card">
+              <div className="card-header">
+                <h2 className="card-title">Services optionnels</h2>
+              </div>
 
-          {/* ── Consommation ── */}
-          <div className="card simulation-form-card">
-            <div className="card-header">
-              <h2 className="card-title">Consommation prévue</h2>
+              {erreur && <div className="alert alert-danger">{erreur}</div>}
+
+              <form onSubmit={handleSubmitHybride}>
+                {/* ── Services — accordéon ── */}
+                {services.length > 0 && (
+                  <div className="sim-accordion">
+                    <button
+                      type="button"
+                      className="sim-accordion-header"
+                      onClick={() => setAccordionOuvert(!accordionOuvert)}
+                    >
+                      <div className="sim-accordion-header-left">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                          <line x1="7" y1="7" x2="7.01" y2="7"/>
+                        </svg>
+                        <span>Services</span>
+                        {optionsChoisies.length > 0 && (
+                          <span className="sim-accordion-badge">{optionsChoisies.length} sélectionné{optionsChoisies.length > 1 ? 's' : ''}</span>
+                        )}
+                      </div>
+                      <svg
+                        width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                        style={{ transform: accordionOuvert ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}
+                      >
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
+                    </button>
+
+                    {accordionOuvert && (
+                      <div className="sim-accordion-body">
+                        {services.map(srv => (
+                          <div key={srv.id} className="sim-service-item">
+                            <button
+                              type="button"
+                              className="sim-service-header"
+                              onClick={() => setServiceOuvert(serviceOuvert === srv.id ? null : srv.id)}
+                            >
+                              <div className="sim-service-header-left">
+                                <svg
+                                  width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#002a7a" strokeWidth="2.5"
+                                  style={{ transform: serviceOuvert === srv.id ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform 0.2s' }}
+                                >
+                                  <polyline points="9 18 15 12 9 6"/>
+                                </svg>
+                                <span className="sim-service-nom">{srv.nom}</span>
+                                <span className="sim-service-desc">{srv.description}</span>
+                              </div>
+                              {optionsChoisies.find(o => o.serviceId === srv.id) && (
+                                <span className="sim-service-chosen">
+                                  ✓ {optionsChoisies.find(o => o.serviceId === srv.id)?.tarif.toLocaleString('fr-FR')} FCFA/mois
+                                </span>
+                              )}
+                            </button>
+
+                            {serviceOuvert === srv.id && (
+                              <div className="sim-options-list">
+                                {srv.options.filter(o => o.actif).map(opt => {
+                                  const choisi = estChoisie(srv.id, opt.id)
+                                  return (
+                                    <button
+                                      key={opt.id}
+                                      type="button"
+                                      onClick={() => toggleOption(srv.id, opt)}
+                                      className={`sim-option-row ${choisi ? 'sim-option-row--active' : ''}`}
+                                    >
+                                      <span className="sim-option-row-check">
+                                        {choisi ? '●' : '○'}
+                                      </span>
+                                      <span className="sim-option-row-nom">{opt.nom}</span>
+                                      <span className="sim-option-row-tarif">
+                                        {opt.tarif.toLocaleString('fr-FR')} FCFA<span>/mois</span>
+                                      </span>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="simulation-actions">
+                  <button type="submit" className="btn btn-primary" disabled={chargement}>
+                    {chargement ? <><div className="spinner" style={{ width: 16, height: 16 }}></div> Calcul...</> : "Calculer l'estimation"}
+                  </button>
+                  <button type="button" className="btn btn-outline" onClick={handleReset}>
+                    Réinitialiser
+                  </button>
+                </div>
+              </form>
             </div>
+          )}
 
-            {erreur && <div className="alert alert-danger">{erreur}</div>}
+          {/* ══════════════════════════════════════════════════
+              SIMULATION OPEN
+          ══════════════════════════════════════════════════ */}
+          {typeClient === 'OP' && (
+            <div className="card simulation-form-card">
+              <div className="card-header">
+                <h2 className="card-title">Consommation prévue</h2>
+              </div>
 
-            {tarifs && (
-              <div className="tarifs-info">
-                <h3>Tarifs en vigueur — {tarifs.nom}</h3>
-                <div className="tarifs-grid">
-                  <div className="tarif-item">
-                    <span>Appels</span>
-                    <strong>{tarifs.prixParMinute?.toLocaleString('fr-FR')} FCFA / min</strong>
-                  </div>
-                  <div className="tarif-item">
-                    <span>SMS</span>
-                    <strong>{tarifs.prixParSms?.toLocaleString('fr-FR')} FCFA / SMS</strong>
-                  </div>
-                  <div className="tarif-item">
-                    <span>Data</span>
-                    <strong>{tarifs.prixParGo?.toLocaleString('fr-FR')} FCFA / Go</strong>
+              {erreur && <div className="alert alert-danger">{erreur}</div>}
+
+              {/* Affichage des tarifs unitaires */}
+              {tarifs && (
+                <div className="tarifs-info">
+                  <h3>Tarifs unitaires en vigueur</h3>
+                  <div className="tarifs-grid">
+                    <div className="tarif-item">
+                      <span>Appel</span>
+                      <strong>{tarifs.prixParMinute.toLocaleString('fr-FR')} FCFA/min</strong>
+                    </div>
+                    <div className="tarif-item">
+                      <span>SMS</span>
+                      <strong>{tarifs.prixParSms.toLocaleString('fr-FR')} FCFA/SMS</strong>
+                    </div>
+                    <div className="tarif-item">
+                      <span>Data</span>
+                      <strong>{tarifs.prixParGo.toLocaleString('fr-FR')} FCFA/Go</strong>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label className="form-label">Durée d'appels prévue (minutes)</label>
-                <input type="number" className="form-control" placeholder="Ex : 3000 min" min="0"
-                  value={form.minutesAppel} onChange={e => setForm({ ...form, minutesAppel: e.target.value })} />
-                {apercu && form.minutesAppel > 0 && (
-                  <span className="form-hint">≈ {apercu.montantAppels.toLocaleString('fr-FR')} FCFA</span>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Nombre de SMS prévus</label>
-                <input type="number" className="form-control" placeholder="Ex : 200 SMS" min="0"
-                  value={form.nombreSms} onChange={e => setForm({ ...form, nombreSms: e.target.value })} />
-                {apercu && form.nombreSms > 0 && (
-                  <span className="form-hint">≈ {apercu.montantSms.toLocaleString('fr-FR')} FCFA</span>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Volume de data prévu (Go)</label>
-                <input type="number" className="form-control" placeholder="Ex : 5 Go" min="0" step="0.1"
-                  value={form.volumeDataGo} onChange={e => setForm({ ...form, volumeDataGo: e.target.value })} />
-                {apercu && form.volumeDataGo > 0 && (
-                  <span className="form-hint">≈ {apercu.montantData.toLocaleString('fr-FR')} FCFA</span>
-                )}
-              </div>
-
-              {/* ── Services optionnels — accordéon ── */}
-              {services.length > 0 && (
-                <div className="sim-accordion">
-                  <button
-                    type="button"
-                    className="sim-accordion-header"
-                    onClick={() => setAccordionOuvert(!accordionOuvert)}
-                  >
-                    <div className="sim-accordion-header-left">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                        <line x1="7" y1="7" x2="7.01" y2="7"/>
-                      </svg>
-                      <span>Services optionnels</span>
-                      {optionsChoisies.length > 0 && (
-                        <span className="sim-accordion-badge">{optionsChoisies.length} sélectionné{optionsChoisies.length > 1 ? 's' : ''}</span>
-                      )}
-                    </div>
-                    <svg
-                      width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                      style={{ transform: accordionOuvert ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}
-                    >
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
-                  </button>
-
-                  {accordionOuvert && (
-                    <div className="sim-accordion-body">
-                      {services.map(srv => (
-                        <div key={srv.id} className="sim-service-item">
-                          {/* En-tête du service — cliquable pour dérouler */}
-                          <button
-                            type="button"
-                            className="sim-service-header"
-                            onClick={() => setServiceOuvert(serviceOuvert === srv.id ? null : srv.id)}
-                          >
-                            <div className="sim-service-header-left">
-                              <svg
-                                width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#002a7a" strokeWidth="2.5"
-                                style={{ transform: serviceOuvert === srv.id ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform 0.2s' }}
-                              >
-                                <polyline points="9 18 15 12 9 6"/>
-                              </svg>
-                              <span className="sim-service-nom">{srv.nom}</span>
-                              <span className="sim-service-desc">{srv.description}</span>
-                            </div>
-                            {optionsChoisies.find(o => o.serviceId === srv.id) && (
-                              <span className="sim-service-chosen">
-                                ✓ {optionsChoisies.find(o => o.serviceId === srv.id)?.tarif.toLocaleString('fr-FR')} FCFA/mois
-                              </span>
-                            )}
-                          </button>
-
-                          {/* Options tarifaires — déroulées */}
-                          {serviceOuvert === srv.id && (
-                            <div className="sim-options-list">
-                              {srv.options.filter(o => o.actif).map(opt => {
-                                const choisi = estChoisie(srv.id, opt.id)
-                                return (
-                                  <button
-                                    key={opt.id}
-                                    type="button"
-                                    onClick={() => toggleOption(srv.id, opt)}
-                                    className={`sim-option-row ${choisi ? 'sim-option-row--active' : ''}`}
-                                  >
-                                    <span className="sim-option-row-check">
-                                      {choisi ? '●' : '○'}
-                                    </span>
-                                    <span className="sim-option-row-nom">{opt.nom}</span>
-                                    <span className="sim-option-row-tarif">
-                                      {opt.tarif.toLocaleString('fr-FR')} FCFA<span>/mois</span>
-                                    </span>
-                                  </button>
-                                )
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-
-                      {optionsChoisies.length > 0 && (
-                        <div className="sim-accordion-total">
-                          <span>Total services :</span>
-                          <strong>{apercu?.montantServices.toLocaleString('fr-FR')} FCFA/mois</strong>
-                        </div>
-                      )}
-                    </div>
+              <form onSubmit={handleSubmitOpen}>
+                {/* Champs de saisie pour la consommation prévue */}
+                <div className="form-group">
+                  <label>Minutes d'appel prévues</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="Ex: 120"
+                    min="0"
+                    step="1"
+                    value={form.minutesAppel}
+                    onChange={(e) => setForm({ ...form, minutesAppel: e.target.value })}
+                  />
+                  {tarifs && form.minutesAppel && (
+                    <span className="form-hint">
+                      ≈ {(parseFloat(form.minutesAppel) * tarifs.prixParMinute).toLocaleString('fr-FR')} FCFA
+                    </span>
                   )}
                 </div>
-              )}
 
-              {apercu && apercu.total > 0 && (
-                <div className="apercu-total">
-                  <span>Estimation totale :</span>
-                  <strong className="text-orange">{apercu.total.toLocaleString('fr-FR')} FCFA</strong>
+                <div className="form-group">
+                  <label>Nombre de SMS prévus</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="Ex: 50"
+                    min="0"
+                    step="1"
+                    value={form.nombreSms}
+                    onChange={(e) => setForm({ ...form, nombreSms: e.target.value })}
+                  />
+                  {tarifs && form.nombreSms && (
+                    <span className="form-hint">
+                      ≈ {(parseFloat(form.nombreSms) * tarifs.prixParSms).toLocaleString('fr-FR')} FCFA
+                    </span>
+                  )}
                 </div>
-              )}
 
-              <div className="simulation-actions">
-                <button type="submit" className="btn btn-primary" disabled={chargement}>
-                  {chargement ? <><div className="spinner" style={{ width: 16, height: 16 }}></div> Calcul...</> : "Calculer l'estimation"}
-                </button>
-                <button type="button" className="btn btn-outline"
-                  onClick={() => { setForm({ minutesAppel: '', nombreSms: '', volumeDataGo: '' }); setOptionsChoisies([]); setResultat(null); setErreur('') }}>
-                  Réinitialiser
-                </button>
-              </div>
-            </form>
-          </div>
+                <div className="form-group">
+                  <label>Volume de data prévu (en Go)</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="Ex: 5"
+                    min="0"
+                    step="0.1"
+                    value={form.volumeDataGo}
+                    onChange={(e) => setForm({ ...form, volumeDataGo: e.target.value })}
+                  />
+                  {tarifs && form.volumeDataGo && (
+                    <span className="form-hint">
+                      ≈ {(parseFloat(form.volumeDataGo) * tarifs.prixParGo).toLocaleString('fr-FR')} FCFA
+                    </span>
+                  )}
+                </div>
+
+                {/* Services optionnels également pour OPEN */}
+                {services.length > 0 && (
+                  <div className="sim-accordion">
+                    <button
+                      type="button"
+                      className="sim-accordion-header"
+                      onClick={() => setAccordionOuvert(!accordionOuvert)}
+                    >
+                      <div className="sim-accordion-header-left">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                          <line x1="7" y1="7" x2="7.01" y2="7"/>
+                        </svg>
+                        <span>Services optionnels</span>
+                        {optionsChoisies.length > 0 && (
+                          <span className="sim-accordion-badge">{optionsChoisies.length} sélectionné{optionsChoisies.length > 1 ? 's' : ''}</span>
+                        )}
+                      </div>
+                      <svg
+                        width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                        style={{ transform: accordionOuvert ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}
+                      >
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
+                    </button>
+
+                    {accordionOuvert && (
+                      <div className="sim-accordion-body">
+                        {services.map(srv => (
+                          <div key={srv.id} className="sim-service-item">
+                            <button
+                              type="button"
+                              className="sim-service-header"
+                              onClick={() => setServiceOuvert(serviceOuvert === srv.id ? null : srv.id)}
+                            >
+                              <div className="sim-service-header-left">
+                                <svg
+                                  width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#002a7a" strokeWidth="2.5"
+                                  style={{ transform: serviceOuvert === srv.id ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform 0.2s' }}
+                                >
+                                  <polyline points="9 18 15 12 9 6"/>
+                                </svg>
+                                <span className="sim-service-nom">{srv.nom}</span>
+                                <span className="sim-service-desc">{srv.description}</span>
+                              </div>
+                              {optionsChoisies.find(o => o.serviceId === srv.id) && (
+                                <span className="sim-service-chosen">
+                                  ✓ {optionsChoisies.find(o => o.serviceId === srv.id)?.tarif.toLocaleString('fr-FR')} FCFA/mois
+                                </span>
+                              )}
+                            </button>
+
+                            {serviceOuvert === srv.id && (
+                              <div className="sim-options-list">
+                                {srv.options.filter(o => o.actif).map(opt => {
+                                  const choisi = estChoisie(srv.id, opt.id)
+                                  return (
+                                    <button
+                                      key={opt.id}
+                                      type="button"
+                                      onClick={() => toggleOption(srv.id, opt)}
+                                      className={`sim-option-row ${choisi ? 'sim-option-row--active' : ''}`}
+                                    >
+                                      <span className="sim-option-row-check">
+                                        {choisi ? '●' : '○'}
+                                      </span>
+                                      <span className="sim-option-row-nom">{opt.nom}</span>
+                                      <span className="sim-option-row-tarif">
+                                        {opt.tarif.toLocaleString('fr-FR')} FCFA<span>/mois</span>
+                                      </span>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Aperçu du total en temps réel pour OPEN */}
+                {(form.minutesAppel || form.nombreSms || form.volumeDataGo || optionsChoisies.length > 0) && tarifs && (
+                  <div className="apercu-total">
+                    <span>Montant estimé</span>
+                    <strong>
+                      {(
+                        (parseFloat(form.minutesAppel) || 0) * tarifs.prixParMinute +
+                        (parseFloat(form.nombreSms) || 0) * tarifs.prixParSms +
+                        (parseFloat(form.volumeDataGo) || 0) * tarifs.prixParGo +
+                        optionsChoisies.reduce((acc, o) => acc + o.tarif, 0)
+                      ).toLocaleString('fr-FR')} FCFA
+                    </strong>
+                  </div>
+                )}
+
+                <div className="simulation-actions">
+                  <button type="submit" className="btn btn-primary" disabled={chargement}>
+                    {chargement ? <><div className="spinner" style={{ width: 16, height: 16 }}></div> Calcul...</> : "Calculer l'estimation"}
+                  </button>
+                  <button type="button" className="btn btn-outline" onClick={handleReset}>
+                    Réinitialiser
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
 
           {/* ── Résultat ── */}
           {resultat && (
@@ -292,25 +567,33 @@ export default function Simulation() {
               <div className="card-header">
                 <h2 className="card-title">Résultat de la simulation</h2>
               </div>
+              
               <div className="resultat-detail">
-                {resultat.montantAppels > 0 && (
-                  <div className="resultat-ligne">
-                    <span>Appels ({form.minutesAppel} min × {tarifs?.prixParMinute} F)</span>
-                    <strong>{resultat.montantAppels?.toLocaleString('fr-FR')} FCFA</strong>
-                  </div>
+                {/* Détails pour OPEN */}
+                {resultat.typeClient === 'OP' && resultat.consommationPrevue && (
+                  <>
+                    {resultat.consommationPrevue.minutes > 0 && (
+                      <div className="resultat-ligne">
+                        <span>Appels ({resultat.consommationPrevue.minutes} min)</span>
+                        <strong>{resultat.montantAppels.toLocaleString('fr-FR')} FCFA</strong>
+                      </div>
+                    )}
+                    {resultat.consommationPrevue.sms > 0 && (
+                      <div className="resultat-ligne">
+                        <span>SMS ({resultat.consommationPrevue.sms} SMS)</span>
+                        <strong>{resultat.montantSms.toLocaleString('fr-FR')} FCFA</strong>
+                      </div>
+                    )}
+                    {resultat.consommationPrevue.dataGo > 0 && (
+                      <div className="resultat-ligne">
+                        <span>Data ({resultat.consommationPrevue.dataGo} Go)</span>
+                        <strong>{resultat.montantData.toLocaleString('fr-FR')} FCFA</strong>
+                      </div>
+                    )}
+                  </>
                 )}
-                {resultat.montantSms > 0 && (
-                  <div className="resultat-ligne">
-                    <span>SMS ({form.nombreSms} SMS × {tarifs?.prixParSms} F)</span>
-                    <strong>{resultat.montantSms?.toLocaleString('fr-FR')} FCFA</strong>
-                  </div>
-                )}
-                {resultat.montantData > 0 && (
-                  <div className="resultat-ligne">
-                    <span>Data ({form.volumeDataGo} Go × {tarifs?.prixParGo} F)</span>
-                    <strong>{resultat.montantData?.toLocaleString('fr-FR')} FCFA</strong>
-                  </div>
-                )}
+
+                {/* Services */}
                 {resultat.servicesChoisis?.map(o => (
                   <div key={o.cle} className="resultat-ligne">
                     <span>{o.nom}</span>
@@ -318,12 +601,17 @@ export default function Simulation() {
                   </div>
                 ))}
               </div>
+              
               <div className="resultat-total">
                 <span>Montant total estimé</span>
                 <span className="resultat-montant">{resultat.montantTotal?.toLocaleString('fr-FR')} FCFA</span>
               </div>
+              
               <p className="resultat-note">
-                Cette simulation est indicative. Le montant réel peut varier selon votre consommation effective.
+                {resultat.typeClient === 'HYB' 
+                  ? "Cette simulation est basée sur votre consommation réelle passée, plus les services optionnels sélectionnés."
+                  : "Cette simulation est basée sur vos prévisions de consommation. Le montant réel peut varier selon votre consommation effective."
+                }
               </p>
             </div>
           )}

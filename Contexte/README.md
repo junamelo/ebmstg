@@ -107,7 +107,7 @@ Créer une nouvelle ligne
   "msisdn": "79000000",
   "utilisateur": "Employé Name",
   "forfait": 15000.00,
-  "cycle": "MON1",
+  "cycle": "HYB",
   "option_blackberry": "BB15_6",
   "option_nolimit": "AI50",
   "est_incognito": false,
@@ -155,7 +155,7 @@ Supprimer une ligne
 - msisdn (unique)
 - utilisateur
 - forfait (FCFA)
-- cycle (HYB1, HYB2, MON1)
+- cycle (HYB, OP)
 - option_blackberry, option_nolimit
 - est_incognito, facture_detaillee, est_non_revenu
 - statut
@@ -165,6 +165,8 @@ Supprimer une ligne
 
 ### CORS
 Le backend est configuré pour accepter les requêtes de :
+- http://localhost:3000
+- http://127.0.0.1:3000
 - http://localhost:5173
 - http://127.0.0.1:5173
 

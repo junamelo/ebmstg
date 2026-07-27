@@ -17,10 +17,14 @@ export default function GestionServices() {
   // Modal nouveau service
   const [formService, setFormService] = useState({ nom: '', description: '' })
   const [formServiceOuvert, setFormServiceOuvert] = useState(false)
+  const [modeEditionService, setModeEditionService] = useState(false)
+  const [serviceEnEdition, setServiceEnEdition] = useState(null)
 
   // Modal nouvelle option — on mémorise le serviceId ciblé
   const [formOption, setFormOption]   = useState({ nom: '', tarif: '' })
   const [serviceSelectionne, setServiceSelectionne] = useState(null) // id du service en cours d'édition
+  const [modeEditionOption, setModeEditionOption] = useState(false)
+  const [optionEnEdition, setOptionEnEdition] = useState(null)
 
   useEffect(() => {
     mockGetServices().then(setServices).finally(() => setChargement(false))
@@ -31,16 +35,45 @@ export default function GestionServices() {
     setTimeout(() => setMessage(null), 4000)
   }
 
-  // ── Créer un service ──────────────────────────────────────────
+  // ── Créer ou modifier un service ─────────────────────────────
   const handleCreerService = async (e) => {
     e.preventDefault()
     try {
-      const nouveau = await mockCreerService(formService)
-      setServices([nouveau, ...services])
+      if (modeEditionService && serviceEnEdition) {
+        // Mode modification
+        setServices(services.map(s =>
+          s.id === serviceEnEdition.id
+            ? { ...s, nom: formService.nom, description: formService.description }
+            : s
+        ))
+        showMsg('success', `Forfait « ${formService.nom} » modifié.`)
+        setModeEditionService(false)
+        setServiceEnEdition(null)
+      } else {
+        // Mode création
+        const nouveau = await mockCreerService(formService)
+        setServices([nouveau, ...services])
+        showMsg('success', `Forfait « ${nouveau.nom} » créé.`)
+      }
       setFormService({ nom: '', description: '' })
       setFormServiceOuvert(false)
-      showMsg('success', `Service « ${nouveau.nom} » créé.`)
-    } catch { showMsg('error', 'Erreur lors de la création.') }
+    } catch { showMsg('error', 'Erreur lors de l\'opération.') }
+  }
+
+  // ── Ouvrir le formulaire de modification de service ──────────
+  const handleModifierService = (service) => {
+    setModeEditionService(true)
+    setServiceEnEdition(service)
+    setFormService({ nom: service.nom, description: service.description })
+    setFormServiceOuvert(true)
+  }
+
+  // ── Annuler modification service ──────────────────────────────
+  const annulerEditionService = () => {
+    setModeEditionService(false)
+    setServiceEnEdition(null)
+    setFormService({ nom: '', description: '' })
+    setFormServiceOuvert(false)
   }
 
   // ── Toggle actif/inactif service ──────────────────────────────
@@ -49,21 +82,57 @@ export default function GestionServices() {
     setServices(services.map(s => s.id === id ? { ...s, actif: !s.actif } : s))
   }
 
-  // ── Ajouter une option tarifaire ──────────────────────────────
+  // ── Ajouter ou modifier une option tarifaire ─────────────────
   const handleAjouterOption = async (e) => {
     e.preventDefault()
     if (!serviceSelectionne) return
     try {
-      const opt = await mockAjouterOption(serviceSelectionne, formOption)
-      setServices(services.map(s =>
-        s.id === serviceSelectionne
-          ? { ...s, options: [...s.options, opt] }
-          : s
-      ))
+      if (modeEditionOption && optionEnEdition) {
+        // Mode modification
+        setServices(services.map(s =>
+          s.id === serviceSelectionne
+            ? {
+                ...s,
+                options: s.options.map(o =>
+                  o.id === optionEnEdition.id
+                    ? { ...o, nom: formOption.nom, tarif: parseFloat(formOption.tarif) }
+                    : o
+                )
+              }
+            : s
+        ))
+        showMsg('success', `Option « ${formOption.nom} » modifiée.`)
+        setModeEditionOption(false)
+        setOptionEnEdition(null)
+      } else {
+        // Mode création
+        const opt = await mockAjouterOption(serviceSelectionne, formOption)
+        setServices(services.map(s =>
+          s.id === serviceSelectionne
+            ? { ...s, options: [...s.options, opt] }
+            : s
+        ))
+        showMsg('success', `Option « ${opt.nom} » ajoutée.`)
+      }
       setFormOption({ nom: '', tarif: '' })
       setServiceSelectionne(null)
-      showMsg('success', `Option « ${opt.nom} » ajoutée.`)
-    } catch { showMsg('error', "Erreur lors de l'ajout.") }
+    } catch { showMsg('error', "Erreur lors de l'opération.") }
+  }
+
+  // ── Ouvrir le formulaire de modification d'option ────────────
+  const handleModifierOption = (serviceId, option) => {
+    setModeEditionOption(true)
+    setOptionEnEdition(option)
+    setServiceSelectionne(serviceId)
+    setFormOption({ nom: option.nom, tarif: option.tarif.toString() })
+  }
+
+  // ── Annuler modification option ───────────────────────────────
+  const annulerEditionOption = () => {
+    setModeEditionOption(false)
+    setOptionEnEdition(null)
+    setFormOption({ nom: '', tarif: '' })
+    setServiceSelectionne(null)
   }
 
   // ── Toggle option ─────────────────────────────────────────────
@@ -90,9 +159,9 @@ export default function GestionServices() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 mb-2">Services et Options</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 mb-2">Gestion des Forfaits</h1>
           <p className="text-zinc-600">
-            Chaque service peut contenir plusieurs options tarifaires proposées à la simulation.
+            Gestion des forfaits et packages (BlackBerry, No Limit, Facture Détaillée, Incognito...)
           </p>
         </div>
         <button
@@ -100,7 +169,7 @@ export default function GestionServices() {
           className="px-4 py-2 bg-[#e05500] hover:bg-[#c44a00] text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-          Nouveau service
+          Nouveau forfait
         </button>
       </div>
 
@@ -128,15 +197,17 @@ export default function GestionServices() {
             className="overflow-hidden"
           >
             <div className="bg-white rounded-xl border border-zinc-200 p-6">
-              <h2 className="text-lg font-semibold text-zinc-900 mb-4">Créer un nouveau service</h2>
+              <h2 className="text-lg font-semibold text-zinc-900 mb-4">
+                {modeEditionService ? 'Modifier le forfait' : 'Créer un nouveau forfait'}
+              </h2>
               <form onSubmit={handleCreerService} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Nom du service *</label>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">Nom du forfait *</label>
                     <input
                       required type="text"
                       className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-[#e05500] outline-none"
-                      placeholder="Ex: BlackBerry, No Limit..."
+                      placeholder="Ex: BlackBerry BB12, No Limit..."
                       value={formService.nom}
                       onChange={e => setFormService({ ...formService, nom: e.target.value })}
                     />
@@ -154,9 +225,9 @@ export default function GestionServices() {
                 </div>
                 <div className="flex gap-3">
                   <button type="submit" className="px-5 py-2 bg-[#e05500] text-white rounded-lg text-sm font-medium hover:bg-[#c44a00] transition-colors">
-                    Créer
+                    {modeEditionService ? 'Enregistrer' : 'Créer'}
                   </button>
-                  <button type="button" onClick={() => setFormServiceOuvert(false)}
+                  <button type="button" onClick={annulerEditionService}
                     className="px-5 py-2 bg-zinc-100 text-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-200 transition-colors">
                     Annuler
                   </button>
@@ -177,9 +248,9 @@ export default function GestionServices() {
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-semibold text-zinc-900">
-                  Ajouter une option — {services.find(s => s.id === serviceSelectionne)?.nom}
+                  {modeEditionOption ? 'Modifier l\'option' : 'Ajouter une option'} — {services.find(s => s.id === serviceSelectionne)?.nom}
                 </h2>
-                <button onClick={() => setServiceSelectionne(null)}
+                <button onClick={annulerEditionOption}
                   className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-100 text-zinc-400">✕</button>
               </div>
               <form onSubmit={handleAjouterOption} className="space-y-4">
@@ -205,9 +276,9 @@ export default function GestionServices() {
                 </div>
                 <div className="flex gap-3 pt-2">
                   <button type="submit" className="px-5 py-2 bg-[#e05500] text-white rounded-lg text-sm font-medium hover:bg-[#c44a00] transition-colors">
-                    Ajouter l'option
+                    {modeEditionOption ? 'Enregistrer' : 'Ajouter l\'option'}
                   </button>
-                  <button type="button" onClick={() => setServiceSelectionne(null)}
+                  <button type="button" onClick={annulerEditionOption}
                     className="px-5 py-2 bg-zinc-100 text-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-200 transition-colors">
                     Annuler
                   </button>
@@ -271,6 +342,12 @@ export default function GestionServices() {
                       <span className="text-sm font-medium text-zinc-700">Actions rapides</span>
                       <div className="flex items-center gap-2">
                         <button
+                          onClick={() => handleModifierService(service)}
+                          className="px-3 py-1.5 text-xs font-medium text-[#002a7a] border border-[#002a7a] rounded-lg hover:bg-blue-50 transition-colors"
+                        >
+                          ✏️ Modifier
+                        </button>
+                        <button
                           onClick={() => setServiceSelectionne(service.id)}
                           className="px-3 py-1.5 text-xs font-medium text-[#e05500] border border-[#e05500] rounded-lg hover:bg-orange-50 transition-colors"
                         >
@@ -305,16 +382,24 @@ export default function GestionServices() {
                               <span className="text-sm font-bold text-[#e05500]">
                                 {opt.tarif.toLocaleString('fr-FR')} FCFA<span className="text-xs font-normal text-zinc-500">/mois</span>
                               </span>
-                              <button
-                                onClick={() => handleToggleOption(service.id, opt.id)}
-                                className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${
-                                  opt.actif
-                                    ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                                    : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                                }`}
-                              >
-                                {opt.actif ? 'Désactiver' : 'Activer'}
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleModifierOption(service.id, opt)}
+                                  className="text-xs px-2.5 py-1 rounded-lg transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                >
+                                  ✏️ Modifier
+                                </button>
+                                <button
+                                  onClick={() => handleToggleOption(service.id, opt.id)}
+                                  className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${
+                                    opt.actif
+                                      ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                                      : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                                  }`}
+                                >
+                                  {opt.actif ? 'Désactiver' : 'Activer'}
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}

@@ -16,10 +16,12 @@ import HistoriqueSimulations from './pages/simulation/HistoriqueSimulations'
 // Pages admin (Super Admin uniquement)
 import AdminDashboard from './pages/admin/AdminDashboard'
 import GestionComptes from './pages/admin/GestionComptes'
+import UsersManagement from './pages/admin/users/UsersManagement'
 import AgentDashboard from './pages/agent/AgentDashboard'
 import PublicationPdf from './pages/agent/PublicationPdf'
 import GestionForfaits from './pages/agent/GestionForfaits'
 import GestionServices from './pages/agent/GestionServices'
+import HistoriquePublications from './pages/agent/HistoriquePublications'
 
 export default function App() {
   return (
@@ -58,8 +60,9 @@ export default function App() {
             <Route index element={<Navigate to="/agent/dashboard" replace />} />
             <Route path="dashboard" element={<AgentDashboard />} />
             <Route path="publication" element={<PublicationPdf />} />
-            <Route path="forfaits" element={<GestionForfaits />} />
-            <Route path="services" element={<GestionServices />} />
+            <Route path="publication/historique" element={<HistoriquePublications />} />
+            <Route path="services" element={<GestionForfaits />} />
+            <Route path="forfaits" element={<GestionServices />} />
           </Route>
 
           {/* Routes protégées — Super Admin uniquement */}
@@ -73,6 +76,7 @@ export default function App() {
           >
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="users" element={<UsersManagement />} />
             <Route path="comptes" element={<GestionComptes />} />
           </Route>
 

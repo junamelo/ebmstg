@@ -1,24 +1,45 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getStatsEmploye } from '../../services/adminService'
+import DateRangePicker from '../../components/DateRangePicker'
 import './Simulation.css'
 
 export default function HistoriqueSimulations() {
   const [simulations, setSimulations] = useState([])
   const [chargement, setChargement] = useState(true)
-  const [filtreDate, setFiltreDate] = useState('')
+  const [dateRange, setDateRange] = useState({ start: null, end: null })
 
   useEffect(() => {
     getStatsEmploye()
       .then(stats => {
-        setSimulations(stats.dernieresSimulations || [])
+        // Ajouter plus de simulations mockées pour le test
+        const simulationsEtendues = [
+          ...(stats.dernieresSimulations || []),
+          { date: '15/07/2026', montant: 89450, tauxConsommation: 58 },
+          { date: '12/07/2026', montant: 134200, tauxConsommation: 85 },
+          { date: '08/07/2026', montant: 76800, tauxConsommation: 49 },
+          { date: '25/06/2026', montant: 102350, tauxConsommation: 71 },
+          { date: '20/06/2026', montant: 95780, tauxConsommation: 63 },
+          { date: '15/06/2026', montant: 118900, tauxConsommation: 79 },
+          { date: '10/06/2026', montant: 87650, tauxConsommation: 56 },
+          { date: '05/06/2026', montant: 145600, tauxConsommation: 92 },
+        ]
+        setSimulations(simulationsEtendues)
       })
       .catch(console.error)
       .finally(() => setChargement(false))
   }, [])
 
-  const simulationsFiltrees = filtreDate
-    ? simulations.filter(s => s.date.includes(filtreDate))
+  const parseDate = (dateStr) => {
+    const [day, month, year] = dateStr.split('/')
+    return new Date(year, month - 1, day)
+  }
+
+  const simulationsFiltrees = dateRange.start && dateRange.end
+    ? simulations.filter(sim => {
+        const simDate = parseDate(sim.date)
+        return simDate >= dateRange.start && simDate <= dateRange.end
+      })
     : simulations
 
   if (chargement) {
@@ -52,31 +73,34 @@ export default function HistoriqueSimulations() {
       {/* Filtres */}
       <div className="card" style={{ marginBottom: '20px' }}>
         <div className="card-body" style={{ padding: '16px' }}>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <label style={{ fontSize: '14px', fontWeight: 500, color: '#555' }}>
-              Filtrer par date :
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <label style={{ fontSize: '14px', fontWeight: 500, color: '#555', whiteSpace: 'nowrap' }}>
+              Période :
             </label>
-            <input
-              type="text"
-              placeholder="Ex: 10/07/2026"
-              className="form-control"
-              style={{ maxWidth: '200px' }}
-              value={filtreDate}
-              onChange={(e) => setFiltreDate(e.target.value)}
+            <DateRangePicker 
+              value={dateRange}
+              onChange={setDateRange}
+              placeholder="Sélectionner une période"
             />
-            {filtreDate && (
+            {(dateRange.start || dateRange.end) && (
               <button
                 className="btn btn-outline btn-sm"
-                onClick={() => setFiltreDate('')}
+                onClick={() => setDateRange({ start: null, end: null })}
               >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
                 Réinitialiser
               </button>
             )}
+            <div style={{ marginLeft: 'auto', fontSize: '13px', color: '#6b7280' }}>
+              {simulationsFiltrees.length} résultat(s)
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Liste des simulations */}
       {simulationsFiltrees.length === 0 ? (
         <div className="card">
           <div className="empty-state">
@@ -85,8 +109,8 @@ export default function HistoriqueSimulations() {
               <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
             </svg>
             <p style={{ marginTop: '16px', fontSize: '15px', color: '#888' }}>
-              {filtreDate 
-                ? 'Aucune simulation trouvée pour cette date.'
+              {dateRange.start || dateRange.end
+                ? 'Aucune simulation trouvée pour cette période.'
                 : 'Vous n\'avez pas encore effectué de simulation.'}
             </p>
             <Link to="/simulation" className="btn btn-primary btn-sm" style={{ marginTop: '12px' }}>
@@ -107,19 +131,12 @@ export default function HistoriqueSimulations() {
                 <tr>
                   <th>Date</th>
                   <th>Montant estimé</th>
-                  <th>Taux consommation</th>
-                  <th>Statut</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {simulationsFiltrees.map((sim, idx) => {
                   const isRecent = idx === 0
-                  const tauxCouleur = sim.tauxConsommation >= 90 
-                    ? 'text-danger' 
-                    : sim.tauxConsommation >= 70 
-                    ? 'text-warning' 
-                    : 'text-success'
 
                   return (
                     <tr key={idx}>
@@ -145,26 +162,6 @@ export default function HistoriqueSimulations() {
                         </strong>
                       </td>
                       <td>
-                        <span className={tauxCouleur} style={{ fontWeight: 600 }}>
-                          {sim.tauxConsommation}%
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`badge ${
-                          sim.tauxConsommation >= 90 
-                            ? 'badge-danger' 
-                            : sim.tauxConsommation >= 70 
-                            ? 'badge-warning' 
-                            : 'badge-success'
-                        }`}>
-                          {sim.tauxConsommation >= 90 
-                            ? 'Attention' 
-                            : sim.tauxConsommation >= 70 
-                            ? 'Modéré' 
-                            : 'Normal'}
-                        </span>
-                      </td>
-                      <td>
                         <button className="btn btn-secondary btn-sm">
                           Voir détails
                         </button>
@@ -178,16 +175,6 @@ export default function HistoriqueSimulations() {
         </div>
       )}
 
-      {/* Info supplémentaire */}
-      <div className="alert alert-info" style={{ marginTop: '20px' }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="16" x2="12" y2="12"/>
-          <line x1="12" y1="8" x2="12.01" y2="8"/>
-        </svg>
-        Les simulations sont des estimations basées sur votre consommation actuelle. 
-        Le montant réel de votre facture peut varier.
-      </div>
     </div>
   )
 }
