@@ -21,6 +21,7 @@ import AgentDashboard from './pages/agent/AgentDashboard'
 import PublicationPdf from './pages/agent/PublicationPdf'
 import GestionForfaits from './pages/agent/GestionForfaits'
 import GestionServices from './pages/agent/GestionServices'
+import GestionAgents from './pages/agent/GestionAgents'
 import HistoriquePublications from './pages/agent/HistoriquePublications'
 
 export default function App() {
@@ -59,6 +60,25 @@ export default function App() {
           >
             <Route index element={<Navigate to="/agent/dashboard" replace />} />
             <Route path="dashboard" element={<AgentDashboard />} />
+            <Route path="agents" element={<GestionAgents />} />
+            <Route path="publication" element={<PublicationPdf />} />
+            <Route path="publication/historique" element={<HistoriquePublications />} />
+            <Route path="services" element={<GestionForfaits />} />
+            <Route path="forfaits" element={<GestionServices />} />
+          </Route>
+          
+          {/* Routes protégées — Chef Facturation */}
+          <Route
+            path="/chef"
+            element={
+              <ProtectedRoute role="CHEF_FACTURATION">
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/chef/dashboard" replace />} />
+            <Route path="dashboard" element={<AgentDashboard />} />
+            <Route path="agents" element={<GestionAgents />} />
             <Route path="publication" element={<PublicationPdf />} />
             <Route path="publication/historique" element={<HistoriquePublications />} />
             <Route path="services" element={<GestionForfaits />} />

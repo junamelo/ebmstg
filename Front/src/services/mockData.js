@@ -129,6 +129,21 @@ export const MOCK_USERS = [
     numeroContrat: null,
     numeroLigne: null,
   },
+  // Chef Agent Facturation ⭐ NOUVEAU
+  {
+    id: '5',
+    nom: 'MENSAH',
+    prenom: 'Divine',
+    email: 'd.mensah@moov-africa.tg',
+    role: 'CHEF_FACTURATION',
+    login: 'chef@moov.tg',
+    motDePasse: 'chef123',
+    estActif: true,
+    raisonSociale: null,
+    numeroContrat: null,
+    numeroLigne: null,
+    custom_permissions: ['accounts.create_agent'], // Permission par défaut
+  },
 ]
 
 // ─── TARIFS ──────────────────────────────────────────────────

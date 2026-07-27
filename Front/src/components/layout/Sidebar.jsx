@@ -19,6 +19,8 @@ const IconChevron     = ({ collapsed }) => (
   />
 )
 
+const IconAgents     = () => <i className="ti ti-user-check"       style={{ fontSize: 18 }} />
+
 const menusEmploye = [
   { path: '/dashboard',             label: 'Tableau de bord',     icon: <IconDashboard /> },
   { path: '/factures',              label: 'Mes factures',        icon: <IconFactures /> },
@@ -47,12 +49,23 @@ const menusAgentFacturation = [
   { path: '/agent/publication/historique',   label: 'Historique Pub.',     icon: <IconHistorique /> },
 ]
 
+const menusChefFacturation = [
+  { path: '/chef/dashboard',                label: 'Dashboard',           icon: <IconDashboard /> },
+  { path: '/chef/agents',                   label: 'Gestion Agents',      icon: <IconAgents /> },
+  { path: '/chef/services',                 label: 'Gestion Services',    icon: <IconServices /> },
+  { path: '/chef/forfaits',                 label: 'Gestion Forfaits',    icon: <IconForfaits /> },
+  { path: '/chef/publication',              label: 'Publication PDF',     icon: <IconPublication /> },
+  { path: '/chef/publication/historique',   label: 'Historique Pub.',     icon: <IconHistorique /> },
+]
+
 export default function Sidebar() {
-  const { isAdmin, isPayeur, isAgentFacturation } = useAuth()
+  const { isAdmin, isPayeur, isAgentFacturation, isChefFacturation } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
 
   const menus = isAdmin()
     ? menusAdmin
+    : isChefFacturation()
+    ? menusChefFacturation
     : isAgentFacturation()
     ? menusAgentFacturation
     : isPayeur()
@@ -61,6 +74,7 @@ export default function Sidebar() {
 
   const accent = isPayeur() ? '#e05500' : '#002a7a'
   const roleText = isAdmin() ? 'Administration'
+    : isChefFacturation() ? 'Chef Facturation'
     : isAgentFacturation() ? 'Agent Facturation'
     : isPayeur() ? 'Espace Entreprise'
     : 'Espace Employé'
@@ -94,7 +108,7 @@ export default function Sidebar() {
           <NavLink
             key={item.path}
             to={item.path}
-            end={item.path === '/simulation' || item.path === '/dashboard' || item.path === '/factures' || item.path === '/agent/publication'}
+            end={item.path === '/simulation' || item.path === '/dashboard' || item.path === '/factures'}
             className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
             style={({ isActive }) => isActive ? { 
               backgroundColor: accent, 

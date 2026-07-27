@@ -38,6 +38,10 @@ export function AuthProvider({ children }) {
   const isPayeur = () => user?.role === 'PAYEUR'
   const isEmploye = () => user?.role === 'EMPLOYE'
   const isAgentFacturation = () => user?.role === 'AGENT_FACTURATION'
+  const isChefFacturation = () => user?.role === 'CHEF_FACTURATION'
+  
+  // Permissions
+  const canCreateAgents = () => isAdmin() || (isChefFacturation() && user?.custom_permissions?.includes('accounts.create_agent'))
 
   return (
     <AuthContext.Provider value={{
@@ -49,7 +53,9 @@ export function AuthProvider({ children }) {
       isAdmin,
       isPayeur,
       isEmploye,
-      isAgentFacturation
+      isAgentFacturation,
+      isChefFacturation,
+      canCreateAgents
     }}>
       {children}
     </AuthContext.Provider>

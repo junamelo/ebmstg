@@ -5,7 +5,7 @@ import logoMoov from '../../assets/logo-moov.png'
 import './Navbar.css'
 
 export default function Navbar() {
-  const { user, logout, isAdmin, isPayeur, isAgentFacturation } = useAuth()
+  const { user, logout, isAdmin, isPayeur, isAgentFacturation, isChefFacturation } = useAuth()
   const navigate = useNavigate()
   const [menuOuvert, setMenuOuvert] = useState(false)
 
@@ -21,6 +21,7 @@ export default function Navbar() {
 
   const getHomeLink = () => {
     if (isAdmin()) return '/admin/dashboard'
+    if (isChefFacturation()) return '/chef/dashboard'
     if (isAgentFacturation()) return '/agent/dashboard'
     return '/dashboard'
   }

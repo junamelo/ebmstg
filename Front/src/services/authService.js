@@ -11,6 +11,7 @@ const USE_MOCK = true
  *   Payeur           → login: A0007612        / mdp: payeur123
  *   Employé          → login: 79342735        / mdp: 5678
  *   Agent Facturation→ login: agent@moov.tg   / mdp: agent123
+ *   Chef Facturation → login: chef@moov.tg    / mdp: chef123  ⭐
  */
 export const login = async (loginVal, motDePasse, typeLogin) => {
   if (USE_MOCK) return mockLogin(loginVal, motDePasse, typeLogin)

@@ -174,6 +174,10 @@ export default function Factures() {
   const [chargement, setChargement] = useState(true)
   const [factureSelectionnee, setFactureSelectionnee] = useState(null)
   const nav = useExplorateur()
+  
+  // Pagination
+  const [page, setPage] = useState(1)
+  const ITEMS_PAR_PAGE = 12
 
   useEffect(() => {
     getFactures({})
@@ -181,6 +185,11 @@ export default function Factures() {
       .catch(console.error)
       .finally(() => setChargement(false))
   }, [])
+  
+  // Réinitialiser la page lors du changement de mois
+  useEffect(() => {
+    setPage(1)
+  }, [nav.mois, nav.annee, nav.type])
 
   if (chargement) {
     return <div className="loading-overlay"><div className="spinner"></div><span>Chargement...</span></div>
@@ -209,6 +218,13 @@ export default function Factures() {
   const facturesDuMois = (nav.annee && nav.mois)
     ? facturesFiltreesParType.filter(f => f.periode === `${nav.annee}-${nav.mois}`)
     : []
+  
+  // Pagination
+  const totalFactures = facturesDuMois.length
+  const totalPages = Math.ceil(totalFactures / ITEMS_PAR_PAGE)
+  const indexDebut = (page - 1) * ITEMS_PAR_PAGE
+  const indexFin = indexDebut + ITEMS_PAR_PAGE
+  const facturesPaginees = facturesDuMois.slice(indexDebut, indexFin)
 
   const nbParType = (t) => toutesFactures.filter(f => f.type === t).length
   const nbParAnnee = (a) => facturesFiltreesParType.filter(f => f.periode?.startsWith(a)).length
@@ -319,11 +335,90 @@ export default function Factures() {
           {facturesDuMois.length === 0 ? (
             <div className="card"><div className="empty-state"><p>Aucune facture pour cette période.</p></div></div>
           ) : (
-            <div className="factures-grid">
-              {facturesDuMois.map(f => (
-                <FactureCard key={f.id} facture={f} onVoir={setFactureSelectionnee} />
-              ))}
-            </div>
+            <>
+              <div className="factures-grid">
+                {facturesPaginees.map(f => (
+                  <FactureCard key={f.id} facture={f} onVoir={setFactureSelectionnee} />
+                ))}
+              </div>
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="pagination-container">
+                  <div className="pagination-info">
+                    Affichage de {indexDebut + 1} à {Math.min(indexFin, totalFactures)} sur {totalFactures} facture{totalFactures > 1 ? 's' : ''}
+                  </div>
+                  <div className="pagination-controls">
+                    <button
+                      className="pagination-btn"
+                      onClick={() => setPage(1)}
+                      disabled={page === 1}
+                      title="Première page"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/>
+                      </svg>
+                    </button>
+                    <button
+                      className="pagination-btn"
+                      onClick={() => setPage(page - 1)}
+                      disabled={page === 1}
+                      title="Page précédente"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                      </svg>
+                    </button>
+                    
+                    <div className="pagination-pages">
+                      {[...Array(totalPages)].map((_, idx) => {
+                        const pageNum = idx + 1
+                        // Afficher les 5 premières, les 5 dernières, et autour de la page actuelle
+                        if (
+                          pageNum === 1 ||
+                          pageNum === totalPages ||
+                          (pageNum >= page - 2 && pageNum <= page + 2)
+                        ) {
+                          return (
+                            <button
+                              key={pageNum}
+                              className={`pagination-page ${page === pageNum ? 'active' : ''}`}
+                              onClick={() => setPage(pageNum)}
+                            >
+                              {pageNum}
+                            </button>
+                          )
+                        } else if (pageNum === page - 3 || pageNum === page + 3) {
+                          return <span key={pageNum} className="pagination-ellipsis">...</span>
+                        }
+                        return null
+                      })}
+                    </div>
+                    
+                    <button
+                      className="pagination-btn"
+                      onClick={() => setPage(page + 1)}
+                      disabled={page === totalPages}
+                      title="Page suivante"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 18l6-6-6-6"/>
+                      </svg>
+                    </button>
+                    <button
+                      className="pagination-btn"
+                      onClick={() => setPage(totalPages)}
+                      disabled={page === totalPages}
+                      title="Dernière page"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M13 17l5-5-5-5M6 17l5-5-5-5"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
