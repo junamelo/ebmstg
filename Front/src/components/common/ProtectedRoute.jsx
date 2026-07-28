@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 
 /**
  * Protège une route — redirige vers /login si non connecté
- * @param {string} role - rôle requis ('ADMIN' | 'PAYEUR' | 'EMPLOYE' | 'AGENT_FACTURATION' | 'CHEF_FACTURATION' | null pour tout rôle)
+ * @param {string} role - rôle requis ('SUPER_ADMIN' | 'PAYEUR' | 'EMPLOYE' | 'AGENT_FACTURATION' | 'CHEF_FACTURATION' | null pour tout rôle)
  */
 export default function ProtectedRoute({ children, role = null }) {
   const { user, loading, isAdmin, isPayeur, isEmploye, isAgentFacturation, isChefFacturation } = useAuth()
@@ -22,7 +22,7 @@ export default function ProtectedRoute({ children, role = null }) {
   }
 
   // Vérification du rôle si précisé
-  if (role === 'ADMIN' && !isAdmin()) {
+  if (role === 'SUPER_ADMIN' && !isAdmin()) {
     return <Navigate to="/dashboard" replace />
   }
 

@@ -78,7 +78,7 @@ export const MOCK_USERS = [
     id: '1',
     nom: '',
     prenom: 'ban ben',
-    email: 'p.kossigan@moov-africa.tg',
+    email: 'banben@moov-africa.tg',
     role: 'SUPER_ADMIN',
     login: 'admin@moov.tg',
     motDePasse: 'admin123',
@@ -416,6 +416,8 @@ export const MOCK_FACTURES = [
 // ─── COMPTES UTILISATEURS (pour l'admin) ─────────────────────
 export const MOCK_COMPTES = [
   { id: '1', nom: '', prenom: 'ban ben', login: 'admin@moov.tg', role: 'SUPER_ADMIN', raisonSociale: null, estActif: true },
+  // Chef Facturation
+  { id: '4', nom: 'MENSAH', prenom: 'Divine', login: 'chef@moov.tg', role: 'CHEF_FACTURATION', raisonSociale: null, estActif: true },
   // Comptes réels basés sur les données Excel
   { id: '2', nom: 'BIOSPARTNERS',    prenom: 'Responsable', login: 'A0007612',    role: 'PAYEUR',            raisonSociale: 'BIOSPARTNERS',                estActif: true  },
   { id: '3', nom: 'TOTSOVI',         prenom: 'Eyram',       login: '79342735',    role: 'EMPLOYE',           raisonSociale: 'BIOSPARTNERS',                estActif: true  },

@@ -26,6 +26,13 @@ export default function Navbar() {
     return '/dashboard'
   }
 
+  const getProfilLink = () => {
+    if (isAdmin()) return '/admin/profil'
+    if (isChefFacturation()) return '/chef/profil'
+    if (isAgentFacturation()) return '/agent/profil'
+    return '/profil'
+  }
+
   const getRoleLabel = () => {
     if (isAdmin()) return 'Super Administrateur'
     if (isAgentFacturation()) return 'Agent Facturation'
@@ -59,11 +66,13 @@ export default function Navbar() {
 
           {menuOuvert && (
             <div className="dropdown-menu">
-              <Link to="/profil" className="dropdown-item" onClick={() => setMenuOuvert(false)}>
+              <Link to={getProfilLink()} className="dropdown-item" onClick={() => setMenuOuvert(false)}>
+                <i className="ti ti-user-circle" style={{ fontSize: 16, marginRight: 8 }} />
                 Mon profil
               </Link>
               <hr className="dropdown-divider" />
               <button className="dropdown-item dropdown-logout" onClick={handleLogout}>
+                <i className="ti ti-logout" style={{ fontSize: 16, marginRight: 8 }} />
                 Déconnexion
               </button>
             </div>

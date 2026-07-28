@@ -7,7 +7,7 @@
   flex-direction: column;
   padding: 0;
   box-shadow: 2px 0 12px rgba(0,0,0,0.06);
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: visible;
 }
@@ -31,7 +31,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
   box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
@@ -68,7 +68,7 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  transition: all 0.3s ease;
+  transition: all 0.08s ease;
 }
 
 .sidebar.collapsed .sidebar-role-band {
@@ -107,7 +107,7 @@
   color: #4b5563;
   font-size: 14px;
   font-weight: 500;
-  transition: all 0.15s ease;
+  transition: all 0.08s ease;
   text-decoration: none;
   white-space: nowrap;
   position: relative;
@@ -120,8 +120,8 @@
 }
 
 .sidebar-link:hover {
-  background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
-  color: #002a7a;
+  background: linear-gradient(135deg, #c5d7f5 0%, #a8c4ef 100%);
+  color: #001d5a;
   transform: translateX(4px);
 }
 
@@ -142,8 +142,10 @@
 
 
 .sidebar-link.active:hover {
-  filter: brightness(1.08);
+  background: linear-gradient(135deg, #003d9e 0%, #0055cc 100%);
+  filter: brightness(1.15);
   color: white;
+  box-shadow: 0 4px 12px rgba(0, 42, 122, 0.3);
 }
 
 .sidebar-icon {
@@ -154,7 +156,7 @@
   justify-content: center;
   flex-shrink: 0;
   opacity: 0.8;
-  transition: all 0.25s ease;
+  transition: all 0.08s ease;
   position: relative;
   z-index: 1;
 }
@@ -166,7 +168,7 @@
 }
 
 .sidebar-label {
-  transition: all 0.3s ease;
+  transition: all 0.08s ease;
   flex: 1;
   position: relative;
   z-index: 1;
@@ -184,7 +186,7 @@
   border-radius: 50%;
   background: currentColor;
   opacity: 0;
-  transition: all 0.3s ease;
+  transition: all 0.08s ease;
   margin-left: auto;
 }
 

@@ -12,17 +12,17 @@ import Dashboard from './pages/dashboard/Dashboard'
 import Factures from './pages/factures/Factures'
 import Simulation from './pages/simulation/Simulation'
 import HistoriqueSimulations from './pages/simulation/HistoriqueSimulations'
+import MonProfil from './pages/profile/MonProfil'
 
 // Pages admin (Super Admin uniquement)
 import AdminDashboard from './pages/admin/AdminDashboard'
 import GestionComptes from './pages/admin/GestionComptes'
-import UsersManagement from './pages/admin/users/UsersManagement'
 import AgentDashboard from './pages/agent/AgentDashboard'
 import PublicationPdf from './pages/agent/PublicationPdf'
+import HistoriquePublications from './pages/agent/HistoriquePublications'
 import GestionForfaits from './pages/agent/GestionForfaits'
 import GestionServices from './pages/agent/GestionServices'
 import GestionAgents from './pages/agent/GestionAgents'
-import HistoriquePublications from './pages/agent/HistoriquePublications'
 
 export default function App() {
   return (
@@ -47,6 +47,7 @@ export default function App() {
             <Route path="factures" element={<Factures />} />
             <Route path="simulation" element={<Simulation />} />
             <Route path="simulation/historique" element={<HistoriqueSimulations />} />
+            <Route path="profil" element={<MonProfil />} />
           </Route>
 
           {/* Routes protégées — Agent Facturation uniquement */}
@@ -65,6 +66,7 @@ export default function App() {
             <Route path="publication/historique" element={<HistoriquePublications />} />
             <Route path="services" element={<GestionForfaits />} />
             <Route path="forfaits" element={<GestionServices />} />
+            <Route path="profil" element={<MonProfil />} />
           </Route>
           
           {/* Routes protégées — Chef Facturation */}
@@ -83,21 +85,26 @@ export default function App() {
             <Route path="publication/historique" element={<HistoriquePublications />} />
             <Route path="services" element={<GestionForfaits />} />
             <Route path="forfaits" element={<GestionServices />} />
+            <Route path="profil" element={<MonProfil />} />
           </Route>
 
           {/* Routes protégées — Super Admin uniquement */}
           <Route
             path="/admin"
             element={
-              <ProtectedRoute role="ADMIN">
+              <ProtectedRoute role="SUPER_ADMIN">
                 <MainLayout />
               </ProtectedRoute>
             }
           >
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="users" element={<UsersManagement />} />
             <Route path="comptes" element={<GestionComptes />} />
+            <Route path="services" element={<GestionForfaits />} />
+            <Route path="forfaits" element={<GestionServices />} />
+            <Route path="publication" element={<PublicationPdf />} />
+            <Route path="publication/historique" element={<HistoriquePublications />} />
+            <Route path="profil" element={<MonProfil />} />
           </Route>
 
           {/* Fallback */}

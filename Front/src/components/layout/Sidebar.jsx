@@ -12,6 +12,7 @@ const IconComptes     = () => <i className="ti ti-users"            style={{ fon
 const IconUsers       = () => <i className="ti ti-users-group"      style={{ fontSize: 18 }} />
 const IconForfaits    = () => <i className="ti ti-package"          style={{ fontSize: 18 }} />
 const IconServices    = () => <i className="ti ti-settings"         style={{ fontSize: 18 }} />
+const IconProfil      = () => <i className="ti ti-user-circle"      style={{ fontSize: 18 }} />
 const IconChevron     = ({ collapsed }) => (
   <i 
     className={`ti ti-chevron-${collapsed ? 'right' : 'left'}`} 
@@ -26,6 +27,7 @@ const menusEmploye = [
   { path: '/factures',              label: 'Mes factures',        icon: <IconFactures /> },
   { path: '/simulation',            label: 'Simulation',          icon: <IconSimulation /> },
   { path: '/simulation/historique', label: 'Historique',          icon: <IconHistorique /> },
+  { path: '/profil',                label: 'Mon profil',          icon: <IconProfil /> },
 ]
 
 const menusPayeur = [
@@ -33,12 +35,17 @@ const menusPayeur = [
   { path: '/factures',              label: 'Factures',            icon: <IconFactures /> },
   { path: '/simulation',            label: 'Simulation',          icon: <IconSimulation /> },
   { path: '/simulation/historique', label: 'Historique',          icon: <IconHistorique /> },
+  { path: '/profil',                label: 'Mon profil',          icon: <IconProfil /> },
 ]
 
 const menusAdmin = [
   { path: '/admin/dashboard', label: 'Tableau de bord', icon: <IconDashboard /> },
-  { path: '/admin/users',     label: 'Utilisateurs',    icon: <IconUsers /> },
   { path: '/admin/comptes',   label: 'Gestion comptes', icon: <IconComptes /> },
+  { path: '/admin/services',  label: 'Gestion Services', icon: <IconServices /> },
+  { path: '/admin/forfaits',  label: 'Gestion Forfaits', icon: <IconForfaits /> },
+  { path: '/admin/publication', label: 'Publication PDF', icon: <IconPublication /> },
+  { path: '/admin/publication/historique', label: 'Historique Pub.', icon: <IconHistorique /> },
+  { path: '/admin/profil',    label: 'Mon profil',      icon: <IconProfil /> },
 ]
 
 const menusAgentFacturation = [
@@ -47,6 +54,7 @@ const menusAgentFacturation = [
   { path: '/agent/forfaits',                 label: 'Gestion Forfaits',    icon: <IconForfaits /> },
   { path: '/agent/publication',              label: 'Publication PDF',     icon: <IconPublication /> },
   { path: '/agent/publication/historique',   label: 'Historique Pub.',     icon: <IconHistorique /> },
+  { path: '/agent/profil',                   label: 'Mon profil',          icon: <IconProfil /> },
 ]
 
 const menusChefFacturation = [
@@ -56,6 +64,7 @@ const menusChefFacturation = [
   { path: '/chef/forfaits',                 label: 'Gestion Forfaits',    icon: <IconForfaits /> },
   { path: '/chef/publication',              label: 'Publication PDF',     icon: <IconPublication /> },
   { path: '/chef/publication/historique',   label: 'Historique Pub.',     icon: <IconHistorique /> },
+  { path: '/chef/profil',                   label: 'Mon profil',          icon: <IconProfil /> },
 ]
 
 export default function Sidebar() {
@@ -108,7 +117,15 @@ export default function Sidebar() {
           <NavLink
             key={item.path}
             to={item.path}
-            end={item.path === '/simulation' || item.path === '/dashboard' || item.path === '/factures'}
+            end={
+              item.path === '/simulation' || 
+              item.path === '/dashboard' || 
+              item.path === '/factures' ||
+              item.path === '/profil' ||
+              item.path === '/agent/publication' ||
+              item.path === '/chef/publication' ||
+              item.path === '/admin/publication'
+            }
             className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
             style={({ isActive }) => isActive ? { 
               backgroundColor: accent, 

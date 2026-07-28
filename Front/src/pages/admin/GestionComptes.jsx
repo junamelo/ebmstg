@@ -7,10 +7,11 @@ import './Admin.css'
 
 // ── Couleurs avatar par rôle ─────────────────────────────────
 const ROLE_CONFIG = {
-  SUPER_ADMIN:       { label: 'Super Admin',   bg: '#fee2e2', color: '#b91c1c' },
-  AGENT_FACTURATION: { label: 'Agent',          bg: '#ede9fe', color: '#6d28d9' },
-  PAYEUR:            { label: 'Payeur',          bg: '#dbeafe', color: '#1d4ed8' },
-  EMPLOYE:           { label: 'Employé',         bg: '#dcfce7', color: '#15803d' },
+  SUPER_ADMIN:       { label: 'Super Admin',      bg: '#fee2e2', color: '#b91c1c' },
+  CHEF_FACTURATION:  { label: 'Chef Facturation', bg: '#fed7aa', color: '#c2410c' },
+  AGENT_FACTURATION: { label: 'Agent',             bg: '#ede9fe', color: '#6d28d9' },
+  PAYEUR:            { label: 'Payeur',            bg: '#dbeafe', color: '#1d4ed8' },
+  EMPLOYE:           { label: 'Employé',           bg: '#dcfce7', color: '#15803d' },
 }
 
 function getInitiales(prenom, nom) {
@@ -22,6 +23,7 @@ const ROLES_OPTIONS = [
   { value: 'EMPLOYE',           label: 'Employé' },
   { value: 'PAYEUR',            label: 'Payeur (Entreprise)' },
   { value: 'AGENT_FACTURATION', label: 'Agent Facturation' },
+  { value: 'CHEF_FACTURATION',  label: 'Chef Facturation' },
   { value: 'SUPER_ADMIN',       label: 'Super Administrateur' },
 ]
 
@@ -438,10 +440,19 @@ function ModalCreerCompte({ onClose, onSuccess, onPayeurCree }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErreur('')
-    if (!form.nom || !form.prenom || !form.login || !form.motDePasse) {
-      setErreur('Veuillez remplir tous les champs obligatoires.')
+    
+    // Validation selon le rôle
+    if (!form.login || !form.motDePasse) {
+      setErreur('Identifiant et mot de passe sont obligatoires.')
       return
     }
+    
+    // Nom et prénom obligatoires uniquement pour EMPLOYE
+    if (form.role === 'EMPLOYE' && (!form.nom || !form.prenom)) {
+      setErreur('Nom et prénom sont obligatoires pour les employés.')
+      return
+    }
+    
     setChargement(true)
     try {
       const nouveauUtilisateur = await mockCreerUtilisateur(form)
@@ -480,12 +491,24 @@ function ModalCreerCompte({ onClose, onSuccess, onPayeurCree }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="form-group">
-              <label className="form-label">Prénom *</label>
-              <input className="form-control" placeholder="Kodjo" value={form.prenom} onChange={e => setForm({ ...form, prenom: e.target.value })} />
+              <label className="form-label">Prénom {form.role === 'EMPLOYE' ? '*' : ''}</label>
+              <input 
+                className="form-control" 
+                placeholder="Kodjo" 
+                value={form.prenom} 
+                onChange={e => setForm({ ...form, prenom: e.target.value })} 
+                required={form.role === 'EMPLOYE'}
+              />
             </div>
             <div className="form-group">
-              <label className="form-label">Nom *</label>
-              <input className="form-control" placeholder="MENSAH" value={form.nom} onChange={e => setForm({ ...form, nom: e.target.value })} />
+              <label className="form-label">Nom {form.role === 'EMPLOYE' ? '*' : ''}</label>
+              <input 
+                className="form-control" 
+                placeholder="MENSAH" 
+                value={form.nom} 
+                onChange={e => setForm({ ...form, nom: e.target.value })} 
+                required={form.role === 'EMPLOYE'}
+              />
             </div>
           </div>
 
@@ -525,7 +548,7 @@ function ModalCreerCompte({ onClose, onSuccess, onPayeurCree }) {
               <label className="form-label">Cycle de facturation</label>
               <select className="form-control" value={form.cycleFin} onChange={e => setForm({ ...form, cycleFin: e.target.value })}>
                 <option value="HYB">Hybride (HYB)</option>
-                <option value="OP">Opérationnel (OP)</option>
+                <option value="OP">Open (OP)</option>
               </select>
               <small className="text-muted">Type de cycle de facturation</small>
             </div>
