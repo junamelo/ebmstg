@@ -4,17 +4,6 @@ import { useAuth } from '../../contexts/AuthContext'
 
 export default function MonProfil() {
   const { user, isAdmin, isChefFacturation, isAgentFacturation, isPayeur, isEmploye } = useAuth()
-  const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({
-    nom: '',
-    prenom: '',
-    email: '',
-    login: '',
-    telephone: '',
-    raisonSociale: '',
-    numeroContrat: '',
-    numeroLigne: ''
-  })
   const [passwordData, setPasswordData] = useState({
     ancienMdp: '',
     nouveauMdp: '',
@@ -23,40 +12,8 @@ export default function MonProfil() {
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
 
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        nom: user.nom || '',
-        prenom: user.prenom || '',
-        email: user.email || '',
-        login: user.login || '',
-        telephone: user.telephone || '',
-        raisonSociale: user.raisonSociale || '',
-        numeroContrat: user.numeroContrat || '',
-        numeroLigne: user.numeroLigne || ''
-      })
-    }
-  }, [user])
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
-
   const handlePasswordChange = (e) => {
     setPasswordData({ ...passwordData, [e.target.name]: e.target.value })
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    try {
-      // Simuler une sauvegarde
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setMessage({ type: 'success', text: 'Profil mis à jour avec succès !' })
-      setIsEditing(false)
-      setTimeout(() => setMessage({ type: '', text: '' }), 3000)
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Erreur lors de la mise à jour du profil.' })
-    }
   }
 
   const handlePasswordSubmit = async (e) => {
@@ -190,7 +147,7 @@ export default function MonProfil() {
           transition={{ delay: 0.2 }}
           className="lg:col-span-2 space-y-6"
         >
-          {/* Informations personnelles */}
+          {/* Informations personnelles - lecture seule */}
           <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
@@ -199,134 +156,73 @@ export default function MonProfil() {
                 </svg>
                 Informations personnelles
               </h3>
-              {!isEditing && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold border rounded-lg transition-all duration-150"
-                  style={{ 
-                    color: accentColor, 
-                    borderColor: accentColor 
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = accentColor
-                    e.currentTarget.style.color = 'white'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                    e.currentTarget.style.color = accentColor
-                  }}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                  </svg>
-                  Modifier
-                </button>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full">
+                Lecture seule
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Nom */}
+              <div>
+                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                  Nom
+                </label>
+                <div className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white">
+                  {user?.nom || '-'}
+                </div>
+              </div>
+
+              {/* Prénom */}
+              <div>
+                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                  Prénom
+                </label>
+                <div className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white">
+                  {user?.prenom || '-'}
+                </div>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                  Email
+                </label>
+                <div className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white">
+                  {user?.email || '-'}
+                </div>
+              </div>
+
+              {/* Téléphone */}
+              <div>
+                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                  Téléphone
+                </label>
+                <div className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white">
+                  {user?.telephone || '-'}
+                </div>
+              </div>
+
+              {/* Raison sociale (si payeur) */}
+              {isPayeur() && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                    Raison sociale
+                  </label>
+                  <div className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white">
+                    {user?.raisonSociale || '-'}
+                  </div>
+                </div>
               )}
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Nom */}
-                <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                    Nom {(isEmploye() || isAdmin()) && <span className="text-red-500">*</span>}
-                  </label>
-                  <input
-                    type="text"
-                    name="nom"
-                    value={formData.nom}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] focus:border-transparent outline-none transition-all disabled:bg-zinc-100 dark:disabled:bg-zinc-900 disabled:cursor-not-allowed"
-                  />
-                </div>
-
-                {/* Prénom */}
-                <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                    Prénom {(isEmploye() || isAdmin()) && <span className="text-red-500">*</span>}
-                  </label>
-                  <input
-                    type="text"
-                    name="prenom"
-                    value={formData.prenom}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] focus:border-transparent outline-none transition-all disabled:bg-zinc-100 dark:disabled:bg-zinc-900 disabled:cursor-not-allowed"
-                  />
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] focus:border-transparent outline-none transition-all disabled:bg-zinc-100 dark:disabled:bg-zinc-900 disabled:cursor-not-allowed"
-                  />
-                </div>
-
-                {/* Téléphone */}
-                <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                    Téléphone
-                  </label>
-                  <input
-                    type="tel"
-                    name="telephone"
-                    value={formData.telephone}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    placeholder="Ex: 90 12 34 56"
-                    className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] focus:border-transparent outline-none transition-all disabled:bg-zinc-100 dark:disabled:bg-zinc-900 disabled:cursor-not-allowed"
-                  />
-                </div>
-
-                {/* Raison sociale (si payeur) */}
-                {isPayeur() && (
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                      Raison sociale
-                    </label>
-                    <input
-                      type="text"
-                      name="raisonSociale"
-                      value={formData.raisonSociale}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] focus:border-transparent outline-none transition-all disabled:bg-zinc-100 dark:disabled:bg-zinc-900 disabled:cursor-not-allowed"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {isEditing && (
-                <div className="flex items-center gap-3 pt-4">
-                  <button
-                    type="submit"
-                    className="inline-flex items-center gap-2 px-6 py-2.5 text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-150"
-                    style={{ background: `linear-gradient(to bottom right, ${accentColor}, ${accentColor}dd)` }}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Enregistrer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    className="px-6 py-2.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-all duration-150"
-                  >
-                    Annuler
-                  </button>
-                </div>
-              )}
-            </form>
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-xs text-blue-700 dark:text-blue-400">
+                <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+                </svg>
+                Pour modifier vos informations personnelles, contactez l'administrateur.
+              </p>
+            </div>
           </div>
 
           {/* Sécurité */}
