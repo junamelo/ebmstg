@@ -13,6 +13,7 @@ const IconUsers       = () => <i className="ti ti-users-group"      style={{ fon
 const IconForfaits    = () => <i className="ti ti-package"          style={{ fontSize: 18 }} />
 const IconServices    = () => <i className="ti ti-settings"         style={{ fontSize: 18 }} />
 const IconProfil      = () => <i className="ti ti-user-circle"      style={{ fontSize: 18 }} />
+const IconLignes      = () => <i className="ti ti-phone"            style={{ fontSize: 18 }} />
 const IconChevron     = ({ collapsed }) => (
   <i 
     className={`ti ti-chevron-${collapsed ? 'right' : 'left'}`} 
@@ -33,6 +34,7 @@ const menusEmploye = [
 const menusPayeur = [
   { path: '/dashboard',             label: 'Tableau de bord',     icon: <IconDashboard /> },
   { path: '/factures',              label: 'Factures',            icon: <IconFactures /> },
+  { path: '/lignes',                label: 'Mes lignes',          icon: <IconLignes /> },
   { path: '/simulation',            label: 'Simulation',          icon: <IconSimulation /> },
   { path: '/simulation/historique', label: 'Historique',          icon: <IconHistorique /> },
   { path: '/profil',                label: 'Mon profil',          icon: <IconProfil /> },
@@ -50,6 +52,7 @@ const menusAdmin = [
 
 const menusAgentFacturation = [
   { path: '/agent/dashboard',                label: 'Dashboard',           icon: <IconDashboard /> },
+  // { path: '/agent/comptes-clients',          label: 'Comptes Clients',     icon: <IconUsers /> },
   { path: '/agent/services',                 label: 'Gestion Services',    icon: <IconServices /> },
   { path: '/agent/forfaits',                 label: 'Gestion Forfaits',    icon: <IconForfaits /> },
   { path: '/agent/publication',              label: 'Publication PDF',     icon: <IconPublication /> },
@@ -60,6 +63,7 @@ const menusAgentFacturation = [
 const menusChefFacturation = [
   { path: '/chef/dashboard',                label: 'Dashboard',           icon: <IconDashboard /> },
   { path: '/chef/agents',                   label: 'Gestion Agents',      icon: <IconAgents /> },
+  // { path: '/chef/comptes-clients',          label: 'Comptes Clients',     icon: <IconUsers /> },
   { path: '/chef/services',                 label: 'Gestion Services',    icon: <IconServices /> },
   { path: '/chef/forfaits',                 label: 'Gestion Forfaits',    icon: <IconForfaits /> },
   { path: '/chef/publication',              label: 'Publication PDF',     icon: <IconPublication /> },

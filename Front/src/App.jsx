@@ -13,6 +13,7 @@ import Factures from './pages/factures/Factures'
 import Simulation from './pages/simulation/Simulation'
 import HistoriqueSimulations from './pages/simulation/HistoriqueSimulations'
 import MonProfil from './pages/profile/MonProfil'
+import MesLignes from './pages/payeur/MesLignes'
 
 // Pages admin (Super Admin uniquement)
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -23,6 +24,7 @@ import HistoriquePublications from './pages/agent/HistoriquePublications'
 import GestionForfaits from './pages/agent/GestionForfaits'
 import GestionServices from './pages/agent/GestionServices'
 import GestionAgents from './pages/agent/GestionAgents'
+import GestionComptesClients from './pages/agent/GestionComptesClients'
 
 export default function App() {
   return (
@@ -45,6 +47,7 @@ export default function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="factures" element={<Factures />} />
+            <Route path="lignes" element={<MesLignes />} />
             <Route path="simulation" element={<Simulation />} />
             <Route path="simulation/historique" element={<HistoriqueSimulations />} />
             <Route path="profil" element={<MonProfil />} />
@@ -62,6 +65,7 @@ export default function App() {
             <Route index element={<Navigate to="/agent/dashboard" replace />} />
             <Route path="dashboard" element={<AgentDashboard />} />
             <Route path="agents" element={<GestionAgents />} />
+            <Route path="comptes-clients" element={<GestionComptesClients />} />
             <Route path="publication" element={<PublicationPdf />} />
             <Route path="publication/historique" element={<HistoriquePublications />} />
             <Route path="services" element={<GestionForfaits />} />
@@ -81,6 +85,7 @@ export default function App() {
             <Route index element={<Navigate to="/chef/dashboard" replace />} />
             <Route path="dashboard" element={<AgentDashboard />} />
             <Route path="agents" element={<GestionAgents />} />
+            {/* <Route path="comptes-clients" element={<GestionComptesClients />} /> */}
             <Route path="publication" element={<PublicationPdf />} />
             <Route path="publication/historique" element={<HistoriquePublications />} />
             <Route path="services" element={<GestionForfaits />} />
