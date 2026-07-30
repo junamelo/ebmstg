@@ -22,6 +22,7 @@ const IconChevron     = ({ collapsed }) => (
 )
 
 const IconAgents     = () => <i className="ti ti-user-check"       style={{ fontSize: 18 }} />
+const IconContrats   = () => <i className="ti ti-file-text"        style={{ fontSize: 18 }} />
 
 const menusEmploye = [
   { path: '/dashboard',             label: 'Tableau de bord',     icon: <IconDashboard /> },
@@ -43,6 +44,7 @@ const menusPayeur = [
 const menusAdmin = [
   { path: '/admin/dashboard', label: 'Tableau de bord', icon: <IconDashboard /> },
   { path: '/admin/comptes',   label: 'Gestion comptes', icon: <IconComptes /> },
+  { path: '/admin/contrats',  label: 'Gestion Contrats', icon: <IconContrats /> },
   { path: '/admin/services',  label: 'Gestion Services', icon: <IconServices /> },
   { path: '/admin/forfaits',  label: 'Gestion Forfaits', icon: <IconForfaits /> },
   { path: '/admin/publication', label: 'Publication PDF', icon: <IconPublication /> },
@@ -52,6 +54,7 @@ const menusAdmin = [
 
 const menusAgentFacturation = [
   { path: '/agent/dashboard',                label: 'Dashboard',           icon: <IconDashboard /> },
+  { path: '/agent/contrats',                 label: 'Gestion Contrats',    icon: <IconContrats /> },
   { path: '/agent/comptes-clients',          label: 'Comptes Clients',     icon: <IconUsers /> },
   { path: '/agent/services',                 label: 'Gestion Services',    icon: <IconServices /> },
   { path: '/agent/forfaits',                 label: 'Gestion Forfaits',    icon: <IconForfaits /> },
@@ -63,6 +66,7 @@ const menusAgentFacturation = [
 const menusChefFacturation = [
   { path: '/chef/dashboard',                label: 'Dashboard',           icon: <IconDashboard /> },
   { path: '/chef/agents',                   label: 'Gestion Agents',      icon: <IconAgents /> },
+  { path: '/chef/contrats',                 label: 'Gestion Contrats',    icon: <IconContrats /> },
   { path: '/chef/comptes-clients',          label: 'Comptes Clients',     icon: <IconUsers /> },
   { path: '/chef/services',                 label: 'Gestion Services',    icon: <IconServices /> },
   { path: '/chef/forfaits',                 label: 'Gestion Forfaits',    icon: <IconForfaits /> },

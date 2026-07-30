@@ -25,6 +25,8 @@ import GestionForfaits from './pages/agent/GestionForfaits'
 import GestionServices from './pages/agent/GestionServices'
 import GestionAgents from './pages/agent/GestionAgents'
 import GestionComptesClients from './pages/agent/GestionComptesClients'
+import GestionContrats from './pages/agent/GestionContrats'
+import DetailContrat from './pages/agent/DetailContrat'
 
 export default function App() {
   return (
@@ -66,6 +68,8 @@ export default function App() {
             <Route path="dashboard" element={<AgentDashboard />} />
             <Route path="agents" element={<GestionAgents />} />
             <Route path="comptes-clients" element={<GestionComptesClients />} />
+            <Route path="contrats" element={<GestionContrats />} />
+            <Route path="contrats/:id" element={<DetailContrat />} />
             <Route path="publication" element={<PublicationPdf />} />
             <Route path="publication/historique" element={<HistoriquePublications />} />
             <Route path="services" element={<GestionForfaits />} />
@@ -86,6 +90,8 @@ export default function App() {
             <Route path="dashboard" element={<AgentDashboard />} />
             <Route path="agents" element={<GestionAgents />} />
             <Route path="comptes-clients" element={<GestionComptesClients />} />
+            <Route path="contrats" element={<GestionContrats />} />
+            <Route path="contrats/:id" element={<DetailContrat />} />
             <Route path="publication" element={<PublicationPdf />} />
             <Route path="publication/historique" element={<HistoriquePublications />} />
             <Route path="services" element={<GestionForfaits />} />
@@ -105,6 +111,8 @@ export default function App() {
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="comptes" element={<GestionComptes />} />
+            <Route path="contrats" element={<GestionContrats />} />
+            <Route path="contrats/:id" element={<DetailContrat />} />
             <Route path="services" element={<GestionForfaits />} />
             <Route path="forfaits" element={<GestionServices />} />
             <Route path="publication" element={<PublicationPdf />} />

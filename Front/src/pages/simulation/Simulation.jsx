@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getTarifsActifs, simulerFacturation } from '../../services/simulationService'
 import { mockGetServices } from '../../services/mockApi'
+import { calculerMontantData, calculerMontantVoixMinutes, calculerMontantSms } from '../../services/tarifsService'
 import illustrationSimulation from '../../assets/illustration-simulation.png'
 import './Simulation.css'
 
@@ -118,15 +119,10 @@ export default function Simulation() {
 
     setChargement(true)
     try {
-      if (!tarifs) {
-        setErreur('Tarifs non disponibles.')
-        return
-      }
-
-      // Calcul selon les tarifs unitaires
-      const montantAppels = minutes * tarifs.prixParMinute
-      const montantSms = sms * tarifs.prixParSms
-      const montantData = dataGo * tarifs.prixParGo
+      // Calcul selon les PALIERS de tarification
+      const montantAppels = calculerMontantVoixMinutes(minutes)
+      const montantSms = calculerMontantSms(sms)
+      const montantData = calculerMontantData(dataGo)
 
       setResultat({
         montantAppels,
@@ -375,27 +371,6 @@ export default function Simulation() {
 
               {erreur && <div className="alert alert-danger">{erreur}</div>}
 
-              {/* Affichage des tarifs unitaires */}
-              {tarifs && (
-                <div className="tarifs-info">
-                  <h3>Tarifs unitaires en vigueur</h3>
-                  <div className="tarifs-grid">
-                    <div className="tarif-item">
-                      <span>Appel</span>
-                      <strong>{tarifs.prixParMinute.toLocaleString('fr-FR')} FCFA/min</strong>
-                    </div>
-                    <div className="tarif-item">
-                      <span>SMS</span>
-                      <strong>{tarifs.prixParSms.toLocaleString('fr-FR')} FCFA/SMS</strong>
-                    </div>
-                    <div className="tarif-item">
-                      <span>Data</span>
-                      <strong>{tarifs.prixParGo.toLocaleString('fr-FR')} FCFA/Go</strong>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <form onSubmit={handleSubmitOpen}>
                 {/* Champs de saisie pour la consommation prévue */}
                 <div className="form-group">
@@ -409,9 +384,9 @@ export default function Simulation() {
                     value={form.minutesAppel}
                     onChange={(e) => setForm({ ...form, minutesAppel: e.target.value })}
                   />
-                  {tarifs && form.minutesAppel && (
+                  {form.minutesAppel && (
                     <span className="form-hint">
-                      ≈ {(parseFloat(form.minutesAppel) * tarifs.prixParMinute).toLocaleString('fr-FR')} FCFA
+                      ≈ {calculerMontantVoixMinutes(parseFloat(form.minutesAppel)).toLocaleString('fr-FR')} FCFA
                     </span>
                   )}
                 </div>
@@ -427,9 +402,9 @@ export default function Simulation() {
                     value={form.nombreSms}
                     onChange={(e) => setForm({ ...form, nombreSms: e.target.value })}
                   />
-                  {tarifs && form.nombreSms && (
+                  {form.nombreSms && (
                     <span className="form-hint">
-                      ≈ {(parseFloat(form.nombreSms) * tarifs.prixParSms).toLocaleString('fr-FR')} FCFA
+                      ≈ {calculerMontantSms(parseFloat(form.nombreSms)).toLocaleString('fr-FR')} FCFA
                     </span>
                   )}
                 </div>
@@ -445,9 +420,9 @@ export default function Simulation() {
                     value={form.volumeDataGo}
                     onChange={(e) => setForm({ ...form, volumeDataGo: e.target.value })}
                   />
-                  {tarifs && form.volumeDataGo && (
+                  {form.volumeDataGo && (
                     <span className="form-hint">
-                      ≈ {(parseFloat(form.volumeDataGo) * tarifs.prixParGo).toLocaleString('fr-FR')} FCFA
+                      ≈ {calculerMontantData(parseFloat(form.volumeDataGo)).toLocaleString('fr-FR')} FCFA
                     </span>
                   )}
                 </div>
@@ -535,14 +510,14 @@ export default function Simulation() {
                 )}
 
                 {/* Aperçu du total en temps réel pour OPEN */}
-                {(form.minutesAppel || form.nombreSms || form.volumeDataGo || optionsChoisies.length > 0) && tarifs && (
+                {(form.minutesAppel || form.nombreSms || form.volumeDataGo || optionsChoisies.length > 0) && (
                   <div className="apercu-total">
                     <span>Montant estimé</span>
                     <strong>
                       {(
-                        (parseFloat(form.minutesAppel) || 0) * tarifs.prixParMinute +
-                        (parseFloat(form.nombreSms) || 0) * tarifs.prixParSms +
-                        (parseFloat(form.volumeDataGo) || 0) * tarifs.prixParGo +
+                        calculerMontantVoixMinutes(parseFloat(form.minutesAppel) || 0) +
+                        calculerMontantSms(parseFloat(form.nombreSms) || 0) +
+                        calculerMontantData(parseFloat(form.volumeDataGo) || 0) +
                         optionsChoisies.reduce((acc, o) => acc + o.tarif, 0)
                       ).toLocaleString('fr-FR')} FCFA
                     </strong>

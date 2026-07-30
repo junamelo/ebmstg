@@ -40,8 +40,15 @@ export function AuthProvider({ children }) {
   const isAgentFacturation = () => user?.role === 'AGENT_FACTURATION'
   const isChefFacturation = () => user?.role === 'CHEF_FACTURATION'
   
+  // Helpers pour type de payeur
+  const isPayeurEntreprise = () => user?.role === 'PAYEUR' && user?.typePayeur === 'ENTREPRISE'
+  const isPayeurParticulier = () => user?.role === 'PAYEUR' && user?.typePayeur === 'PARTICULIER'
+  
   // Permissions
   const canCreateAgents = () => isAdmin() || (isChefFacturation() && user?.custom_permissions?.includes('accounts.create_agent'))
+  const canManageAccess = () => isAdmin() || isAgentFacturation() || isChefFacturation()
+  const canBlockAccounts = () => isAdmin() || isChefFacturation()
+  const canResetPasswords = () => isAdmin() || isAgentFacturation() || isChefFacturation()
 
   return (
     <AuthContext.Provider value={{
@@ -55,7 +62,12 @@ export function AuthProvider({ children }) {
       isEmploye,
       isAgentFacturation,
       isChefFacturation,
-      canCreateAgents
+      isPayeurEntreprise,
+      isPayeurParticulier,
+      canCreateAgents,
+      canManageAccess,
+      canBlockAccounts,
+      canResetPasswords
     }}>
       {children}
     </AuthContext.Provider>
