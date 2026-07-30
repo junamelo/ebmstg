@@ -85,7 +85,7 @@ export default function App() {
             <Route index element={<Navigate to="/chef/dashboard" replace />} />
             <Route path="dashboard" element={<AgentDashboard />} />
             <Route path="agents" element={<GestionAgents />} />
-            {/* <Route path="comptes-clients" element={<GestionComptesClients />} /> */}
+            <Route path="comptes-clients" element={<GestionComptesClients />} />
             <Route path="publication" element={<PublicationPdf />} />
             <Route path="publication/historique" element={<HistoriquePublications />} />
             <Route path="services" element={<GestionForfaits />} />

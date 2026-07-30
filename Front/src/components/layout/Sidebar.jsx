@@ -52,7 +52,7 @@ const menusAdmin = [
 
 const menusAgentFacturation = [
   { path: '/agent/dashboard',                label: 'Dashboard',           icon: <IconDashboard /> },
-  // { path: '/agent/comptes-clients',          label: 'Comptes Clients',     icon: <IconUsers /> },
+  { path: '/agent/comptes-clients',          label: 'Comptes Clients',     icon: <IconUsers /> },
   { path: '/agent/services',                 label: 'Gestion Services',    icon: <IconServices /> },
   { path: '/agent/forfaits',                 label: 'Gestion Forfaits',    icon: <IconForfaits /> },
   { path: '/agent/publication',              label: 'Publication PDF',     icon: <IconPublication /> },
@@ -63,7 +63,7 @@ const menusAgentFacturation = [
 const menusChefFacturation = [
   { path: '/chef/dashboard',                label: 'Dashboard',           icon: <IconDashboard /> },
   { path: '/chef/agents',                   label: 'Gestion Agents',      icon: <IconAgents /> },
-  // { path: '/chef/comptes-clients',          label: 'Comptes Clients',     icon: <IconUsers /> },
+  { path: '/chef/comptes-clients',          label: 'Comptes Clients',     icon: <IconUsers /> },
   { path: '/chef/services',                 label: 'Gestion Services',    icon: <IconServices /> },
   { path: '/chef/forfaits',                 label: 'Gestion Forfaits',    icon: <IconForfaits /> },
   { path: '/chef/publication',              label: 'Publication PDF',     icon: <IconPublication /> },
