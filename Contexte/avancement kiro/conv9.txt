@@ -1,0 +1,1142 @@
+La suppression des mocks est confirmée, mais la phase 1 n’est pas validée car `python manage.py test` échoue : 78 tests, 3 échecs et 3 erreurs.
+
+Corrige uniquement la suite de tests et les incohérences révélées, sans réintroduire l’ancien workflow de publication.
+
+1. Back/test_matching_logic.py et Back/test_stats_data.py :
+
+   - ces fichiers ne doivent pas être découverts comme tests Django s’ils sont des scripts manuels ;
+
+   - les déplacer vers un dossier scripts/ ou les renommer sans préfixe test_;
+
+   - ne pas exécuter de print au moment de l’import ;
+
+   - ne pas supprimer leur logique utile sans l’intégrer à de vrais tests si elle représente une règle métier.
+
+2. Mettre à jour billing/tests.py selon le workflow final :
+
+   - test_create_publication doit vérifier que POST /billing/publications/ est refusé en 405 ;
+
+   - test_publish_invoices_masse doit utiliser POST /billing/invoices/publier_masse/ ;
+
+   - ne rétablis ni PublicationViewSet.publish ni la création directe de publication.
+
+3. Corriger les tests payeur selon la spécification :
+
+   - une facture non PUBLIEE ne doit pas être visible par un payeur ;
+
+   - décider à partir de la matrice d’accès si un payeur doit pouvoir lire sa propre entreprise :
+
+     * si oui, corriger la permission/queryset ;
+
+     * si non, corriger le test pour attendre 403.
+
+   Ne fais pas ce choix arbitrairement : lis d’abord SPECIFICATION_REGLES_METIER.md et MATRICE_ACCES_ET_TRANSITIONS.md.
+
+4. Exécuter et rapporter exactement :
+
+   - python manage.py check
+
+   - python manage.py test
+
+   - npm run build
+
+La phase 1 ne pourra être déclarée terminée que lorsque la commande `python manage.py test` complète est verte.
+
+Kiro
+Je vais corriger les tests en suivant vos instructions. Commençons par identifier les problèmes :
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py test --verbosity=2
+cion- Use build┌──────────────────────────────────────┐prove chunk│📦 c++                                │options/#ou│📦 caffeinate                         │- Adjust ch│📦 cal                                │d.chunkSize│📦 cap                                │✓ built in │📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘ion- Use build┌──────────────────────────────────────┐prove chunk│📦 c++                                │options/#ou│📦 caffeinate                         │- Adjust ch│📦 cal                                │d.chunkSize│📦 cap                                │✓ built in │📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 202prove chunking: https://rollupjs.org/configuration-options/#ou┌──────────────────────────────────────┐- Adjust ch│📦 c++                                │d.chunkSize│📦 caffeinate                         │✓ built in │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │c:\Users\Be└──────────────────────────────────────┘prove chunking: https://rollupjs.org/configuration-options/#ou┌──────────────────────────────────────┐- Adjust ch│📦 c++                                │d.chunkSize│📦 caffeinate                         │✓ built in │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │c:\Users\Be└──────────────────────────────────────┘prove chunking: https://rollupjs.org/configuration-options/#ou┌──────────────────────────────────────┐- Adjust ch│📦 c++                                │d.chunkSize│📦 caffeinate                         │✓ built in │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │c:\Users\Be└──────────────────────────────────────┘prove chunking: https://rollupjs.org/configuration-options/#ou┌──────────────────────────────────────┐- Adjust ch│📦 c++                                │d.chunkSize│📦 caffeinate                         │✓ built in │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │c:\Users\Be└──────────────────────────────────────┘prove chunking: https://rollupjs.org/configuration-options/#ou┌──────────────────────────────────────┐- Adjust ch│📦 c++                                │d.chunkSize│📦 caffeinate                         │✓ built in │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │c:\Users\Be└──────────────────────────────────────┘ion- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.✓ built in 10.45sPS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Bcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Bacd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Baccd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Backcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back"cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ;cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; pcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; pycd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --vecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --vercd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbocd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verboscd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosicd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbositcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbositycd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=2
+🧪 TEST DE LA NOUVELLE LOGIQUE DE MATCHING
+
+======================================================================
+année GLSI-A BANLEPO Mintre Benoit 2026\Front> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=2🧪 TEST DE LA NOUVELLE LOGIQUE DE MATCHING======================================================================❌ AUCUN MATCH | MSISDN: 99475555
+
+❌ AUCUN MATCH | MSISDN: 99478787
+
+❌ AUCUN MATCH | MSISDN: 79300739
+
+❌ AUCUN MATCH | MSISDN: 79603054
+
+======================================================================
+
+💡 Si tous les matchs sont CORRECTS, le système est prêt !
+🔍 VÉRIFICATION DE L'ACCÈS AUX DONNÉES POUR LES STATS
+
+======================================================================
+1. DONNÉES DE BASE
+----------------------------------------------------------------------
+✅ Entreprises      : 9
+✅ Lignes           : 23
+✅ Factures         : 29
+✅ Publications     : 14
+
+2. AGRÉGATIONS
+----------------------------------------------------------------------
+✅ Factures par statut : {'VALIDEE': 29}
+✅ Montant total       : 224,200.00 FCFA
+
+3. TOP 5 ENTREPRISES
+----------------------------------------------------------------------
+✅ WACEM SA                       | A0000106   |       53,100 FCFA | 10 factures
+✅ GAMMA TECHNOLOGIES             | C26TEST003 |       41,300 FCFA |  1 factures
+✅ BETA CORPORATION               | C26TEST002 |       35,400 FCFA |  1 factures
+✅ ENTREPRISE ALPHA SARL          | C26TEST001 |       29,500 FCFA |  1 factures
+✅ CAURIS MANAGEMENT              | A0000011   |       23,600 FCFA |  5 factures
+
+4. UTILISATEURS PAR RÔLE
+----------------------------------------------------------------------
+⚠️  ADMIN                : Aucun utilisateur
+⚠️  CHEF_FACTURATION     : Aucun utilisateur
+✅ AGENT_FACTURATION    : 1 utilisateur(s)
+✅ PAYEUR               : 1 utilisateur(s)
+✅ EMPLOYE              : 1 utilisateur(s)
+
+5. PUBLICATIONS PAR AGENT
+----------------------------------------------------------------------
+✅ agent@moov.tg                  : 14 publication(s)
+
+======================================================================
+RÉSUMÉ
+======================================================================
+✅ La base de données est bien liée et contient des données
+✅ Les endpoints de stats peuvent fonctionner
+
+🎯 PROCHAINE ÉTAPE : Tester les endpoints via le serveur Django
+   1. Démarrer le serveur : python manage.py runserver
+   2. Tester avec curl ou Postman
+======================================================================
+Found 76 test(s).
+Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, django_filters, drf_spectacular, messages, rest_framework, rest_framework_simplejwt, staticfiles
+  Apply all migrations: accounts, admin, auth, billing, contenttypes, sessions, token_blacklist
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying accounts.0001_initial... OK
+  Applying accounts.0002_user_created_by_user_custom_permissions_and_more... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying billing.0001_initial... OK
+  Applying billing.0002_alter_line_cycle... OK
+  Applying billing.0003_package_service_invoice_historiquefacturation_and_more... OK
+  Applying billing.0004_invoice_line... OK
+  Applying sessions.0001_initial... OK
+  Applying token_blacklist.0001_initial... OK
+  Applying token_blacklist.0002_outstandingtoken_jti_hex... OK
+  Applying token_blacklist.0003_auto_20171017_2007... OK
+  Applying token_blacklist.0004_auto_20171017_2013... OK
+  Applying token_blacklist.0005_remove_outstandingtoken_jti... OK
+  Applying token_blacklist.0006_auto_20171017_2113... OK
+  Applying token_blacklist.0007_auto_20171017_2214... OK
+  Applying token_blacklist.0008_migrate_to_bigautofield... OK
+  Applying token_blacklist.0010_fix_migrate_to_bigautofield... OK
+  Applying token_blacklist.0011_linearizes_history... OK
+  Applying token_blacklist.0012_alter_outstandingtoken_user... OK
+  Applying token_blacklist.0013_alter_blacklistedtoken_options_and_more... OK
+System check identified no issues (0 silenced).
+test_change_password_mismatch (accounts.tests.AuthenticationTests.test_change_password_mismatch)
+Test changement avec confirmation différente ... WARNING 2026-08-02 01:02:46,844 log Bad Request: /api/auth/change-password/
+ok
+test_change_password_success (accounts.tests.AuthenticationTests.test_change_password_success)
+Test changement de mot de passe réussi ... ok
+test_change_password_wrong_old (accounts.tests.AuthenticationTests.test_change_password_wrong_old)
+Test changement avec mauvais ancien mot de passe ... WARNING 2026-08-02 01:02:53,875 log Bad Request: /api/auth/change-password/
+ok
+test_login_inactive_user (accounts.tests.AuthenticationTests.test_login_inactive_user)
+Test login avec utilisateur inactif ... WARNING 2026-08-02 01:02:55,638 log Forbidden: /api/auth/login/
+ok
+test_login_invalid_email (accounts.tests.AuthenticationTests.test_login_invalid_email)
+Test login avec email inexistant ... WARNING 2026-08-02 01:02:57,389 log Unauthorized: /api/auth/login/
+ok
+test_login_invalid_password (accounts.tests.AuthenticationTests.test_login_invalid_password)
+Test login avec mauvais mot de passe ... WARNING 2026-08-02 01:03:00,027 log Unauthorized: /api/auth/login/
+ok
+test_login_success (accounts.tests.AuthenticationTests.test_login_success)
+Test login avec credentials valides ... ok
+test_profile_authenticated (accounts.tests.AuthenticationTests.test_profile_authenticated)
+Test récupération du profil connecté ... ok
+test_profile_unauthenticated (accounts.tests.AuthenticationTests.test_profile_unauthenticated)
+Test profil sans authentification ... WARNING 2026-08-02 01:03:06,150 log Unauthorized: /api/auth/profile/
+ok
+test_admin_has_all_permissions (accounts.tests.PermissionsTests.test_admin_has_all_permissions)
+Test admin a toutes les permissions ... ok
+test_agent_limited_permissions (accounts.tests.PermissionsTests.test_agent_limited_permissions)
+Test agent a permissions limitées ... ok
+test_can_manage_user (accounts.tests.PermissionsTests.test_can_manage_user)
+Test gestion d'utilisateurs ... ok
+test_chef_has_specific_permissions (accounts.tests.PermissionsTests.test_chef_has_specific_permissions)
+Test chef a ses permissions spécifiques ... ok
+test_change_status (accounts.tests.UserManagementTests.test_change_status)
+Test changement de statut d'utilisateur ... ok
+test_create_admin_as_chef_forbidden (accounts.tests.UserManagementTests.test_create_admin_as_chef_forbidden)
+Test chef ne peut pas créer admin ... WARNING 2026-08-02 01:03:22,827 log Bad Request: /api/auth/users/
+ok
+test_create_user_as_admin (accounts.tests.UserManagementTests.test_create_user_as_admin)
+Test création d'utilisateur par admin ... ok
+test_create_user_as_chef (accounts.tests.UserManagementTests.test_create_user_as_chef)
+Test création d'agent par chef ... ok
+test_list_users_as_admin (accounts.tests.UserManagementTests.test_list_users_as_admin)
+Test liste des utilisateurs en tant qu'admin ... ok
+test_list_users_as_chef (accounts.tests.UserManagementTests.test_list_users_as_chef)
+Test liste en tant que chef (voit seulement ses agents) ... ok
+test_reset_password (accounts.tests.UserManagementTests.test_reset_password)
+Test réinitialisation de mot de passe ... ok
+test_01_facture_validee_avec_pdf (billing.test_publication.PublicationWorkflowTests.test_01_facture_validee_avec_pdf)
+Test : Facture VALIDEE avec PDF peut être publiée ... INFO 2026-08-02 01:03:42,957 middleware Sensitive action: {'timestamp': '2026-08-02T00:03:42.957298+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 200, 'duration': '0.006s', 'ip': '127.0.0.1', 'user_agent': ''}
+ok
+test_02_facture_sans_pdf_refusee (billing.test_publication.PublicationWorkflowTests.test_02_facture_sans_pdf_refusee)
+Test : Facture VALIDEE sans PDF ne peut pas être publiée ... WARNING 2026-08-02 01:03:46,480 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:03:46.480596+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:03:46,481 log Bad Request: /api/billing/invoices/publier_masse/
+ok
+test_03_facture_mauvais_statut_refusee (billing.test_publication.PublicationWorkflowTests.test_03_facture_mauvais_statut_refusee)
+Test : Facture EN_COURS ne peut pas être publiée ... WARNING 2026-08-02 01:03:49,949 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:03:49.949217+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:03:49,949 log Bad Request: /api/billing/invoices/publier_masse/
+ok
+test_04_facture_deja_publiee_refusee (billing.test_publication.PublicationWorkflowTests.test_04_facture_deja_publiee_refusee)
+Test : Facture déjà PUBLIEE ne peut pas être republiée ... WARNING 2026-08-02 01:03:53,444 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:03:53.444645+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:03:53,445 log Bad Request: /api/billing/invoices/publier_masse/
+ok
+test_05_payeur_voit_seulement_publiee (billing.test_publication.PublicationWorkflowTests.test_05_payeur_voit_seulement_publiee)
+Test : Payeur voit uniquement ses factures PUBLIEE ... ok
+test_06_employe_voit_sa_facture_publiee (billing.test_publication.PublicationWorkflowTests.test_06_employe_voit_sa_facture_publiee)
+Test : Employé voit sa facture PUBLIEE ... ok
+test_07_employe_ne_voit_pas_autre_facture (billing.test_publication.PublicationWorkflowTests.test_07_employe_ne_voit_pas_autre_facture)
+Test : Employé ne voit pas la facture d'un autre employé ... ok
+test_08_publication_en_masse (billing.test_publication.PublicationWorkflowTests.test_08_publication_en_masse)
+Test : Publication en masse de plusieurs factures ... INFO 2026-08-02 01:04:07,489 middleware Sensitive action: {'timestamp': '2026-08-02T00:04:07.489849+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 200, 'duration': '0.007s', 'ip': '127.0.0.1', 'user_agent': ''}
+ok
+test_09_liste_factures_a_publier (billing.test_publication.PublicationWorkflowTests.test_09_liste_factures_a_publier)
+Test : Endpoint factures_a_publier retourne uniquement VALIDEE ... ok
+test_10_cycle_periode_differents_refuses (billing.test_publication.PublicationWorkflowTests.test_10_cycle_periode_differents_refuses)
+Test : Publication refusée si cycles ou périodes différents ... WARNING 2026-08-02 01:04:14,461 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:04:14.461804+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:04:14,462 log Bad Request: /api/billing/invoices/publier_masse/
+WARNING 2026-08-02 01:04:14,469 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:04:14.469050+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.003s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:04:14,469 log Bad Request: /api/billing/invoices/publier_masse/
+ok
+test_11_creation_directe_publication_refusee (billing.test_publication.PublicationWorkflowTests.test_11_creation_directe_publication_refusee)
+Test : Création directe de Publication est refusée ... WARNING 2026-08-02 01:04:17,935 log Method Not Allowed: /api/billing/publications/
+ok
+test_12_upload_pdf_cree_publication_validee (billing.test_publication.PublicationWorkflowTests.test_12_upload_pdf_cree_publication_validee)
+Test : Upload PDF réel crée Publication avec statut VALIDEE, pas PUBLIEE ... INFO 2026-08-02 01:04:21,422 middleware Sensitive action: {'timestamp': '2026-08-02T00:04:21.422568+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/upload_bulk_pdf/', 'status_code': 200, 'duration': '0.010s', 'ip': '127.0.0.1', 'user_agent': ''}
+ok
+test_13_upload_pdf_ne_cree_pas_publication_publiee (billing.test_publication.PublicationWorkflowTests.test_13_upload_pdf_ne_cree_pas_publication_publiee)
+Test : Upload PDF ne doit jamais créer de Publication PUBLIEE ... INFO 2026-08-02 01:04:24,937 middleware Sensitive action: {'timestamp': '2026-08-02T00:04:24.937673+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/upload_bulk_pdf/', 'status_code': 200, 'duration': '0.011s', 'ip': '127.0.0.1', 'user_agent': ''}
+ok
+test_calculer_data_dans_forfait (billing.tests.CalculTarificationTests.test_calculer_data_dans_forfait)
+Test calcul DATA dans le forfait ... ok
+test_calculer_data_hors_paliers (billing.tests.CalculTarificationTests.test_calculer_data_hors_paliers)
+Test calcul DATA hors paliers (> 275 Go) ... ok
+test_calculer_data_palier_1go (billing.tests.CalculTarificationTests.test_calculer_data_palier_1go)
+Test calcul DATA palier 1 Go ... ok
+test_calculer_data_palier_5go (billing.tests.CalculTarificationTests.test_calculer_data_palier_5go)
+Test calcul DATA palier 5 Go ... ok
+test_calculer_facture_ligne_complete (billing.tests.CalculTarificationTests.test_calculer_facture_ligne_complete)
+Test calcul facture ligne complète ... ok
+test_calculer_sms_dans_forfait (billing.tests.CalculTarificationTests.test_calculer_sms_dans_forfait)
+Test calcul SMS dans le forfait ... ok
+test_calculer_sms_hors_forfait (billing.tests.CalculTarificationTests.test_calculer_sms_hors_forfait)
+Test calcul SMS hors forfait ... ok
+test_calculer_tva (billing.tests.CalculTarificationTests.test_calculer_tva)
+Test calcul TVA 18% ... ok
+test_calculer_voix_dans_forfait (billing.tests.CalculTarificationTests.test_calculer_voix_dans_forfait)
+Test calcul VOIX dans le forfait ... ok
+test_calculer_voix_hors_forfait (billing.tests.CalculTarificationTests.test_calculer_voix_hors_forfait)
+Test calcul VOIX hors forfait ... ok
+test_change_company_statut (billing.tests.CompanyTests.test_change_company_statut)
+Test changement de statut d'entreprise ... ok
+test_company_stats (billing.tests.CompanyTests.test_company_stats)
+Test statistiques d'un contrat ... ok
+test_create_company_as_agent (billing.tests.CompanyTests.test_create_company_as_agent)
+Test création d'entreprise par agent ... ok
+test_create_company_with_lines (billing.tests.CompanyTests.test_create_company_with_lines)
+Test création d'entreprise avec lignes ... ok
+test_list_companies_as_agent (billing.tests.CompanyTests.test_list_companies_as_agent)
+Test liste des entreprises en tant qu'agent ... ok
+test_list_companies_as_payeur (billing.tests.CompanyTests.test_list_companies_as_payeur)
+Test payeur voit seulement ses entreprises ... WARNING 2026-08-02 01:04:45,934 log Forbidden: /api/billing/companies/
+FAIL
+test_annuler_invoice (billing.tests.InvoiceTests.test_annuler_invoice)
+Test annulation d'une facture ... INFO 2026-08-02 01:04:48,564 middleware Sensitive action: {'timestamp': '2026-08-02T00:04:48.564112+00:00', 'user': 'admin@test.com (SUPER_ADMIN)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/8ca74827-7a5c-49d6-b655-199b3e6216e4/annuler/', 'status_code': 200, 'duration': '0.008s', 'ip': '127.0.0.1', 'user_agent': ''}
+ok
+test_calculate_line_invoice (billing.tests.InvoiceTests.test_calculate_line_invoice)
+Test calcul facture d'une ligne ... INFO 2026-08-02 01:04:51,188 middleware Sensitive action: {'timestamp': '2026-08-02T00:04:51.188158+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 2, 'method': 'POST', 'path': '/api/billing/invoices/calculate_line/', 'status_code': 200, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+ok
+test_generate_invoices (billing.tests.InvoiceTests.test_generate_invoices)
+Test génération de factures en masse ... INFO 2026-08-02 01:04:53,822 middleware Sensitive action: {'timestamp': '2026-08-02T00:04:53.822375+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 2, 'method': 'POST', 'path': '/api/billing/invoices/generate/', 'status_code': 200, 'duration': '0.006s', 'ip': '127.0.0.1', 'user_agent': ''}
+ok
+test_invoice_stats (billing.tests.InvoiceTests.test_invoice_stats)
+Test statistiques des factures ... ok
+test_list_invoices_as_agent (billing.tests.InvoiceTests.test_list_invoices_as_agent)
+Test liste des factures en tant qu'agent ... ok
+test_list_invoices_as_payeur (billing.tests.InvoiceTests.test_list_invoices_as_payeur)
+Test payeur voit seulement ses factures ... FAIL
+test_valider_invoice (billing.tests.InvoiceTests.test_valider_invoice)
+Test validation d'une facture ... INFO 2026-08-02 01:05:04,359 middleware Sensitive action: {'timestamp': '2026-08-02T00:05:04.359176+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 2, 'method': 'POST', 'path': '/api/billing/invoices/e72091e6-1dcd-4e82-ab4a-b4d07679b911/valider/', 'status_code': 200, 'duration': '0.008s', 'ip': '127.0.0.1', 'user_agent': ''}
+ok
+test_assigner_employe (billing.tests.LineTests.test_assigner_employe)
+Test assignation d'un employé à une ligne ... ok
+test_change_cycle (billing.tests.LineTests.test_change_cycle)
+Test changement de cycle de facturation ... ok
+test_change_line_statut (billing.tests.LineTests.test_change_line_statut)
+Test changement de statut d'une ligne ... ok
+test_create_line_as_agent (billing.tests.LineTests.test_create_line_as_agent)
+Test création de ligne par agent ... ok
+test_list_lines_as_agent (billing.tests.LineTests.test_list_lines_as_agent)
+Test liste des lignes en tant qu'agent ... ok
+test_list_lines_as_employe (billing.tests.LineTests.test_list_lines_as_employe)
+Test employé voit seulement sa ligne ... ok
+test_retirer_employe (billing.tests.LineTests.test_retirer_employe)
+Test retrait d'un employé d'une ligne ... ok
+test_create_package (billing.tests.PackageTests.test_create_package)
+Test création de forfait ... ok
+test_list_packages (billing.tests.PackageTests.test_list_packages)
+Test liste des forfaits ... ok
+test_toggle_package_actif (billing.tests.PackageTests.test_toggle_package_actif)
+Test activation/désactivation forfait ... ok
+test_create_publication (billing.tests.PublicationTests.test_create_publication)
+Test création d'une publication ... WARNING 2026-08-02 01:05:36,001 log Method Not Allowed: /api/billing/publications/
+FAIL
+test_publication_stats (billing.tests.PublicationTests.test_publication_stats)
+Test statistiques d'une publication ... ok
+test_publish_invoices_masse (billing.tests.PublicationTests.test_publish_invoices_masse)
+Test publication de factures en masse ... ERROR
+test_create_service_with_tarifs (billing.tests.ServiceTests.test_create_service_with_tarifs)
+Test création de service avec tarifs ... ok
+test_get_service_tarifs (billing.tests.ServiceTests.test_get_service_tarifs)
+Test récupération des tarifs d'un service ... ok
+test_list_services (billing.tests.ServiceTests.test_list_services)
+Test liste des services ... ok
+test_toggle_service_actif (billing.tests.ServiceTests.test_toggle_service_actif)
+Test activation/désactivation service ... ok
+test_create_tarif (billing.tests.TarifServiceTests.test_create_tarif)
+Test création de tarif ... ok
+test_list_tarifs (billing.tests.TarifServiceTests.test_list_tarifs)
+Test liste des tarifs ... ok
+test_toggle_tarif_actif (billing.tests.TarifServiceTests.test_toggle_tarif_actif)
+Test activation/désactivation tarif ... ok
+
+======================================================================
+ERROR: test_publish_invoices_masse (billing.tests.PublicationTests.test_publish_invoices_masse)
+Test publication de factures en masse
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back\billing\tests.py", line 1055, in test_publish_invoices_masse
+    url = reverse('publication-publish', kwargs={'pk': publication.pk})
+  File "C:\Users\Benoit\AppData\Roaming\Python\Python314\site-packages\django\urls\base.py", line 98, in reverse
+    resolved_url = resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "C:\Users\Benoit\AppData\Roaming\Python\Python314\site-packages\django\urls\resolvers.py", line 842, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'publication-publish' not found. 'publication-publish' is not a valid view function or pattern name.
+
+======================================================================
+FAIL: test_list_companies_as_payeur (billing.tests.CompanyTests.test_list_companies_as_payeur)
+Test payeur voit seulement ses entreprises
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back\billing\tests.py", line 328, in test_list_companies_as_payeur
+    self.assertEqual(response.status_code, status.HTTP_200_OK)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 403 != 200
+
+======================================================================
+FAIL: test_list_invoices_as_payeur (billing.tests.InvoiceTests.test_list_invoices_as_payeur)
+Test payeur voit seulement ses factures
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back\billing\tests.py", line 852, in test_list_invoices_as_payeur
+    self.assertEqual(len(response.data), 1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_create_publication (billing.tests.PublicationTests.test_create_publication)
+Test création d'une publication
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back\billing\tests.py", line 1016, in test_create_publication
+    self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 405 != 201
+
+----------------------------------------------------------------------
+Ran 76 tests in 184.128s
+
+FAILED (failures=3, errors=1)
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack 
+Adding a command to the trust list allows me to auto run this command in the future without asking for your approval every time. Manage the command trust list in the Trusted Commands setting. Which variation would you like to add?
+
+
+Full command
+python manage.py test --verbosity=2
+
+Partial
+python manage.py *
+
+Base
+python *
+Parfait, j'ai identifié les problèmes. Commençons par lire les spécifications pour comprendre les règles d'accès :
+
+Searched workspace
+Chercher les règles d'accès pour les payeurs dans les spécifications
+Maintenant vérifions la matrice d'accès pour Company :
+
+Read file(s)
+
+MATRICE_ACCES_ET_TRANSITIONS.md 1 - 101
+Parfait ! Je vois que selon la matrice : "Consulter ses entreprises" → ✅ PAYEUR peut consulter. Maintenant les fichiers problématiques :
+
+Read file(s)
+
+test_matching_logic.py 1 - 51
+
+test_stats_data.py 1 - 51
+
+tests.py 1 - 51
+Maintenant créons un dossier scripts et déplaçons les fichiers de test manuels, puis corrigeons les tests :
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+New-Item -ItemType Directory -Force -Path "scripts"
+c--------------------------------------------------------------┌──────────────────────────────────────┐Ran 76 test│📦 c++                                ││📦 caffeinate                         │FAILED (fai│📦 cal                                │Destroying │📦 cap                                │:memorydb_d│📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘----------------------------------------------------------------------Ran 76 tests in 184.128sFAILED (failures=3, errors=1)Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; New-Item -ItemType Directory -Force -Path cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; New-Item -ItemType Directory -Force -Path "cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; New-Item -ItemType Directory -Force -Path "scd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; New-Item -ItemType Directory -Force -Path "sccd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; New-Item -ItemType Directory -Force -Path "scrcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; New-Item -ItemType Directory -Force -Path "scricd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; New-Item -ItemType Directory -Force -Path "scripcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; New-Item -ItemType Directory -Force -Path "scriptcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; New-Item -ItemType Directory -Force -Path "scriptscd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; New-Item -ItemType Directory -Force -Path "scripts"
+
+
+    Répertoire: 
+    C:\Users\Benoit\Documents\BURRO\Projet de fin 
+    d'année GLSI-A BANLEPO Mintre Benoit 2026\Back
+
+
+Mode                 LastWriteTime         Length
+----                 -------------         ------
+d-----          8/2/2026   1:06 AM               
+
+
+PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack 
+Adding a command to the trust list allows me to auto run this command in the future without asking for your approval every time. Manage the command trust list in the Trusted Commands setting. Which variation would you like to add?
+
+
+Full command
+New-Item -ItemType Directory -Force -Path "scripts"
+
+Base
+New-Item *
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\" -Force
+c┌──────────────────────────────────────┐Mode       │📦 c++                                │----       │📦 caffeinate                         │d-----     │📦 cal                                ││📦 cap                                ││📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘┌──────────────────────────────────────┐Mode       │📦 c++                                │----       │📦 caffeinate                         │d-----     │📦 cal                                ││📦 cap                                ││📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘┌──────────────────────────────────────┐Mode       │📦 c++                                │----       │📦 caffeinate                         │d-----     │📦 cal                                ││📦 cap                                ││📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projcd "c:\Users\Benoit\Documents\BURRO\Projecd "c:\Users\Benoit\Documents\BURRO\ProjetMode       ┌──────────────────────────────────────┐----       │📦 c++                                │d-----     │📦 caffeinate                         ││📦 cal                                ││📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘Mode       ┌──────────────────────────────────────┐----       │📦 c++                                │d-----     │📦 caffeinate                         ││📦 cal                                ││📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet Mode       ┌──────────────────────────────────────┐----       │📦 c++                                │d-----     │📦 caffeinate                         ││📦 cal                                ││📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘Mode                 LastWriteTime         Length----                 -------------         ------d-----          8/2/2026   1:06 AM               PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scriptscd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\"cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\" cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\" -cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\" -Fcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\" -Focd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\" -Forcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\" -Forccd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\" -Force
+PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack 
+Adding a command to the trust list allows me to auto run this command in the future without asking for your approval every time. Manage the command trust list in the Trusted Commands setting. Which variation would you like to add?
+
+
+Full command
+Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\" -Force
+
+Base
+Move-Item *
+Bon, maintenant lisons le fichier tests.py complètement pour corriger les problèmes :
+
+Read file(s)
+
+tests.py 1000 - 1101
+Maintenant lisons le test des factures pour le payeur :
+
+Read file(s)
+
+tests.py 820 - 901
+Maintenant lisons le test company pour le payeur:
+
+Read file(s)
+
+tests.py 300 - 351
+Maintenant corrigeons les 4 problèmes identifiés :
+
+
+4 edits to file
+
+tests.py
+
+
+Maintenant relançons les tests complets :
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py test --verbosity=1
+PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -For┌──────────────────────────────────────┐" -Destinat│📁 Projet de fin d'année GLSI-A BANLE…│PS C:\Users└──────────────────────────────────────┘PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\" -ForcePS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cPS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-┌──────────────────────────────────────┐:\Users\Ben│📦 c++                                │e GLSI-A BA│📦 caffeinate                         │em -Path "t│📦 cal                                │ipts\" -For│📦 cap                                │" -Destinat│📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-┌──────────────────────────────────────┐:\Users\Ben│📦 c++                                │e GLSI-A BA│📦 caffeinate                         │em -Path "t│📦 cal                                │ipts\" -For│📦 cap                                │" -Destinat│📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 202:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BA┌──────────────────────────────────────┐em -Path "t│📦 c++                                │ipts\" -For│📦 caffeinate                         │" -Destinat│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BA┌──────────────────────────────────────┐em -Path "t│📦 c++                                │ipts\" -For│📦 caffeinate                         │" -Destinat│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BA┌──────────────────────────────────────┐em -Path "t│📦 c++                                │ipts\" -For│📦 caffeinate                         │" -Destinat│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Move-Item -Path "test_matching_logic.py" -Destination "scripts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\" -ForcePS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'annécd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Bcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Bacd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Baccd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --vecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --vercd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbocd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verboscd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosicd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbositcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbositycd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=1
+Found 76 test(s).
+ipts\" -Force ; Move-Item -Path "test_stats_data.py" -Destination "scripts\" -ForcePS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=1Found 76 test(s).Creating test database for alias 'default'...
+System check identified no issues (0 silenced).
+WARNING 2026-08-02 01:08:56,898 log Bad Request: /api/auth/change-password/
+..WARNING 2026-08-02 01:09:03,839 log Bad Request: /api/auth/change-password/
+.WARNING 2026-08-02 01:09:05,564 log Forbidden: /api/auth/login/
+.WARNING 2026-08-02 01:09:07,281 log Unauthorized: /api/auth/login/
+.WARNING 2026-08-02 01:09:09,879 log Unauthorized: /api/auth/login/
+...WARNING 2026-08-02 01:09:15,924 log Unauthorized: /api/auth/profile/
+......WARNING 2026-08-02 01:09:32,323 log Bad Request: /api/auth/users/
+......INFO 2026-08-02 01:09:52,119 middleware Sensitive action: {'timestamp': '2026-08-02T00:09:52.119525+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 200, 'duration': '0.006s', 'ip': '127.0.0.1', 'user_agent': ''}
+.WARNING 2026-08-02 01:09:55,580 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:09:55.580071+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:09:55,580 log Bad Request: /api/billing/invoices/publier_masse/
+.WARNING 2026-08-02 01:09:59,039 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:09:59.039073+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:09:59,039 log Bad Request: /api/billing/invoices/publier_masse/
+.WARNING 2026-08-02 01:10:02,506 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:10:02.506898+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:10:02,507 log Bad Request: /api/billing/invoices/publier_masse/
+....INFO 2026-08-02 01:10:16,311 middleware Sensitive action: {'timestamp': '2026-08-02T00:10:16.311297+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 200, 'duration': '0.007s', 'ip': '127.0.0.1', 'user_agent': ''}
+..WARNING 2026-08-02 01:10:23,237 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:10:23.237761+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.003s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:10:23,238 log Bad Request: /api/billing/invoices/publier_masse/
+WARNING 2026-08-02 01:10:23,249 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:10:23.249740+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:10:23,250 log Bad Request: /api/billing/invoices/publier_masse/
+.WARNING 2026-08-02 01:10:26,705 log Method Not Allowed: /api/billing/publications/
+.INFO 2026-08-02 01:10:30,161 middleware Sensitive action: {'timestamp': '2026-08-02T00:10:30.161321+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/upload_bulk_pdf/', 'status_code': 200, 'duration': '0.009s', 'ip': '127.0.0.1', 'user_agent': ''}
+.INFO 2026-08-02 01:10:33,652 middleware Sensitive action: {'timestamp': '2026-08-02T00:10:33.652514+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/upload_bulk_pdf/', 'status_code': 200, 'duration': '0.012s', 'ip': '127.0.0.1', 'user_agent': ''}
+................
+
+[Command timed out after 120000ms. The command may still be running in the background. Latest output shown above.]
+Adding a command to the trust list allows me to auto run this command in the future without asking for your approval every time. Manage the command trust list in the Trusted Commands setting. Which variation would you like to add?
+
+
+Full command
+python manage.py test --verbosity=1
+
+Partial
+python manage.py *
+
+Base
+python *
+Les tests progressent bien ! Relançons avec plus de timeout :
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py test --verbosity=1 2>&1 | Select-Object -Last 50
+c-----------┌──────────────────────────────────────┐-----------│📦 c++                                │Ran 76 test│📦 caffeinate                         ││📦 cal                                │FAILED (fai│📦 cap                                │Destroying │📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘-----------┌──────────────────────────────────────┐-----------│📦 c++                                │Ran 76 test│📦 caffeinate                         ││📦 cal                                │FAILED (fai│📦 cap                                │Destroying │📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 202-------------------Ran 76 test┌──────────────────────────────────────┐│📦 c++                                │FAILED (fai│📦 caffeinate                         │Destroying │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘-------------------Ran 76 test┌──────────────────────────────────────┐│📦 c++                                │FAILED (fai│📦 caffeinate                         │Destroying │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘-------------------Ran 76 test┌──────────────────────────────────────┐│📦 c++                                │FAILED (fai│📦 caffeinate                         │Destroying │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘-------------------Ran 76 test┌──────────────────────────────────────┐│📦 c++                                │FAILED (fai│📦 caffeinate                         │Destroying │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘-------------------Ran 76 test┌──────────────────────────────────────┐│📦 c++                                │FAILED (fai│📦 caffeinate                         │Destroying │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘----------------------------------------------------------------------Ran 76 tests in 181.588sFAILED (failures=2)Destroying test database for alias 'default'...PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Bcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Bacd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Baccd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Backcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back"cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ;cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=1 2>&1 | Select-Objectcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=1 2>&1 | Select-Object cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=1 2>&1 | Select-Object -
+cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=1 2>&1 | Select-Object -Lcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=1 2>&1 | Select-Object -Lacd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=1 2>&1 | Select-Object -Lascd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=1 2>&1 | Select-Object -Lastcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=1 2>&1 | Select-Object -Last cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=1 2>&1 | Select-Object -Last 5cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=1 2>&1 | Select-Object -Last 50
+Adding a command to the trust list allows me to auto run this command in the future without asking for your approval every time. Manage the command trust list in the Trusted Commands setting. Which variation would you like to add?
+
+
+Full command
+python manage.py test --verbosity=1 2>&1 | Select-Object -Last 50
+
+Partial
+python manage.py *
+
+Base
+python *
+Excellent ! On passe de 3 échecs + 1 erreur à seulement 2 échecs ! Relançons avec verbosity=2 pour voir les détails :
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py test --verbosity=2 2>&1 | Select-String -Pattern "FAIL|ERROR|Traceback|AssertionError" -Context 2,5
+FAILED (failures=2)Destroying test database for alias 'default'...PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=1 2>&1 | Select-Object -Last 50.WARNING 2026-08-02 01:15:12,163 middleware 
+Sensitive action failed: {'timestamp': 
+'2026-08-02T00:15:12.163287+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/publier_masse/', 
+'status_code': 400, 'duration': '0.002s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:15:12,163 log Bad Request: 
+/api/billing/invoices/publier_masse/
+.WARNING 2026-08-02 01:15:15,613 middleware 
+Sensitive action failed: {'timestamp': 
+'2026-08-02T00:15:15.613809+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/publier_masse/', 
+'status_code': 400, 'duration': '0.002s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:15:15,614 log Bad Request: 
+/api/billing/invoices/publier_masse/
+.WARNING 2026-08-02 01:15:19,086 middleware 
+Sensitive action failed: {'timestamp': 
+'2026-08-02T00:15:19.086870+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/publier_masse/', 
+'status_code': 400, 'duration': '0.002s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:15:19,087 log Bad Request: 
+/api/billing/invoices/publier_masse/
+....INFO 2026-08-02 01:15:32,878 middleware 
+Sensitive action: {'timestamp': 
+'2026-08-02T00:15:32.877962+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/publier_masse/', 
+'status_code': 200, 'duration': '0.007s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+..WARNING 2026-08-02 01:15:39,812 middleware 
+Sensitive action failed: {'timestamp': 
+'2026-08-02T00:15:39.812366+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/publier_masse/', 
+'status_code': 400, 'duration': '0.003s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:15:39,812 log Bad Request: 
+/api/billing/invoices/publier_masse/
+WARNING 2026-08-02 01:15:39,819 middleware 
+Sensitive action failed: {'timestamp': 
+'2026-08-02T00:15:39.819316+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/publier_masse/', 
+'status_code': 400, 'duration': '0.002s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:15:39,819 log Bad Request: 
+/api/billing/invoices/publier_masse/
+.WARNING 2026-08-02 01:15:43,283 log Method Not 
+Allowed: /api/billing/publications/
+.INFO 2026-08-02 01:15:46,738 middleware 
+Sensitive action: {'timestamp': 
+'2026-08-02T00:15:46.738432+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/upload_bulk_pdf/', 
+'status_code': 200, 'duration': '0.009s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+.INFO 2026-08-02 01:15:50,225 middleware 
+Sensitive action: {'timestamp': 
+'2026-08-02T00:15:50.225569+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/upload_bulk_pdf/', 
+'status_code': 200, 'duration': '0.012s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+................WARNING 2026-08-02 01:16:11,002 
+log Forbidden: /api/billing/companies/
+FINFO 2026-08-02 01:16:13,619 middleware 
+Sensitive action: {'timestamp': 
+'2026-08-02T00:16:13.619534+00:00', 'user': 
+'admin@test.com (SUPER_ADMIN)', 'user_id': 1, 
+'method': 'POST', 'path': '/api/billing/invoices/6
+e7b68e0-865a-4fdc-a861-03d9de20816d/annuler/', 
+'status_code': 200, 'duration': '0.008s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+.INFO 2026-08-02 01:16:16,223 middleware 
+Sensitive action: {'timestamp': 
+'2026-08-02T00:16:16.223363+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+2, 'method': 'POST', 'path': 
+'/api/billing/invoices/calculate_line/', 
+'status_code': 200, 'duration': '0.003s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+.INFO 2026-08-02 01:16:18,814 middleware 
+Sensitive action: {'timestamp': 
+'2026-08-02T00:16:18.814854+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+2, 'method': 'POST', 'path': 
+'/api/billing/invoices/generate/', 'status_code': 
+200, 'duration': '0.006s', 'ip': '127.0.0.1', 
+'user_agent': ''}
+....INFO 2026-08-02 01:16:29,193 middleware 
+Sensitive action: {'timestamp': 
+'2026-08-02T00:16:29.193009+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+2, 'method': 'POST', 'path': '/api/billing/invoice
+s/c020678d-7804-420b-a0d9-0e389cd1cd82/valider/', 
+'status_code': 200, 'duration': '0.008s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+...........WARNING 2026-08-02 01:17:00,309 log 
+Method Not Allowed: /api/billing/publications/
+..INFO 2026-08-02 01:17:03,810 middleware 
+Sensitive action: {'timestamp': 
+'2026-08-02T00:17:03.810721+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/publier_masse/', 
+'status_code': 200, 'duration': '0.006s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+F.......
+==================================================
+====================
+FAIL: test_list_companies_as_payeur (billing.tests
+.CompanyTests.test_list_companies_as_payeur)
+Test payeur peut consulter ses entreprises (selon 
+matrice d'accÞs)
+--------------------------------------------------
+--------------------
+Traceback (most recent call last):
+  File "C:\Users\Benoit\Documents\BURRO\Projet de 
+fin d'annÚe GLSI-A BANLEPO Mintre Benoit 
+2026\Back\billing\tests.py", line 329, in 
+test_list_companies_as_payeur
+    self.assertEqual(response.status_code, 
+status.HTTP_200_OK)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^
+AssertionError: 403 != 200
+==================================================
+====================
+FAIL: test_publish_invoices_masse (billing.tests.P
+ublicationTests.test_publish_invoices_masse)
+Test publication de factures en masse via 
+publier_masse
+--------------------------------------------------
+--------------------
+Traceback (most recent call last):
+  File "C:\Users\Benoit\Documents\BURRO\Projet de 
+fin d'annÚe GLSI-A BANLEPO Mintre Benoit 
+2026\Back\billing\tests.py", line 1066, in 
+test_publish_invoices_masse
+    self.assertIn('published_count', 
+response.data)
+    
+~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'published_count' not found in 
+{'message': '2 facture(s) publiÚe(s) avec 
+succÞs', 'factures_publiees': 2, 
+'factures_publiees_ids': 
+['0d4cc876-eca1-470f-9924-7c9554bfaf5f', 
+'436388da-f08b-4db5-aa3c-c0f9469e3d9f'], 
+'montant_total': 30000.0, 'publication_id': 
+'e4463485-6882-45e1-a806-ec30f53b68e2', 
+'publication_created': True}
+--------------------------------------------------
+--------------------
+Ran 76 tests in 183.019s
+FAILED (failures=2)
+Destroying test database for alias 'default'...
+Found 76 test(s).
+System check identified no issues (0 silenced).
+PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=2 2>&1 | Select-String -Pattern "FAIL|ERROR|Traceback|AssertionError" -Cocd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=2 2>&1 | Select-String -Pattern "FAIL|ERROR|Traceback|AssertionError" -Concd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=2 2>&1 | Select-String -Pattern "FAIL|ERROR|Traceback|AssertionError" -Cont
+cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=2 2>&1 | Select-String -Pattern "FAIL|ERROR|Traceback|AssertionError" -Contecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=2 2>&1 | Select-String -Pattern "FAIL|ERROR|Traceback|AssertionError" -Contexcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=2 2>&1 | Select-String -Pattern "FAIL|ERROR|Traceback|AssertionError" -Contextcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=2 2>&1 | Select-String -Pattern "FAIL|ERROR|Traceback|AssertionError" -Context cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=2 2>&1 | Select-String -Pattern "FAIL|ERROR|Traceback|AssertionError" -Context 2cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=2 2>&1 | Select-String -Pattern "FAIL|ERROR|Traceback|AssertionError" -Context 2,cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test --verbosity=2 2>&1 | Select-String -Pattern "FAIL|ERROR|Traceback|AssertionError" -Context 2,5
+
+    Applying 
+auth.0005_alter_user_last_login_null... OK
+    Applying 
+auth.0006_require_contenttypes_0002... OK
+>   Applying 
+auth.0007_alter_validators_add_error_messages... 
+OK
+    Applying 
+auth.0008_alter_user_username_max_length... OK
+    Applying 
+auth.0009_alter_user_last_name_max_length... OK
+    Applying 
+auth.0010_alter_group_name_max_length... OK
+    Applying 
+auth.0011_update_proxy_permissions... OK
+    Applying 
+auth.0012_alter_user_first_name_max_length... OK
+Adding a command to the trust list allows me to auto run this command in the future without asking for your approval every time. Manage the command trust list in the Trusted Commands setting. Which variation would you like to add?
+
+
+Full command
+python manage.py test --verbosity=2 2>&1 | Select-String -Pattern "FAIL|ERROR|Traceback|AssertionError" -Context 2,5
+
+Partial
+python manage.py *
+
+Base
+python *
+Parfait ! 2 échecs seulement. Corrigeons-les :
+
+test_publish_invoices_masse - La réponse retourne factures_publiees au lieu de published_count
+test_list_companies_as_payeur - Permission 403, il faut corriger la permission du Company ViewSet
+Accepted edits to
+
+tests.py
+
+
+Maintenant corrigeons la permission Company pour permettre aux payeurs de lire leurs entreprises :
+
+Read file(s)
+
+views.py 1 - 151
+Je vois ! Le problème est que la permission IsAgentFacturation refuse l'accès aux payeurs. Il faut ajuster la logique :
+
+Accepted edits to
+
+views.py
+
+
+Maintenant relançons les tests :
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py test --verbosity=1
+  ok
+  test_02_facture_sans_pdf_refusee (billing.test_p
+ublication.PublicationWorkflowTests.test_02_factur
+e_sans_pdf_refusee)
+> Test : Facture VALIDEE sans PDF ne peut pas 
+Ûtre publiÚe ... WARNING 2026-08-02 01:18:17,621 
+middleware Sensitive action failed: {'timestamp': 
+'2026-08-02T00:18:17.621583+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/publier_masse/', 
+'status_code': 400, 'duration': '0.002s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+  WARNING 2026-08-02 01:18:17,621 log Bad 
+Request: /api/billing/invoices/publier_masse/
+  ok
+  test_03_facture_mauvais_statut_refusee (billing.
+test_publication.PublicationWorkflowTests.test_03_
+facture_mauvais_statut_refusee)
+> Test : Facture EN_COURS ne peut pas Ûtre 
+publiÚe ... WARNING 2026-08-02 01:18:21,103 
+middleware Sensitive action failed: {'timestamp': 
+'2026-08-02T00:18:21.103618+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/publier_masse/', 
+'status_code': 400, 'duration': '0.002s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+  WARNING 2026-08-02 01:18:21,103 log Bad 
+Request: /api/billing/invoices/publier_masse/
+  ok
+  test_04_facture_deja_publiee_refusee (billing.te
+st_publication.PublicationWorkflowTests.test_04_fa
+cture_deja_publiee_refusee)
+> Test : Facture dÚjÓ PUBLIEE ne peut pas Ûtre 
+republiÚe ... WARNING 2026-08-02 01:18:24,588 
+middleware Sensitive action failed: {'timestamp': 
+'2026-08-02T00:18:24.588808+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/publier_masse/', 
+'status_code': 400, 'duration': '0.002s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+  WARNING 2026-08-02 01:18:24,589 log Bad 
+Request: /api/billing/invoices/publier_masse/
+  ok
+  test_05_payeur_voit_seulement_publiee (billing.t
+est_publication.PublicationWorkflowTests.test_05_p
+ayeur_voit_seulement_publiee)
+  Test : Payeur voit uniquement ses factures 
+PUBLIEE ... ok
+  test_06_employe_voit_sa_facture_publiee (billing
+.test_publication.PublicationWorkflowTests.test_06
+_employe_voit_sa_facture_publiee)
+Le test avance bien ! Attendons la fin :
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py test 2>&1 | Select-String -Pattern "Ran|OK|FAILED" -Context 0,2
+  test_list_companies_as_payeur (billing.tests.Com
+panyTests.test_list_companies_as_payeur)
+  Test payeur peut consulter ses entreprises 
+(selon matrice d'accÞs) ... WARNING 2026-08-02 
+01:19:17,117 log Forbidden: 
+/api/billing/companies/
+> FAIL
+  test_annuler_invoice 
+(billing.tests.InvoiceTests.test_annuler_invoice)
+  Test annulation d'une facture ... INFO 
+2026-08-02 01:19:19,757 middleware Sensitive 
+action: {'timestamp': 
+'2026-08-02T00:19:19.757479+00:00', 'user': 
+'admin@test.com (SUPER_ADMIN)', 'user_id': 1, 
+'method': 'POST', 'path': '/api/billing/invoices/c
+5358e6d-4eef-4bce-8eb3-b4fc2b7bc7ab/annuler/', 
+'status_code': 200, 'duration': '0.008s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+  ok
+  test_calculate_line_invoice (billing.tests.Invoi
+ceTests.test_calculate_line_invoice)
+  Test calcul facture d'une ligne ... INFO 
+2026-08-02 01:19:22,375 middleware Sensitive 
+action: {'timestamp': 
+'2026-08-02T00:19:22.375920+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+2, 'method': 'POST', 'path': 
+'/api/billing/invoices/calculate_line/', 
+'status_code': 200, 'duration': '0.002s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+Adding a command to the trust list allows me to auto run this command in the future without asking for your approval every time. Manage the command trust list in the Trusted Commands setting. Which variation would you like to add?
+
+
+Full command
+python manage.py test 2>&1 | Select-String -Pattern "Ran|OK|FAILED" -Context 0,2
+
+Partial
+python manage.py *
+
+Base
+python *
+Le test company échoue encore. Le problème est que change_statut reste bloqué. Ajustons :
+
+Accepted edits to
+
+views.py
+
+
+En fait, le problème vient probablement du queryset qui retourne none pour le payeur. Attendons que le test se termine pour voir le résultat :
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py test billing.tests.CompanyTests.test_list_companies_as_payeur --verbosity=2
+WARNING 2026-08-02 01:21:31,190 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:21:31.190764+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:21:31,191 log Bad Request: /api/billing/invoices/publier_masse/
+....INFO 2026-08-02 01:21:45,166 middleware Sensitive action: {'timestamp': '2026-08-02T00:21:45.166762+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 200, 'duration': '0.007s', 'ip': '127.0.0.1', 'user_agent': ''}
+..WARNING 2026-08-02 01:21:52,162 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:21:52.162116+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.003s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:21:52,162 log Bad Request: /api/billing/invoices/publier_masse/
+WARNING 2026-08-02 01:21:52,169 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:21:52.169325+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:21:52,169 log Bad Request: /api/billing/invoices/publier_masse/
+.WARNING 2026-08-02 01:21:55,655 log Method Not Allowed: /api/billing/publications/
+.INFO 2026-08-02 01:21:59,139 middleware Sensitive action: {'timestamp': '2026-08-02T00:21:59.138984+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/upload_bulk_pdf/', 'status_code': 200, 'duration': '0.008s', 'ip': '127.0.0.1', 'user_agent': ''}
+.INFO 2026-08-02 01:22:02,663 middleware Sensitive action: {'timestamp': '2026-08-02T00:22:02.663376+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/upload_bulk_pdf/', 'status_code': 200, 'duration': '0.012s', 'ip': '127.0.0.1', 'user_agent': ''}
+.................INFO 2026-08-02 01:22:26,253 middleware Sensitive action: {'timestamp': '2026-08-02T00:22:26.253876+00:00', 'user': 'admin@test.com (SUPER_ADMIN)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/4599a32f-c5fb-436f-8c8c-f6f314b2fe6a/annuler/', 'status_code': 200, 'duration': '0.008s', 'ip': '127.0.0.1', 'user_agent': ''}
+.INFO 2026-08-02 01:22:28,834 middleware Sensitive action: {'timestamp': '2026-08-02T00:22:28.834548+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 2, 'method': 'POST', 'path': '/api/billing/invoices/calculate_line/', 'status_code': 200, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+.INFO 2026-08-02 01:22:31,431 middleware Sensitive action: {'timestamp': '2026-08-02T00:22:31.431015+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 2, 'method': 'POST', 'path': '/api/billing/invoices/generate/', 'status_code': 200, 'duration': '0.006s', 'ip': '127.0.0.1', 'user_agent': ''}
+....INFO 2026-08-02 01:22:41,792 middleware Sensitive action: {'timestamp': '2026-08-02T00:22:41.792674+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 2, 'method': 'POST', 'path': '/api/billing/invoices/787cd688-3605-49cc-a854-82fc57286673/valider/', 'status_code': 200, 'duration': '0.008s', 'ip': '127.0.0.1', 'user_agent': ''}
+...........WARNING 2026-08-02 01:23:12,912 log Method Not Allowed: /api/billing/publications/
+..INFO 2026-08-02 01:23:16,415 middleware Sensitive action: {'timestamp': '2026-08-02T00:23:16.415194+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 200, 'duration': '0.006s', 'ip': '127.0.0.1', 'user_agent': ''}
+........
+----------------------------------------------------------------------
+Ran 76 tests in 182.947s
+
+OK
+Destroying test database for alias 'default'...
+:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test 2>&1 | Select-String -Pattern "Ran|OK|FAILED" -Context 0,2
+Adding a command to the trust list allows me to auto run this command in the future without asking for your approval every time. Manage the command trust list in the Trusted Commands setting. Which variation would you like to add?
+
+
+Full command
+python manage.py test billing.tests.CompanyTests.test_list_companies_as_payeur --verbosity=2
+
+Partial
+python manage.py *
+
+Base
+python *
+🎉 EXCELLENT ! Tous les tests passent ! Ran 76 tests in 182.947s - OK
+
+Maintenant effectuons les vérifications finales :
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py check
+
+> .WARNING 2026-08-02 01:24:30,057 middleware 
+Sensitive action failed: {'timestamp': 
+'2026-08-02T00:24:30.057646+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/publier_masse/', 
+'status_code': 400, 'duration': '0.002s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+  WARNING 2026-08-02 01:24:30,058 log Bad 
+Request: /api/billing/invoices/publier_masse/
+> .WARNING 2026-08-02 01:24:33,543 middleware 
+Sensitive action failed: {'timestamp': 
+'2026-08-02T00:24:33.543288+00:00', 'user': 
+'agent@test.com (AGENT_FACTURATION)', 'user_id': 
+1, 'method': 'POST', 'path': 
+'/api/billing/invoices/publier_masse/', 
+'status_code': 400, 'duration': '0.002s', 'ip': 
+'127.0.0.1', 'user_agent': ''}
+  WARNING 2026-08-02 01:24:33,543 log Bad 
+Request: /api/billing/invoices/publier_masse/
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py check 2>&1 | Select-String -Pattern "System check|issues|silenced"
+> Ran 76 tests in 222.770s
+  System.Management.Automation.RemoteException
+> OK
+  Destroying test database for alias 'default'...
+  System.Management.Automation.RemoteException
+
+
+PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.CompanyTests.test_list_companies_as_payeur --verbosity=2
+Found 1 test(s).
+Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, django_filters, drf_spectacular, messages, rest_framework, rest_framework_simplejwt, staticfiles
+  Apply all migrations: accounts, admin, auth, billing, contenttypes, sessions, token_blacklist
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying accounts.0001_initial... OK
+  Applying accounts.0002_user_created_by_user_custom_permissions_and_more... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying billing.0001_initial... OK
+  Applying billing.0002_alter_line_cycle... OK
+  Applying billing.0003_package_service_invoice_historiquefacturation_and_more... OK
+  Applying billing.0004_invoice_line... OK
+  Applying sessions.0001_initial... OK
+  Applying token_blacklist.0001_initial... OK
+  Applying token_blacklist.0002_outstandingtoken_jti_hex... OK
+  Applying token_blacklist.0003_auto_20171017_2007... OK
+  Applying token_blacklist.0004_auto_20171017_2013... OK
+  Applying token_blacklist.0005_remove_outstandingtoken_jti... OK
+  Applying token_blacklist.0006_auto_20171017_2113... OK
+  Applying token_blacklist.0007_auto_20171017_2214... OK
+  Applying token_blacklist.0008_migrate_to_bigautofield... OK
+  Applying token_blacklist.0010_fix_migrate_to_bigautofield... OK
+  Applying token_blacklist.0011_linearizes_history... OK
+  Applying token_blacklist.0012_alter_outstandingtoken_user... OK
+  Applying token_blacklist.0013_alter_blacklistedtoken_options_and_more... OK
+System check identified no issues (0 silenced).
+test_list_companies_as_payeur (billing.tests.CompanyTests.test_list_companies_as_payeur)
+Test payeur peut consulter ses entreprises (selon matrice d'accès) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 3.569s
+
+OK
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py check
+System check identified no issues (0 silenced).
+:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py check 2>&1 | Select-String -Pattern "System check|issues|cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py check 2>&1 | Select-String -Pattern "System check|issues|scd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py check 2>&1 | Select-String -Pattern "System check|issues|sicd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py check 2>&1 | Select-String -Pattern "System check|issues|silcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py check 2>&1 | Select-String -Pattern "System check|issues|silecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py check 2>&1 | Select-String -Pattern "System check|issues|silene GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py checkSystem check identified no issues (0 silenced).PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py check 2>&1 | Select-String -Pattern "Systcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py check 2>&1 | Select-String -Pattern "System check|issues|silenccd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py check 2>&1 | Select-String -Pattern "System check|issues|silencecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py check 2>&1 | Select-String -Pattern "System check|issues|silencedcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py check 2>&1 | Select-String -Pattern "System check|issues|silenced"
+
+System check identified no issues (0 silenced).
+
+
+PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack 
+Adding a command to the trust list allows me to auto run this command in the future without asking for your approval every time. Manage the command trust list in the Trusted Commands setting. Which variation would you like to add?
+
+
+Full command
+python manage.py check 2>&1 | Select-String -Pattern "System check|issues|silenced"
+
+Partial
+python manage.py *
+
+Base
+python *
+Parfait ! System check identified no issues (0 silenced). Maintenant le build frontend :
+
+Command
+c:\Users\Benoit\Documents\BU…EPO Mintre Benoit 2026\Front
+
+npm run build
+ce GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py c┌──────────────────────────────────────┐em check|is│📦 c++                                ││📦 caffeinate                         │System chec│📦 cal                                ││📦 cap                                ││📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projcd "c:\Users\Benoit\Documents\BURRO\Projecd "c:\Users\Benoit\Documents\BURRO\Projetcd "c:\Users\Benoit\Documents\BURRO\Projet manage.py check 2>&1 | Select-String -Pattern "System check|is┌──────────────────────────────────────┐│📦 c++                                │System chec│📦 caffeinate                         ││📦 cal                                ││📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet dcd "c:\Users\Benoit\Documents\BURRO\Projet decd "c:\Users\Benoit\Documents\BURRO\Projet de manage.py check 2>&1 | Select-String -Pattern "System check|is┌──────────────────────────────────────┐│📦 c++                                │System chec│📦 caffeinate                         ││📦 cal                                ││📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘manage.py check 2>&1 | Select-String -Pattern "System check|is┌──────────────────────────────────────┐│📦 c++                                │System chec│📦 caffeinate                         ││📦 cal                                ││📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fmanage.py check 2>&1 | Select-String -Pattern "System check|is┌──────────────────────────────────────┐│📦 c++                                │System chec│📦 caffeinate                         ││📦 cal                                ││📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm em check|issues|silenced"System check identified no issues (0 silenced).PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'annécd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm rcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm ru
+cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm runcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run bcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run bucd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run buicd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run builcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run build
+System check identified no issues (0 silenced).PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run buildpm run build\
+> portail-moov-factures@0.1.0 build
+> vite build
+
+:\WINDOWS\system32\cmd.exe \vite v5.4.21 building for production...
+transforming (1) index.htmltransforming (3) src\main.jsxtransforming (6) node_modules\react\index.js[transforming (18) src\pages\auth\ForgotPasswortransforming (41) node_modules\@remix-run\routtransforming (68) src\services\api.jstransforming (150) node_modules\scheduler\indetransforming (151) node_modules\react-dom\cjs\transforming (353) src\styles\global.csstransforming (665) node_modules\framer-motion\transforming (693) node_modules\framer-motion\transforming (847) node_modules\react-is\cjs\rtransforming (930) node_modules\axios\lib\plattransforming (1072) node_modules\use-sync-exte✓ 1122 modules transformed.
+rendering chunks (1)...computing gzip size (0)...computing gzip size (1)...computing gzip size (2)...computing gzip size (3)...computing gzip size (4)...dist/index.html                                       0.50 kB │ gzip:   0.33 kB
+dist/assets/logo-moov-BA8kZ-9l.png                    5.90 kB
+dist/assets/illustration-factures-BaC66Sie.svg       22.71 kB │ gzip:   9.06 kB
+dist/assets/illustration-payeur-B3UdxpO8.png         44.59 kB
+dist/assets/illustration-simulation-YNeMJA7i.png     47.61 kB
+dist/assets/tabler-icons-CKaxJfX3.woff2             457.38 kB
+dist/assets/tabler-icons-KWc1JFMo.woff              785.78 kB
+dist/assets/tabler-icons-DSK2_1ka.ttf             2,810.99 kB
+dist/assets/index-C3OFwIOd.css                      283.74 kB │ gzip:  53.67 kB
+dist/assets/index-CGNCjs-a.js                       975.55 kB │ gzip: 276.17 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 10.85s
+⠙:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cFront 
+🎉 PARFAIT ! ✓ built in 10.85s
+
+✅ Phase 1 Complètement Terminée et Validée
+📊 Rapport Final
+Tous les tests passent : 76/76 ✅
+
+🔧 Corrections Appliquées
+1. Fichiers de Scripts Manuels Déplacés
+✅ test_matching_logic.py → 
+test_matching_logic.py
+✅ test_stats_data.py → 
+test_stats_data.py
+Raison : Ces fichiers ne sont pas des tests Django mais des scripts d'analyse manuelle
+2. Tests billing/tests.py Corrigés
+test_create_publication :
+
+# AVANT : Attendait HTTP 201 CREATED
+# APRÈS : Attend HTTP 405 METHOD_NOT_ALLOWED
+# Car PublicationViewSet est ReadOnlyModelViewSet
+test_publish_invoices_masse :
+
+# AVANT : Utilisait reverse('publication-publish')
+# APRÈS : Utilise reverse('invoice-publier-masse')
+# AVANT : Attendait response.data['published_count']
+# APRÈS : Attend response.data['factures_publiees']
+# Respecte le workflow final : publier_masse uniquement
+test_list_invoices_as_payeur :
+
+# AVANT : Créait facture sans statut spécifique
+# APRÈS : Crée facture PUBLIEE + facture VALIDEE
+# Vérifie que payeur voit uniquement PUBLIEE (pas VALIDEE)
+test_list_companies_as_payeur :
+
+# AVANT : Commentaire "payeur voit seulement ses entreprises"
+# APRÈS : Commentaire conforme à matrice d'accès
+# "Test payeur peut consulter ses entreprises (selon matrice d'accès)"
+3. Permission CompanyViewSet Corrigée
+# AVANT : permission_classes = [IsAuthenticated, IsAgentFacturation]
+# APRÈS : get_permissions() dynamique
+# - Lecture (list, retrieve, stats, lignes) : IsAuthenticated seulement
+# - Écriture (create, update, delete) : IsAgentFacturation requis
+# Conforme à MATRICE_ACCES_ET_TRANSITIONS.md ligne 32 :
+# "Consulter ses entreprises | PAYEUR ✅"
+✅ Vérifications Obligatoires
+Vérification	Résultat	Détails
+python manage.py check	✅ PASS	System check identified no issues (0 silenced)
+python manage.py test	✅ PASS	Ran 76 tests in 182.947s - OK
+npm run build	✅ PASS	✓ built in 10.85s
+📋 Résumé des Modifications
+✅ 2 fichiers scripts déplacés (ne sont plus découverts comme tests Django)
+✅ 4 tests corrigés dans billing/tests.py
+✅ 1 permission ViewSet ajustée (CompanyViewSet)
+✅ Aucune régression sur workflow de publication
+✅ Conformité totale avec MATRICE_ACCES_ET_TRANSITIONS.md
+🎯 Conformité Spécification
+✅ Payeur voit uniquement factures PUBLIEE (pas VALIDEE)
+✅ Payeur peut consulter ses entreprises (lecture seule)
+✅ Publication via publier_masse() uniquement
+✅ POST /billing/publications/ refusé (405)
+✅ Workflow publication préservé intact
+🚀 Phase 1 Validée - Tous les Critères Remplis
+La commande python manage.py test complète est maintenant VERTE (76/76 tests OK).
+
+L'application est entièrement raccordée aux API Django réelles, sans aucun mock résiduel, et tous les tests passent.
+
+Est. Credits Used: 8.91
+Elapsed time: 25m 52s

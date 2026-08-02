@@ -12,21 +12,13 @@ export default function HistoriqueSimulations() {
   useEffect(() => {
     getStatsEmploye()
       .then(stats => {
-        // Ajouter plus de simulations mockées pour le test
-        const simulationsEtendues = [
-          ...(stats.dernieresSimulations || []),
-          { date: '15/07/2026', montant: 89450, tauxConsommation: 58 },
-          { date: '12/07/2026', montant: 134200, tauxConsommation: 85 },
-          { date: '08/07/2026', montant: 76800, tauxConsommation: 49 },
-          { date: '25/06/2026', montant: 102350, tauxConsommation: 71 },
-          { date: '20/06/2026', montant: 95780, tauxConsommation: 63 },
-          { date: '15/06/2026', montant: 118900, tauxConsommation: 79 },
-          { date: '10/06/2026', montant: 87650, tauxConsommation: 56 },
-          { date: '05/06/2026', montant: 145600, tauxConsommation: 92 },
-        ]
-        setSimulations(simulationsEtendues)
+        // Utiliser uniquement les simulations réelles de l'API
+        setSimulations(stats.dernieresSimulations || [])
       })
-      .catch(console.error)
+      .catch(error => {
+        console.error('Erreur chargement simulations:', error)
+        setSimulations([])
+      })
       .finally(() => setChargement(false))
   }, [])
 

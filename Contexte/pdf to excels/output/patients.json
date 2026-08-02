@@ -1,0 +1,434 @@
+[
+  {
+    "id": "PAT_facturena20260601041priode0106202630062026dition09072026chance30072026__unknown",
+    "nom": "FACTURE N°:             A20260601041\nPÉRIODE:                               01/06/2026-30/06/2026\nÉDITION:                                09/07/2026\nÉCHÉANCE:                            30/07/2026",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_facturena20260601041priode0106202630062026dition09072026chance30072026__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_codecommercial__unknown",
+    "nom": "CODE COMMERCIAL:",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_codecommercial__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_tva__unknown",
+    "nom": "TVA:",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_tva__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_montant__unknown",
+    "nom": "MONTANT:",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_montant__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_impaysant2019__unknown",
+    "nom": "IMPAYÉS ANT. 2019:",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_impaysant2019__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_impays20192026__unknown",
+    "nom": "IMPAYÉS 2019-2026:",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_impays20192026__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_totald__unknown",
+    "nom": "TOTAL DÛ:",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_totald__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_ddttaaiillssdduummoonnttaanntt__unknown",
+    "nom": "DDÉÉTTAAIILLSS DDUU MMOONNTTAANNTT",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_ddttaaiillssdduummoonnttaanntt__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_99475555_noagbodjimarie_unknown",
+    "nom": "99475555",
+    "prenom": "NOAGBODJI MARIE",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20260601041",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_99475555_noagbodjimarie_unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_99478787_noagbodjijeanmarie_unknown",
+    "nom": "99478787",
+    "prenom": "NOAGBODJI JEAN MARIE",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20260601041",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_99478787_noagbodjijeanmarie_unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_99492454_secretariattechnique_unknown",
+    "nom": "99492454",
+    "prenom": "SECRETARIAT TECHNIQUE",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20260601041",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_99492454_secretariattechnique_unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_ddttaaiillssddeessiimmppaayysssauferreurouomission01012019au08072026__unknown",
+    "nom": "DDÉÉTTAAIILLSS DDEESS IIMMPPAAYYÉÉSS SAUF ERREUR OU OMISSION  -  01/01/2019 au 08/07/2026",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_ddttaaiillssddeessiimmppaayysssauferreurouomission01012019au08072026__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_janvier2019__unknown",
+    "nom": "Janvier 2019",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20190100712",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_janvier2019__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_juillet2019__unknown",
+    "nom": "Juillet 2019",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20190700628",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_juillet2019__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_aot2019__unknown",
+    "nom": "Août 2019",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20190800614",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_aot2019__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_septembre2019__unknown",
+    "nom": "Septembre 2019",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20190900611",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_septembre2019__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_octobre2019__unknown",
+    "nom": "Octobre 2019",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20191000615",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_octobre2019__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_novembre2019__unknown",
+    "nom": "Novembre 2019",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20191100631",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_novembre2019__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_dcembre2019__unknown",
+    "nom": "Décembre 2019",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20191200969",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_dcembre2019__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_janvier2020__unknown",
+    "nom": "Janvier 2020",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20200100980",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_janvier2020__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_fvrier2020__unknown",
+    "nom": "Février 2020",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20200200986",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_fvrier2020__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_mars2020__unknown",
+    "nom": "Mars 2020",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20200301002",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_mars2020__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_avril2020__unknown",
+    "nom": "Avril 2020",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20200401012",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_avril2020__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_mai2020__unknown",
+    "nom": "Mai 2020",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20200500616",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_mai2020__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_juin2020__unknown",
+    "nom": "Juin 2020",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20200600623",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_juin2020__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_juillet2020__unknown",
+    "nom": "Juillet 2020",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20200700636",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_juillet2020__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_aot2020__unknown",
+    "nom": "Août 2020",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20200800618",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_aot2020__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_septembre2020__unknown",
+    "nom": "Septembre 2020",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20200900639",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_septembre2020__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_octobre2020__unknown",
+    "nom": "Octobre 2020",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20201000627",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_octobre2020__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_novembre2020__unknown",
+    "nom": "Novembre 2020",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20201100638",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_novembre2020__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_dcembre2020__unknown",
+    "nom": "Décembre 2020",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20201200639",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_dcembre2020__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_janvier2021__unknown",
+    "nom": "Janvier 2021",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20210100630",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_janvier2021__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_fvrier2021__unknown",
+    "nom": "Février 2021",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20210200624",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_fvrier2021__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_mars2021__unknown",
+    "nom": "Mars 2021",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20210300624",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_mars2021__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_avril2021__unknown",
+    "nom": "Avril 2021",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20210400631",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_avril2021__unknown_unknown"
+    ]
+  },
+  {
+    "id": "PAT_mai2021__unknown",
+    "nom": "Mai 2021",
+    "prenom": "",
+    "dateNaissance": null,
+    "numeroCNAMGS": "A20210500617",
+    "telephone": "",
+    "adresse": "",
+    "historiqueConsultations": [
+      "CONS_PAT_mai2021__unknown_unknown"
+    ]
+  }
+]

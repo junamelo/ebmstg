@@ -212,6 +212,16 @@ class Invoice(models.Model):
         related_name='invoices',
         verbose_name='Entreprise'
     )
+    # Renseignée uniquement pour une facture individuelle (SOM). Une facture
+    # globale reste liée à l'entreprise sans être rattachée à une ligne.
+    line = models.ForeignKey(
+        Line,
+        on_delete=models.SET_NULL,
+        related_name='invoices',
+        null=True,
+        blank=True,
+        verbose_name='Ligne concernée'
+    )
     numero_facture = models.CharField(max_length=50, unique=True, verbose_name='Numéro de facture')
     periode_debut = models.DateField(verbose_name='Début de période')
     periode_fin = models.DateField(verbose_name='Fin de période')

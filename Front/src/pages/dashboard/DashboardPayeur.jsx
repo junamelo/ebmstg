@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { getFactures } from '../../services/factureService'
 import { getStatsPayeur } from '../../services/adminService'
+import ImageWithFallback from '../../components/common/ImageWithFallback'
 import illustrationPayeur from '../../assets/illustration-payeur.png'
 import './Dashboard.css'
 
@@ -78,7 +79,7 @@ export default function DashboardPayeur() {
         </div>
         {/* Illustration */}
         <div className="hero-card__illustration">
-          <img
+          <ImageWithFallback
             src={illustrationPayeur}
             alt="Illustration espace entreprise"
             className="hero-card__illustration-img"

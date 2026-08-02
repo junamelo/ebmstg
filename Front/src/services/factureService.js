@@ -1,53 +1,49 @@
 import api from './api'
-import { mockGetFactures, mockGetFactureById } from './mockApi'
-import { MOCK_FACTURES } from './mockData'
+const API_ORIGIN = 'http://localhost:8000'
 
-// ⚠️ Mettre à false quand le backend .NET sera prêt
-const USE_MOCK = true
+const formatDate = (date) => date ? new Date(date).toLocaleDateString('fr-FR') : ''
 
-const getUserFromStorage = () => {
-  try { return JSON.parse(localStorage.getItem('user')) } catch { return null }
-}
+const adapterFacture = (facture) => ({
+  ...facture,
+  numero: facture.numero_facture,
+  periode: facture.periode_debut?.slice(0, 7),
+  type: facture.line ? 'SOMMAIRE' : 'GLOBALE',
+  ligneOuFlotte: facture.line_msisdn || facture.company_name,
+  montantTTC: Number(facture.montant_ttc),
+  dateEmission: formatDate(facture.date_emission),
+  dateEcheance: formatDate(facture.date_echeance),
+  pdfUrl: facture.fichier_pdf
+    ? (facture.fichier_pdf.startsWith('http') ? facture.fichier_pdf : `${API_ORIGIN}${facture.fichier_pdf}`)
+    : null,
+})
 
 export const getFactures = async (filtres = {}) => {
-  if (USE_MOCK) {
-    const user = getUserFromStorage()
-    return mockGetFactures(user, filtres)
-  }
   const params = new URLSearchParams()
   if (filtres.periode) params.append('periode', filtres.periode)
   if (filtres.type) params.append('type', filtres.type)
   if (filtres.statut) params.append('statut', filtres.statut)
-  const response = await api.get(`/factures?${params.toString()}`)
-  return response.data
+  const response = await api.get(`/billing/invoices/?${params.toString()}`)
+  const factures = response.data.results || response.data
+  return factures.map(adapterFacture)
 }
 
 export const getFactureById = async (id) => {
-  if (USE_MOCK) {
-    return MOCK_FACTURES.find(f => f.id === id) || null
-  }
-  const response = await api.get(`/factures/${id}`)
-  return response.data
+  const response = await api.get(`/billing/invoices/${id}/`)
+  return adapterFacture(response.data)
 }
 
 export const getFacturePdfUrl = (id) => {
-  if (USE_MOCK) return '/mock-facture.pdf'
-  const token = localStorage.getItem('token')
-  return `/api/factures/${id}/pdf?token=${token}`
+  return `${API_ORIGIN}/api/billing/invoices/${id}/`
 }
 
 export const telechargerFacture = async (id, numeroFacture) => {
-  if (USE_MOCK) {
-    alert(`[MOCK] Téléchargement de la facture ${numeroFacture} — sera disponible avec le backend .NET`)
-    return
-  }
-  const response = await api.get(`/factures/${id}/pdf`, { responseType: 'blob' })
-  const url = window.URL.createObjectURL(new Blob([response.data]))
+  const facture = await getFactureById(id)
+  if (!facture.pdfUrl) throw new Error(`Aucun PDF associé à la facture ${numeroFacture}`)
   const link = document.createElement('a')
-  link.href = url
+  link.href = facture.pdfUrl
   link.setAttribute('download', `facture_${numeroFacture}.pdf`)
+  link.target = '_blank'
   document.body.appendChild(link)
   link.click()
   link.remove()
-  window.URL.revokeObjectURL(url)
 }

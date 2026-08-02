@@ -426,7 +426,7 @@ export default function Factures() {
       {/* PDF Viewer */}
       {factureSelectionnee && (
         <PdfViewer
-          url={getFacturePdfUrl(factureSelectionnee.id)}
+          url={factureSelectionnee.pdfUrl || getFacturePdfUrl(factureSelectionnee.id)}
           numeroFacture={factureSelectionnee.numero}
           onClose={() => setFactureSelectionnee(null)}
           onTelecharger={() => {

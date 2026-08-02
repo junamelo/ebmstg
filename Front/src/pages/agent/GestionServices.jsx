@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
-  mockGetServices,
-  mockCreerService,
-  mockToggleService,
-  mockAjouterOption,
-  mockToggleOption,
-} from '../../services/mockApi'
+  getServices,
+  creerService,
+  toggleService,
+  creerTarifService,
+  toggleTarifService,
+} from '../../services/servicesService'
 
 export default function GestionServices() {
   const [services, setServices] = useState([])
   const [chargement, setChargement] = useState(true)
+  const [erreur, setErreur] = useState(null)
   const [message, setMessage]     = useState(null)
   const [servicesOuverts, setServicesOuverts] = useState({})
 
@@ -27,8 +28,37 @@ export default function GestionServices() {
   const [optionEnEdition, setOptionEnEdition] = useState(null)
 
   useEffect(() => {
-    mockGetServices().then(setServices).finally(() => setChargement(false))
+    chargerServices()
   }, [])
+
+  const chargerServices = async () => {
+    try {
+      setChargement(true)
+      setErreur(null)
+      const response = await getServices()
+      // Adapter la structure backend vers frontend
+      const servicesAdaptes = (response.results || response).map(s => ({
+        id: s.id,
+        nom: s.nom || s.name,
+        description: s.description || '',
+        actif: s.est_actif,
+        is_active: s.est_actif,
+        options: (s.tarifs || []).map(t => ({
+          id: t.id,
+          nom: t.nom_option,
+          tarif: parseFloat(t.prix),
+          actif: t.est_actif
+        }))
+      }))
+      setServices(servicesAdaptes)
+    } catch (error) {
+      console.error('Erreur chargement services:', error)
+      setErreur('Impossible de charger les services')
+      showMsg('error', 'Erreur lors du chargement des services')
+    } finally {
+      setChargement(false)
+    }
+  }
 
   const showMsg = (type, texte) => {
     setMessage({ type, texte })
@@ -40,31 +70,36 @@ export default function GestionServices() {
     e.preventDefault()
     try {
       if (modeEditionService && serviceEnEdition) {
-        // Mode modification
-        setServices(services.map(s =>
-          s.id === serviceEnEdition.id
-            ? { ...s, nom: formService.nom, description: formService.description }
-            : s
-        ))
-        showMsg('success', `Forfait « ${formService.nom} » modifié.`)
-        setModeEditionService(false)
-        setServiceEnEdition(null)
+        // Mode modification - pas encore implémenté dans l'API
+        showMsg('error', 'Modification de service non disponible pour le moment')
+        return
       } else {
         // Mode création
-        const nouveau = await mockCreerService(formService)
-        setServices([nouveau, ...services])
+        const nouveau = await creerService({ 
+          nom: formService.nom, 
+          code: formService.nom.toUpperCase().replace(/\s+/g, '_'),
+          description: formService.description,
+          type_service: 'OPTION'
+        })
+        await chargerServices() // Recharger pour avoir les données à jour
         showMsg('success', `Forfait « ${nouveau.nom} » créé.`)
       }
       setFormService({ nom: '', description: '' })
       setFormServiceOuvert(false)
-    } catch { showMsg('error', 'Erreur lors de l\'opération.') }
+      setModeEditionService(false)
+      setServiceEnEdition(null)
+    } catch (error) { 
+      console.error('Erreur opération service:', error)
+      const errorMsg = error.response?.data?.detail || error.response?.data?.message || 'Erreur lors de l\'opération.'
+      showMsg('error', errorMsg) 
+    }
   }
 
   // ── Ouvrir le formulaire de modification de service ──────────
   const handleModifierService = (service) => {
     setModeEditionService(true)
     setServiceEnEdition(service)
-    setFormService({ nom: service.nom, description: service.description })
+    setFormService({ nom: service.name || service.nom, description: service.description })
     setFormServiceOuvert(true)
   }
 
@@ -78,8 +113,14 @@ export default function GestionServices() {
 
   // ── Toggle actif/inactif service ──────────────────────────────
   const handleToggleService = async (id) => {
-    await mockToggleService(id)
-    setServices(services.map(s => s.id === id ? { ...s, actif: !s.actif } : s))
+    try {
+      await toggleService(id)
+      await chargerServices() // Recharger pour avoir l'état mis à jour
+      showMsg('success', 'Statut du service mis à jour')
+    } catch (error) {
+      console.error('Erreur toggle service:', error)
+      showMsg('error', 'Erreur lors de la mise à jour du service')
+    }
   }
 
   // ── Ajouter ou modifier une option tarifaire ─────────────────
@@ -88,35 +129,29 @@ export default function GestionServices() {
     if (!serviceSelectionne) return
     try {
       if (modeEditionOption && optionEnEdition) {
-        // Mode modification
-        setServices(services.map(s =>
-          s.id === serviceSelectionne
-            ? {
-                ...s,
-                options: s.options.map(o =>
-                  o.id === optionEnEdition.id
-                    ? { ...o, nom: formOption.nom, tarif: parseFloat(formOption.tarif) }
-                    : o
-                )
-              }
-            : s
-        ))
-        showMsg('success', `Option « ${formOption.nom} » modifiée.`)
-        setModeEditionOption(false)
-        setOptionEnEdition(null)
+        // Mode modification - pas encore implémenté
+        showMsg('error', 'Modification d\'option non disponible pour le moment')
+        return
       } else {
         // Mode création
-        const opt = await mockAjouterOption(serviceSelectionne, formOption)
-        setServices(services.map(s =>
-          s.id === serviceSelectionne
-            ? { ...s, options: [...s.options, opt] }
-            : s
-        ))
-        showMsg('success', `Option « ${opt.nom} » ajoutée.`)
+        await creerTarifService({
+          service: serviceSelectionne,
+          nom_option: formOption.nom,
+          prix: parseFloat(formOption.tarif),
+          description: ''
+        })
+        await chargerServices() // Recharger pour avoir les options à jour
+        showMsg('success', `Option « ${formOption.nom} » ajoutée.`)
       }
       setFormOption({ nom: '', tarif: '' })
       setServiceSelectionne(null)
-    } catch { showMsg('error', "Erreur lors de l'opération.") }
+      setModeEditionOption(false)
+      setOptionEnEdition(null)
+    } catch (error) {
+      console.error('Erreur ajout option:', error)
+      const errorMsg = error.response?.data?.detail || error.response?.data?.message || 'Erreur lors de l\'opération.'
+      showMsg('error', errorMsg)
+    }
   }
 
   // ── Ouvrir le formulaire de modification d'option ────────────
@@ -137,12 +172,14 @@ export default function GestionServices() {
 
   // ── Toggle option ─────────────────────────────────────────────
   const handleToggleOption = async (serviceId, optionId) => {
-    await mockToggleOption(serviceId, optionId)
-    setServices(services.map(s =>
-      s.id === serviceId
-        ? { ...s, options: s.options.map(o => o.id === optionId ? { ...o, actif: !o.actif } : o) }
-        : s
-    ))
+    try {
+      await toggleTarifService(optionId)
+      await chargerServices() // Recharger pour avoir l'état mis à jour
+      showMsg('success', 'Statut de l\'option mis à jour')
+    } catch (error) {
+      console.error('Erreur toggle option:', error)
+      showMsg('error', 'Erreur lors de la mise à jour de l\'option')
+    }
   }
 
   if (chargement) {

@@ -7,9 +7,9 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'https://localhost:7001',
+        // Backend Django utilisé par le portail.
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: false,
       }
     }
   }

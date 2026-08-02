@@ -1,11 +1,10 @@
 import api from './api'
-import { mockLogin, mockDemanderReinitialisationMdp } from './mockApi'
 
-// ⚠️ Mettre à false quand le backend .NET sera prêt
-const USE_MOCK = true
+// Backend Django prêt pour auth !
 
 /**
  * Connexion d'un utilisateur
+ * Endpoint: POST /api/auth/login/
  * Comptes de test :
  *   Admin            → login: admin@moov.tg   / mdp: admin123
  *   Payeur           → login: A0007612        / mdp: payeur123
@@ -14,23 +13,40 @@ const USE_MOCK = true
  *   Chef Facturation → login: chef@moov.tg    / mdp: chef123  ⭐
  */
 export const login = async (loginVal, motDePasse, typeLogin) => {
-  if (USE_MOCK) return mockLogin(loginVal, motDePasse, typeLogin)
-  const response = await api.post('/auth/login', { login: loginVal, motDePasse, typeLogin })
+  // Adapter les paramètres pour l'API Django
+  const response = await api.post('/auth/login/', { 
+    email: loginVal,  // Django backend attend 'email' 
+    password: motDePasse  // Django backend attend 'password'
+  })
   return response.data
 }
 
+/**
+ * Demande de réinitialisation de mot de passe
+ * Endpoint: POST /api/auth/forgot-password/
+ */
 export const demanderReinitialisationMdp = async (email) => {
-  if (USE_MOCK) return mockDemanderReinitialisationMdp(email)
-  const response = await api.post('/auth/forgot-password', { email })
+  const response = await api.post('/auth/forgot-password/', { email })
   return response.data
 }
 
+/**
+ * Réinitialisation du mot de passe
+ * Endpoint: POST /api/auth/reset-password/
+ */
 export const reinitialiserMdp = async (token, nouveauMotDePasse) => {
-  const response = await api.post('/auth/reset-password', { token, nouveauMotDePasse })
+  const response = await api.post('/auth/reset-password/', { token, nouveauMotDePasse })
   return response.data
 }
 
+/**
+ * Déconnexion de l'utilisateur
+ * Endpoint: POST /api/auth/logout/
+ */
 export const logout = async () => {
-  if (USE_MOCK) return
-  try { await api.post('/auth/logout') } catch { /* nettoyage localStorage géré dans AuthContext */ }
+  try { 
+    await api.post('/auth/logout/') 
+  } catch { 
+    /* nettoyage localStorage géré dans AuthContext */ 
+  }
 }

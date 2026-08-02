@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { getUtilisateurs, activerCompte, suspendreCompte, reinitialiserMotDePasseAdmin } from '../../services/adminService'
-import { mockCreerUtilisateur } from '../../services/mockApi'
+import api from '../../services/api'
 import './Admin.css'
 
 // ── Couleurs avatar par rôle ─────────────────────────────────
@@ -38,19 +38,27 @@ function ModalGestionLignes({ payeur, onClose, onSuccess }) {
   const [chargement, setChargement] = useState(false)
   const [erreur, setErreur] = useState('')
 
-  // Simuler des lignes disponibles non attribuées
-  const mockLignesDisponibles = [
-    { id: '1', numero: '79 34 27 35', forfait: 'M2B - Formule Moon 2', statut: 'Disponible' },
-    { id: '2', numero: '79 34 27 36', forfait: 'M2B - Formule Moon 2', statut: 'Disponible' },
-    { id: '3', numero: '79 34 27 37', forfait: 'Standard', statut: 'Disponible' },
-    { id: '4', numero: '90 12 34 56', forfait: 'Premium', statut: 'Disponible' },
-    { id: '5', numero: '90 12 34 57', forfait: 'Standard', statut: 'Disponible' },
-    { id: '6', numero: '79 88 77 66', forfait: 'M2B - Formule Moon 2', statut: 'Disponible' },
-  ]
-
   useEffect(() => {
-    setLignesDisponibles(mockLignesDisponibles)
+    chargerLignesDisponibles()
   }, [])
+
+  const chargerLignesDisponibles = async () => {
+    try {
+      // Récupérer les lignes sans entreprise (disponibles)
+      const response = await api.get('/billing/lines/', { params: { company__isnull: true } })
+      const lignesAPI = response.data.results || response.data
+      setLignesDisponibles(lignesAPI.map(ligne => ({
+        id: ligne.id,
+        numero: ligne.msisdn,
+        forfait: ligne.package_nom || 'Standard',
+        statut: 'Disponible'
+      })))
+    } catch (error) {
+      console.error('Erreur chargement lignes:', error)
+      // Fallback : aucune ligne disponible
+      setLignesDisponibles([])
+    }
+  }
 
   const handleImportFichier = (e) => {
     const file = e.target.files[0]
@@ -455,7 +463,16 @@ function ModalCreerCompte({ onClose, onSuccess, onPayeurCree }) {
     
     setChargement(true)
     try {
-      const nouveauUtilisateur = await mockCreerUtilisateur(form)
+      const response = await api.post('/auth/users/', {
+        username: form.login,
+        email: form.email || `${form.login}@moov.africa`,
+        password: form.motDePasse,
+        first_name: form.prenom || '',
+        last_name: form.nom || '',
+        role: form.role
+      })
+      
+      const nouveauUtilisateur = response.data
       
       if (form.role === 'PAYEUR') {
         // Si c'est un payeur, déclencher la modal de gestion des lignes
@@ -464,8 +481,9 @@ function ModalCreerCompte({ onClose, onSuccess, onPayeurCree }) {
         onSuccess('Compte créé avec succès.')
       }
       onClose()
-    } catch {
-      setErreur('Erreur lors de la création du compte.')
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.response?.data?.detail || 'Erreur lors de la création du compte.'
+      setErreur(errorMsg)
     } finally {
       setChargement(false)
     }

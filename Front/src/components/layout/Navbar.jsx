@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import ImageWithFallback from '../common/ImageWithFallback'
 import logoMoov from '../../assets/logo-moov.png'
 import './Navbar.css'
 
@@ -51,7 +52,7 @@ export default function Navbar() {
     <nav className="navbar" style={{ background: navBg }}>
       <div className="navbar-brand">
         <Link to={getHomeLink()} className="navbar-logo-link">
-          <img src={logoMoov} alt="Moov Africa" className="navbar-logo-img" />
+          <ImageWithFallback src={logoMoov} alt="Moov Africa" className="navbar-logo-img" />
         </Link>
         <span className="navbar-title">Portail Factures</span>
       </div>

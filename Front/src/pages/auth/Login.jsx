@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { login as loginService } from '../../services/authService'
 import { enregistrerVisite } from '../../services/deviceService'
+import ImageWithFallback from '../../components/common/ImageWithFallback'
 import illustrationFactures from '../../assets/illustration-factures.svg'
 import logoMoov from '../../assets/logo-moov.png'
 import './Login.css'
@@ -28,18 +29,24 @@ export default function Login() {
     try {
       // Le type est déduit automatiquement par le backend selon l'identifiant
       const data = await loginService(identifiant, motDePasse, null)
-      login(data.token, data.user)
+      
+      // Adapter la réponse Django : access -> token
+      login(data.access, data.user)
+      
       enregistrerVisite(data.user.id, data.user.role)
       // Redirection selon le rôle
       if (data.user.role === 'SUPER_ADMIN') {
         navigate('/admin/dashboard')
       } else if (data.user.role === 'AGENT_FACTURATION') {
         navigate('/agent/dashboard')
+      } else if (data.user.role === 'CHEF_FACTURATION') {
+        navigate('/chef/dashboard')
       } else {
         navigate('/dashboard')
       }
     } catch (err) {
-      setErreur(err.response?.data?.message || 'Identifiant ou mot de passe incorrect.')
+      console.error('Erreur login:', err)
+      setErreur(err.response?.data?.error || err.response?.data?.message || 'Identifiant ou mot de passe incorrect.')
     } finally {
       setChargement(false)
     }
@@ -53,7 +60,11 @@ export default function Login() {
 
         {/* Logo Moov Africa — coin supérieur droit du panneau bleu */}
         <div className="login-branding-logo">
-          <img src={logoMoov} alt="Moov Africa" className="login-branding-logo-img" />
+          <ImageWithFallback 
+            src={logoMoov} 
+            alt="Moov Africa" 
+            className="login-branding-logo-img" 
+          />
         </div>
 
         {/* Losanges style Moov Africa */}
@@ -132,7 +143,7 @@ export default function Login() {
 
           {/* Illustration factures */}
           <div className="login-illustration">
-            <img
+            <ImageWithFallback
               src={illustrationFactures}
               alt="Illustration publication de factures"
               className="login-illustration-img"

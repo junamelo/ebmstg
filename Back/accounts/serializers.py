@@ -81,7 +81,9 @@ class StatusHistorySerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
+    # Le champ conserve le nom "email" pour compatibilité avec le frontend,
+    # mais accepte aussi un MSISDN/username comme identifiant de connexion.
+    email = serializers.CharField(required=True, max_length=150)
     password = serializers.CharField(required=True, write_only=True)
 
 
@@ -112,12 +114,15 @@ class RegisterSerializer(serializers.ModelSerializer):
 class CreateUserSerializer(serializers.ModelSerializer):
     """Serializer pour la création d'utilisateur par admin/chef"""
     password = serializers.CharField(write_only=True, required=True)
+    force_password_change = serializers.BooleanField(default=True, write_only=True)
+    send_email = serializers.BooleanField(default=True, write_only=True)
     
     class Meta:
         model = User
         fields = [
             'email', 'username', 'password', 'first_name', 'last_name',
-            'role', 'status', 'telephone', 'custom_permissions'
+            'role', 'status', 'telephone', 'custom_permissions',
+            'force_password_change', 'send_email'
         ]
     
     def validate_role(self, value):
@@ -136,12 +141,19 @@ class CreateUserSerializer(serializers.ModelSerializer):
         if creator.role == 'CHEF_FACTURATION' and value == 'AGENT_FACTURATION':
             return value
         
+        # Agent peut créer des payeurs et employés
+        if creator.role == 'AGENT_FACTURATION' and value in ['PAYEUR', 'EMPLOYE']:
+            return value
+        
         raise serializers.ValidationError(
             f"Vous n'avez pas la permission de créer un utilisateur avec le rôle {value}"
         )
     
     def create(self, validated_data):
         password = validated_data.pop('password')
+        force_password_change = validated_data.pop('force_password_change', True)
+        send_email = validated_data.pop('send_email', True)
+        
         user = User.objects.create(**validated_data)
         user.set_password(password)
         
@@ -151,4 +163,32 @@ class CreateUserSerializer(serializers.ModelSerializer):
             user.created_by = request.user
         
         user.save()
+        
+        # TODO: Gérer force_password_change (ajouter champ au modèle si nécessaire)
+        # TODO: Envoyer email si send_email=True
+        
         return user
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """Serializer pour changer son propre mot de passe"""
+    old_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, write_only=True, validators=[validate_password])
+    new_password_confirm = serializers.CharField(required=True, write_only=True)
+    
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password_confirm']:
+            raise serializers.ValidationError({"new_password": "Les mots de passe ne correspondent pas"})
+        return attrs
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    """Serializer pour réinitialiser le mot de passe d'un utilisateur (admin/chef)"""
+    new_password = serializers.CharField(required=True, write_only=True, validators=[validate_password])
+    force_change = serializers.BooleanField(default=True)
+    send_email = serializers.BooleanField(default=True)
+
+
+class RefreshTokenSerializer(serializers.Serializer):
+    """Serializer pour rafraîchir le token JWT"""
+    refresh = serializers.CharField(required=True)

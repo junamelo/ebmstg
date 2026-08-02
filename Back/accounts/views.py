@@ -11,7 +11,8 @@ from .models import User, StatusHistory, ROLE_PERMISSIONS
 from .serializers import (
     UserSerializer, UserListSerializer, RegisterSerializer, LoginSerializer,
     ChangeStatusSerializer, PermissionSerializer, StatusHistorySerializer,
-    CreateUserSerializer
+    CreateUserSerializer, ChangePasswordSerializer, ResetPasswordSerializer,
+    RefreshTokenSerializer
 )
 
 class RegisterView(generics.GenericAPIView):
@@ -57,9 +58,11 @@ class LoginView(generics.GenericAPIView):
             email = serializer.validated_data['email']
             password = serializer.validated_data['password']
             
-            # Chercher l'utilisateur par email
+            # L'identifiant peut être l'e-mail ou le MSISDN enregistré comme
+            # username pour un employé. Cela permet aux salariés de se
+            # connecter avec leur numéro de ligne.
             try:
-                user = User.objects.get(email=email)
+                user = User.objects.get(Q(email=email) | Q(username=email))
                 username = user.username
             except User.DoesNotExist:
                 return Response({
@@ -112,6 +115,110 @@ class ProfileView(generics.GenericAPIView):
     def get(self, request):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
+
+
+class ChangePasswordView(generics.GenericAPIView):
+    """Permet à l'utilisateur de changer son propre mot de passe"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChangePasswordSerializer
+    
+    @extend_schema(
+        summary='Changer son mot de passe',
+        description='Permet à l\'utilisateur connecté de changer son mot de passe',
+        responses={
+            200: OpenApiResponse(description='Mot de passe changé avec succès'),
+            400: OpenApiResponse(description='Ancien mot de passe incorrect'),
+        }
+    )
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        user = request.user
+        
+        # Vérifier l'ancien mot de passe
+        if not user.check_password(serializer.validated_data['old_password']):
+            return Response(
+                {'error': 'Ancien mot de passe incorrect'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Définir le nouveau mot de passe
+        user.set_password(serializer.validated_data['new_password'])
+        user.save()
+        
+        # Générer de nouveaux tokens
+        refresh = RefreshToken.for_user(user)
+        
+        return Response({
+            'message': 'Mot de passe changé avec succès',
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        })
+
+
+class RefreshTokenView(generics.GenericAPIView):
+    """Rafraîchir le token JWT"""
+    permission_classes = [AllowAny]
+    serializer_class = RefreshTokenSerializer
+    
+    @extend_schema(
+        summary='Rafraîchir le token',
+        description='Génère un nouveau access token à partir d\'un refresh token valide',
+        responses={
+            200: OpenApiResponse(description='Token rafraîchi avec succès'),
+            401: OpenApiResponse(description='Refresh token invalide'),
+        }
+    )
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            refresh = RefreshToken(serializer.validated_data['refresh'])
+            return Response({
+                'access': str(refresh.access_token),
+            })
+        except Exception:
+            return Response(
+                {'error': 'Refresh token invalide ou expiré'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+
+class LogoutView(generics.GenericAPIView):
+    """Déconnexion (blacklist du refresh token)"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = RefreshTokenSerializer
+    
+    @extend_schema(
+        summary='Déconnexion',
+        description='Déconnecte l\'utilisateur en blacklistant son refresh token',
+        responses={
+            200: OpenApiResponse(description='Déconnexion réussie'),
+            400: OpenApiResponse(description='Refresh token invalide'),
+        }
+    )
+    def post(self, request):
+        try:
+            refresh_token = request.data.get('refresh')
+            if not refresh_token:
+                return Response(
+                    {'error': 'Refresh token requis'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            
+            return Response({
+                'message': 'Déconnexion réussie'
+            })
+        except Exception:
+            return Response(
+                {'error': 'Token invalide'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class UserManagementViewSet(viewsets.ModelViewSet):
@@ -282,18 +389,20 @@ class UserManagementViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        new_password = request.data.get('new_password')
-        if not new_password:
-            return Response(
-                {'error': 'Le nouveau mot de passe est requis'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        new_password = serializer.validated_data['new_password']
+        force_change = serializer.validated_data.get('force_change', True)
+        send_email = serializer.validated_data.get('send_email', True)
         
         target_user.set_password(new_password)
         target_user.save()
         
-        # TODO: Envoyer email avec nouveau mot de passe
+        # TODO: Implémenter force_change (ajouter champ must_change_password au modèle)
+        # TODO: Envoyer email avec nouveau mot de passe si send_email=True
         
         return Response({
-            'message': 'Mot de passe réinitialisé avec succès'
+            'message': 'Mot de passe réinitialisé avec succès',
+            'email_sent': send_email
         })

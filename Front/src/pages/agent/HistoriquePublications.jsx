@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
-import { getHistoriquePublications } from '../../services/adminService'
+import api from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 
 export default function HistoriquePublications() {
@@ -10,28 +10,42 @@ export default function HistoriquePublications() {
   const [pageActuelle, setPageActuelle] = useState(1)
   const [filtreStatut, setFiltreStatut] = useState('tous')
   const [recherche, setRecherche] = useState('')
+  const [erreur, setErreur] = useState(null)
   
   const publicationsParPage = 15
 
   useEffect(() => {
-    // Simuler le chargement des données
-    setTimeout(() => {
-      const agents = ['Koffi ATTIOGBE', 'Divine MENSAH', 'Edem KODJO', 'Adjoa MENSAH']
-      const mockPublications = Array.from({ length: 75 }, (_, i) => ({
-        id: i + 1,
-        date: new Date(2026, 6 - (i % 12), 5 + (i % 25)).toLocaleDateString('fr-FR'),
-        periode: `${2026 - Math.floor(i / 12)}-${String(12 - (i % 12)).padStart(2, '0')}`,
-        nbFactures: Math.floor(Math.random() * 2000) + 1000,
-        statut: ['TRAITEE', 'EN_COURS', 'ERREUR'][Math.floor(Math.random() * 3)],
-        tailleFichier: (Math.random() * 50 + 10).toFixed(1) + ' MB',
-        tempsTraitement: Math.floor(Math.random() * 120 + 30) + ' min',
-        nomFichier: `bloc_factures_${2026 - Math.floor(i / 12)}_${String(12 - (i % 12)).padStart(2, '0')}.pdf`,
-        publiePar: agents[Math.floor(Math.random() * agents.length)] // Ajout du nom de l'agent
-      }))
-      setPublications(mockPublications)
-      setChargement(false)
-    }, 500)
+    chargerPublications()
   }, [])
+
+  const chargerPublications = async () => {
+    try {
+      setChargement(true)
+      setErreur(null)
+      const response = await api.get('/billing/publications/')
+      
+      // Transformer les données de l'API vers le format utilisé par le composant
+      const publicationsTransformees = response.data.map(pub => ({
+        id: pub.id,
+        date: new Date(pub.date_publication).toLocaleDateString('fr-FR'),
+        periode: `${new Date(pub.periode_debut).toLocaleDateString('fr-FR')} - ${new Date(pub.periode_fin).toLocaleDateString('fr-FR')}`,
+        nbFactures: pub.nombre_lignes_traitees || 0,
+        statut: pub.statut || 'EN_COURS',
+        nomFichier: pub.fichier_pdf || `publication_${pub.cycle_facturation}_${pub.periode_debut}.pdf`,
+        publiePar: pub.agent_name || 'Inconnu',
+        cycle: pub.cycle_facturation,
+        montantTotal: pub.montant_total || 0,
+        commentaire: pub.commentaire || ''
+      }))
+      
+      setPublications(publicationsTransformees)
+    } catch (error) {
+      console.error('Erreur chargement publications:', error)
+      setErreur('Erreur lors du chargement de l\'historique des publications')
+    } finally {
+      setChargement(false)
+    }
+  }
 
   // Filtrage des publications
   const publicationsFiltrees = publications.filter(pub => {
@@ -56,12 +70,14 @@ export default function HistoriquePublications() {
 
   const getStatutBadge = (statut) => {
     switch(statut) {
-      case 'TRAITEE':
+      case 'PUBLIEE':
         return 'bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 text-emerald-700 dark:text-emerald-400 border-2 border-emerald-400 dark:border-emerald-500/50 shadow-sm'
+      case 'VALIDEE':
+        return 'bg-gradient-to-br from-blue-500/20 to-blue-600/10 text-blue-700 dark:text-blue-400 border-2 border-blue-400 dark:border-blue-500/50 shadow-sm'
       case 'EN_COURS':
         return 'bg-gradient-to-br from-amber-500/20 to-amber-600/10 text-amber-700 dark:text-amber-400 border-2 border-amber-400 dark:border-amber-500/50 shadow-sm'
-      case 'ERREUR':
-        return 'bg-gradient-to-br from-red-500/20 to-red-600/10 text-red-700 dark:text-red-400 border-2 border-red-400 dark:border-red-500/50 shadow-sm'
+      case 'BROUILLON':
+        return 'bg-gradient-to-br from-zinc-500/20 to-zinc-600/10 text-zinc-700 dark:text-zinc-400 border-2 border-zinc-400 dark:border-zinc-500/50 shadow-sm'
       default:
         return 'bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border-2 border-zinc-300 dark:border-zinc-700 shadow-sm'
     }
@@ -69,10 +85,11 @@ export default function HistoriquePublications() {
 
   const getStatutTexte = (statut) => {
     switch(statut) {
-      case 'TRAITEE': return 'Traitée'
+      case 'PUBLIEE': return 'Publiée'
+      case 'VALIDEE': return 'Validée'
       case 'EN_COURS': return 'En cours'
-      case 'ERREUR': return 'Erreur'
-      default: return 'Inconnu'
+      case 'BROUILLON': return 'Brouillon'
+      default: return statut
     }
   }
 
@@ -82,6 +99,30 @@ export default function HistoriquePublications() {
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-zinc-300 border-t-[#002a7a] rounded-full animate-spin" />
           <span className="text-sm text-zinc-600 dark:text-zinc-400">Chargement...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (erreur) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 max-w-md text-center">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-2">Erreur de chargement</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">{erreur}</p>
+            <button
+              onClick={chargerPublications}
+              className="px-4 py-2 bg-[#002a7a] text-white rounded-lg hover:bg-[#003d9e] transition-colors"
+            >
+              Réessayer
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -138,9 +179,9 @@ export default function HistoriquePublications() {
             </div>
             <div>
               <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                {publications.filter(p => p.statut === 'TRAITEE').length}
+                {publications.filter(p => p.statut === 'PUBLIEE').length}
               </p>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Traitées</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Publiées</p>
             </div>
           </div>
         </motion.div>
@@ -149,6 +190,27 @@ export default function HistoriquePublications() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-zinc-900 dark:text-white">
+                {publications.filter(p => p.statut === 'VALIDEE').length}
+              </p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Validées</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
           className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6"
         >
           <div className="flex items-center gap-3">
@@ -162,27 +224,6 @@ export default function HistoriquePublications() {
                 {publications.filter(p => p.statut === 'EN_COURS').length}
               </p>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">En cours</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                {publications.filter(p => p.statut === 'ERREUR').length}
-              </p>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Erreurs</p>
             </div>
           </div>
         </motion.div>
@@ -217,9 +258,10 @@ export default function HistoriquePublications() {
             className="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-[#002a7a] outline-none"
           >
             <option value="tous">Tous les statuts</option>
-            <option value="TRAITEE">Traitées</option>
+            <option value="PUBLIEE">Publiées</option>
+            <option value="VALIDEE">Validées</option>
             <option value="EN_COURS">En cours</option>
-            <option value="ERREUR">Erreurs</option>
+            <option value="BROUILLON">Brouillon</option>
           </select>
         </div>
         {publicationsFiltrees.length !== publications.length && (
@@ -258,10 +300,7 @@ export default function HistoriquePublications() {
                   Factures
                 </th>
                 <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
-                  Taille
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
-                  Durée
+                  Montant
                 </th>
                 <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                   Statut
@@ -274,7 +313,7 @@ export default function HistoriquePublications() {
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {publicationsPaginees.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin() ? "9" : "8"} className="px-6 py-16 text-center">
+                  <td colSpan={isAdmin() ? "8" : "7"} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center">
                         <svg className="w-8 h-8 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
@@ -345,25 +384,21 @@ export default function HistoriquePublications() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                        </svg>
-                        {pub.tailleFichier}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-900/20 text-sm font-medium text-amber-700 dark:text-amber-400">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="10"/>
-                          <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                        {pub.tempsTraitement}
-                      </span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-sm font-bold text-zinc-900 dark:text-white font-mono">
+                          {parseFloat(pub.montantTotal).toLocaleString('fr-FR')}
+                        </span>
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400">FCFA</span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-center whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${getStatutBadge(pub.statut)}`}>
-                        {pub.statut === 'TRAITEE' && (
+                        {pub.statut === 'PUBLIEE' && (
+                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                          </svg>
+                        )}
+                        {pub.statut === 'VALIDEE' && (
                           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
                           </svg>
@@ -371,11 +406,6 @@ export default function HistoriquePublications() {
                         {pub.statut === 'EN_COURS' && (
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10"/>
-                          </svg>
-                        )}
-                        {pub.statut === 'ERREUR' && (
-                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
                           </svg>
                         )}
                         {getStatutTexte(pub.statut)}

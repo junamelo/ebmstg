@@ -1,65 +1,97 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { useParams, useNavigate } from 'react-router-dom'
+import api from '../../services/api'
 
 export default function DetailContrat() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [ongletActif, setOngletActif] = useState('infos')
+  const [contrat, setContrat] = useState(null)
+  const [chargement, setChargement] = useState(true)
+  const [erreur, setErreur] = useState(null)
 
-  // Mock data - à remplacer par un appel API
-  const [contrat] = useState({
-    id: '1',
-    numeroContrat: 'A2600001',
-    typePayeur: 'ENTREPRISE',
-    raisonSociale: 'BIOSPARTNERS',
-    email: 'contact@biospartners.com',
-    telephone: '+228 22 00 00 00',
-    adresse: 'Lomé, Togo',
-    dateCreation: '2020-01-15',
-    statut: 'ACTIF',
-    typeContrat: 'Professionnel',
-    dureeEngagement: 24,
-    modeFacturation: 'Mensuel',
-    agentResponsable: 'agent@moov.tg',
-    lignes: [
-      {
-        id: '1',
-        numero: '79 34 27 35',
-        employe: { nom: 'TOTSOVI', prenom: 'Eyram', email: 'e.totsovi@biospartners.com' },
-        statut: 'ACTIF',
-        dateActivation: '2020-03-20',
-        forfaits: ['No Limit AI50', 'Facture Détaillée'],
-        consommation: { voix: 450, sms: 120, data: 15.5 },
-        montantEstime: 45000
-      },
-      {
-        id: '2',
-        numero: '79 34 27 36',
-        employe: { nom: 'AGBEKO', prenom: 'Koffi', email: 'k.agbeko@biospartners.com' },
-        statut: 'ACTIF',
-        dateActivation: '2020-06-15',
-        forfaits: ['BlackBerry BB15_6'],
-        consommation: { voix: 320, sms: 85, data: 8.2 },
-        montantEstime: 38000
-      },
-      {
-        id: '3',
-        numero: '79 34 27 37',
-        employe: { nom: 'MENSAH', prenom: 'Divine', email: 'd.mensah@biospartners.com' },
-        statut: 'SUSPENDU',
-        dateActivation: '2021-08-10',
-        forfaits: ['No Limit AI70'],
-        consommation: { voix: 0, sms: 0, data: 0 },
-        montantEstime: 0
-      }
-    ],
-    historiqueFacturation: [
-      { mois: 'Juillet 2026', montant: 135000, statut: 'Payée', datePaiement: '2026-08-05' },
-      { mois: 'Juin 2026', montant: 132000, statut: 'Payée', datePaiement: '2026-07-03' },
-      { mois: 'Mai 2026', montant: 128000, statut: 'Payée', datePaiement: '2026-06-02' }
-    ]
-  })
+  useEffect(() => {
+    chargerContrat()
+  }, [id])
+
+  const chargerContrat = async () => {
+    try {
+      setChargement(true)
+      setErreur(null)
+      // Charger les données de l'entreprise
+      const response = await api.get(`/billing/companies/${id}/`)
+      const company = response.data
+      
+      // Charger les lignes de l'entreprise
+      const lignesResponse = await api.get(`/billing/lines/`, { params: { company: id } })
+      const lignes = lignesResponse.data.results || lignesResponse.data
+      
+      // Adapter les données
+      setContrat({
+        id: company.id,
+        numeroContrat: company.compte,
+        typePayeur: 'ENTREPRISE',
+        raisonSociale: company.raison_sociale,
+        email: company.payeur_email || '',
+        telephone: company.telephone || 'Non renseigné',
+        adresse: company.adresse || 'Non renseignée',
+        dateCreation: company.date_creation,
+        statut: company.est_actif ? 'ACTIF' : 'INACTIF',
+        typeContrat: company.categorie || 'Professionnel',
+        dureeEngagement: 24, // Par défaut
+        modeFacturation: 'Mensuel',
+        agentResponsable: 'Non assigné',
+        lignes: lignes.map(l => ({
+          id: l.id,
+          numero: l.msisdn,
+          employe: {
+            nom: l.employe_last_name || 'N/A',
+            prenom: l.employe_first_name || 'N/A',
+            email: l.employe_email || 'N/A'
+          },
+          statut: l.est_active ? 'ACTIF' : 'SUSPENDU',
+          dateActivation: l.date_activation || l.date_creation,
+          forfaits: l.package_nom ? [l.package_nom] : [],
+          consommation: { voix: 0, sms: 0, data: 0 },
+          montantEstime: 0
+        })),
+        historiqueFacturation: []
+      })
+    } catch (error) {
+      console.error('Erreur chargement contrat:', error)
+      setErreur('Impossible de charger les détails du contrat')
+    } finally {
+      setChargement(false)
+    }
+  }
+
+  if (chargement) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-zinc-300 border-t-[#002a7a] rounded-full animate-spin" />
+          <span className="text-sm text-zinc-600">Chargement...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (erreur || !contrat) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{erreur || 'Contrat introuvable'}</p>
+          <button
+            onClick={() => navigate('/agent/contrats')}
+            className="px-4 py-2 bg-[#002a7a] text-white rounded-lg hover:bg-[#003399]"
+          >
+            Retour aux contrats
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const lignesActives = contrat.lignes.filter(l => l.statut === 'ACTIF').length
   const caMensuel = contrat.lignes.reduce((sum, l) => sum + l.montantEstime, 0)

@@ -1,0 +1,758 @@
+[
+  {
+    "id": "CONS_PAT_facturena20260601041priode0106202630062026dition09072026chance30072026__unknown_unknown",
+    "patientId": "PAT_facturena20260601041priode0106202630062026dition09072026chance30072026__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "",
+        "quantite": 1,
+        "tarifUnitaire": 0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_codecommercial__unknown_unknown",
+    "patientId": "PAT_codecommercial__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "N° CONTRAT:        A0000009                                                             ",
+        "designation": "",
+        "quantite": 1,
+        "tarifUnitaire": 0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_tva__unknown_unknown",
+    "patientId": "PAT_tva__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "ADRESSE:               Rte de Kpalimé, Adidogomé, cité Maman    ",
+        "designation": "",
+        "quantite": 1,
+        "tarifUnitaire": 0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_montant__unknown_unknown",
+    "patientId": "PAT_montant__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "N'danida, 07 BP: 12596                                        ",
+        "designation": "",
+        "quantite": 1,
+        "tarifUnitaire": 0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_impaysant2019__unknown_unknown",
+    "patientId": "PAT_impaysant2019__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "",
+        "quantite": 1,
+        "tarifUnitaire": 0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_impays20192026__unknown_unknown",
+    "patientId": "PAT_impays20192026__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "",
+        "quantite": 1,
+        "tarifUnitaire": 0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_totald__unknown_unknown",
+    "patientId": "PAT_totald__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "",
+        "quantite": 1,
+        "tarifUnitaire": 0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_ddttaaiillssdduummoonnttaanntt__unknown_unknown",
+    "patientId": "PAT_ddttaaiillssdduummoonnttaanntt__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "",
+        "quantite": 1,
+        "tarifUnitaire": 0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_99475555_noagbodjimarie_unknown_unknown",
+    "patientId": "PAT_99475555_noagbodjimarie_unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "9998",
+        "quantite": 1800,
+        "tarifUnitaire": 11798.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_99478787_noagbodjijeanmarie_unknown_unknown",
+    "patientId": "PAT_99478787_noagbodjijeanmarie_unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "36475",
+        "quantite": 6565,
+        "tarifUnitaire": 43040.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_99492454_secretariattechnique_unknown_unknown",
+    "patientId": "PAT_99492454_secretariattechnique_unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "19280",
+        "quantite": 3470,
+        "tarifUnitaire": 22750.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_ddttaaiillssddeessiimmppaayysssauferreurouomission01012019au08072026__unknown_unknown",
+    "patientId": "PAT_ddttaaiillssddeessiimmppaayysssauferreurouomission01012019au08072026__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "",
+        "quantite": 1,
+        "tarifUnitaire": 0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_janvier2019__unknown_unknown",
+    "patientId": "PAT_janvier2019__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "60656",
+        "quantite": 1,
+        "tarifUnitaire": 60656.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_juillet2019__unknown_unknown",
+    "patientId": "PAT_juillet2019__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "166491",
+        "quantite": 90000,
+        "tarifUnitaire": 76491.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_aot2019__unknown_unknown",
+    "patientId": "PAT_aot2019__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "185489",
+        "quantite": 1,
+        "tarifUnitaire": 185489.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_septembre2019__unknown_unknown",
+    "patientId": "PAT_septembre2019__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "239901",
+        "quantite": 1,
+        "tarifUnitaire": 239901.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_octobre2019__unknown_unknown",
+    "patientId": "PAT_octobre2019__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "273302",
+        "quantite": 1,
+        "tarifUnitaire": 273302.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_novembre2019__unknown_unknown",
+    "patientId": "PAT_novembre2019__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "262479",
+        "quantite": 1,
+        "tarifUnitaire": 262479.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_dcembre2019__unknown_unknown",
+    "patientId": "PAT_dcembre2019__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "249669",
+        "quantite": 1,
+        "tarifUnitaire": 249669.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_janvier2020__unknown_unknown",
+    "patientId": "PAT_janvier2020__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "251767",
+        "quantite": 1,
+        "tarifUnitaire": 251767.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_fvrier2020__unknown_unknown",
+    "patientId": "PAT_fvrier2020__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "198098",
+        "quantite": 1,
+        "tarifUnitaire": 198098.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_mars2020__unknown_unknown",
+    "patientId": "PAT_mars2020__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "266635",
+        "quantite": 1,
+        "tarifUnitaire": 266635.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_avril2020__unknown_unknown",
+    "patientId": "PAT_avril2020__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "171076",
+        "quantite": 1,
+        "tarifUnitaire": 171076.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_mai2020__unknown_unknown",
+    "patientId": "PAT_mai2020__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "193508",
+        "quantite": 1,
+        "tarifUnitaire": 193508.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_juin2020__unknown_unknown",
+    "patientId": "PAT_juin2020__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "198366",
+        "quantite": 1,
+        "tarifUnitaire": 198366.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_juillet2020__unknown_unknown",
+    "patientId": "PAT_juillet2020__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "175980",
+        "quantite": 1,
+        "tarifUnitaire": 175980.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_aot2020__unknown_unknown",
+    "patientId": "PAT_aot2020__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "239586",
+        "quantite": 1,
+        "tarifUnitaire": 239586.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_septembre2020__unknown_unknown",
+    "patientId": "PAT_septembre2020__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "239887",
+        "quantite": 1,
+        "tarifUnitaire": 239887.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_octobre2020__unknown_unknown",
+    "patientId": "PAT_octobre2020__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "247622",
+        "quantite": 1,
+        "tarifUnitaire": 247622.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_novembre2020__unknown_unknown",
+    "patientId": "PAT_novembre2020__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "231813",
+        "quantite": 1,
+        "tarifUnitaire": 231813.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_dcembre2020__unknown_unknown",
+    "patientId": "PAT_dcembre2020__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "284270",
+        "quantite": 1,
+        "tarifUnitaire": 284270.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_janvier2021__unknown_unknown",
+    "patientId": "PAT_janvier2021__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "265038",
+        "quantite": 1,
+        "tarifUnitaire": 265038.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_fvrier2021__unknown_unknown",
+    "patientId": "PAT_fvrier2021__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "233388",
+        "quantite": 1,
+        "tarifUnitaire": 233388.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_mars2021__unknown_unknown",
+    "patientId": "PAT_mars2021__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "277655",
+        "quantite": 1,
+        "tarifUnitaire": 277655.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_avril2021__unknown_unknown",
+    "patientId": "PAT_avril2021__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "206911",
+        "quantite": 1,
+        "tarifUnitaire": 206911.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  },
+  {
+    "id": "CONS_PAT_mai2021__unknown_unknown",
+    "patientId": "PAT_mai2021__unknown",
+    "dateConsultation": null,
+    "prestations": [
+      {
+        "code": "",
+        "designation": "208242",
+        "quantite": 1,
+        "tarifUnitaire": 208242.0,
+        "montantTotal": 0
+      }
+    ],
+    "diagnostics": [],
+    "statut": "termine",
+    "montantTotal": 0,
+    "montantPatient": 0.0,
+    "montantCNAMGS": 0.0,
+    "dateFacturation": null,
+    "tauxPriseEnCharge": 80.0
+  }
+]

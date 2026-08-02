@@ -1,0 +1,11 @@
+# Librairies pour traitement PDF
+PyPDF2==3.0.1          # Manipulation PDF (split, merge)
+pdf2image==1.16.3      # Conversion PDF → Images
+Pillow==10.0.0         # Traitement images
+pytesseract==0.3.10    # OCR (extraction texte) - OPTIONNEL
+reportlab==4.0.4       # Génération PDF - OPTIONNEL
+
+# Note : pytesseract nécessite Tesseract-OCR installé sur le système
+# Windows : https://github.com/UB-Mannheim/tesseract/wiki
+# Ubuntu : apt-get install tesseract-ocr
+# Mac : brew install tesseract

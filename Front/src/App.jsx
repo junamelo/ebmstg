@@ -20,6 +20,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import GestionComptes from './pages/admin/GestionComptes'
 import AgentDashboard from './pages/agent/AgentDashboard'
 import PublicationPdf from './pages/agent/PublicationPdf'
+import FacturesAPublier from './pages/agent/FacturesAPublier'
 import HistoriquePublications from './pages/agent/HistoriquePublications'
 import GestionForfaits from './pages/agent/GestionForfaits'
 import GestionServices from './pages/agent/GestionServices'
@@ -71,6 +72,7 @@ export default function App() {
             <Route path="contrats" element={<GestionContrats />} />
             <Route path="contrats/:id" element={<DetailContrat />} />
             <Route path="publication" element={<PublicationPdf />} />
+            <Route path="factures-a-publier" element={<FacturesAPublier />} />
             <Route path="publication/historique" element={<HistoriquePublications />} />
             <Route path="services" element={<GestionForfaits />} />
             <Route path="forfaits" element={<GestionServices />} />
@@ -93,6 +95,7 @@ export default function App() {
             <Route path="contrats" element={<GestionContrats />} />
             <Route path="contrats/:id" element={<DetailContrat />} />
             <Route path="publication" element={<PublicationPdf />} />
+            <Route path="factures-a-publier" element={<FacturesAPublier />} />
             <Route path="publication/historique" element={<HistoriquePublications />} />
             <Route path="services" element={<GestionForfaits />} />
             <Route path="forfaits" element={<GestionServices />} />

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getTarifsActifs, simulerFacturation } from '../../services/simulationService'
-import { mockGetServices } from '../../services/mockApi'
+import { getServices } from '../../services/servicesService'
 import { calculerMontantData, calculerMontantVoixMinutes, calculerMontantSms } from '../../services/tarifsService'
+import ImageWithFallback from '../../components/common/ImageWithFallback'
 import illustrationSimulation from '../../assets/illustration-simulation.png'
 import './Simulation.css'
 
@@ -23,12 +24,14 @@ export default function Simulation() {
 
   useEffect(() => {
     console.log('[Simulation] Chargement initial...')
-    Promise.all([getTarifsActifs(), mockGetServices()])
+    Promise.all([getTarifsActifs(), getServices()])
       .then(([t, s]) => {
         console.log('[Simulation] Tarifs:', t)
         console.log('[Simulation] Services:', s)
         setTarifs(t)
-        setServices(s.filter(srv => srv.actif))
+        // Filtrer uniquement les services actifs
+        const servicesActifs = (s.results || s).filter(srv => srv.est_actif)
+        setServices(servicesActifs)
       })
       .catch((err) => {
         console.error('[Simulation] Erreur chargement:', err)
@@ -248,7 +251,11 @@ export default function Simulation() {
       <div className="simulation-layout">
         {/* Illustration */}
         <div className="simulation-illustration">
-          <img src={illustrationSimulation} alt="Illustration simulation" className="simulation-illustration-img" />
+          <ImageWithFallback 
+            src={illustrationSimulation} 
+            alt="Illustration simulation" 
+            className="simulation-illustration-img" 
+          />
         </div>
 
         {/* Formulaire + résultat */}

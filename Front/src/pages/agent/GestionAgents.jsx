@@ -1,59 +1,14 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useAuth } from '../../contexts/AuthContext'
-
-// Mock API - À remplacer par les vrais appels
-const mockGetAgents = async () => {
-  return [
-    {
-      id: 1,
-      username: 'agent.dupont',
-      email: 'agent.dupont@moov.africa',
-      first_name: 'Jean',
-      last_name: 'Dupont',
-      role: 'AGENT_FACTURATION',
-      status: 'ACTIF',
-      custom_permissions: ['accounts.create_agent'],
-      date_creation: '2026-01-15',
-      last_login: '2026-07-26 14:30',
-    },
-    {
-      id: 2,
-      username: 'agent.martin',
-      email: 'agent.martin@moov.africa',
-      first_name: 'Marie',
-      last_name: 'Martin',
-      role: 'AGENT_FACTURATION',
-      status: 'ACTIF',
-      custom_permissions: [],
-      date_creation: '2026-02-20',
-      last_login: '2026-07-27 09:15',
-    },
-  ]
-}
-
-const mockCreerAgent = async (data) => {
-  return {
-    id: Date.now(),
-    ...data,
-    status: 'ACTIF',
-    date_creation: new Date().toISOString().split('T')[0],
-    last_login: null,
-  }
-}
-
-const mockModifierAgent = async (id, data) => {
-  return { id, ...data }
-}
-
-const mockToggleStatus = async (id) => {
-  return { success: true }
-}
+import { getUtilisateurs, activerCompte, suspendreCompte } from '../../services/adminService'
+import api from '../../services/api'
 
 export default function GestionAgents() {
   const { user, isChefFacturation, canCreateAgents } = useAuth()
   const [agents, setAgents] = useState([])
   const [chargement, setChargement] = useState(true)
+  const [erreur, setErreur] = useState(null)
   const [message, setMessage] = useState(null)
   const [formOuvert, setFormOuvert] = useState(false)
   const [modeEdition, setModeEdition] = useState(false)
@@ -74,11 +29,20 @@ export default function GestionAgents() {
     chargerAgents()
   }, [])
 
-  const chargerAgents = () => {
-    mockGetAgents()
-      .then(setAgents)
-      .catch(console.error)
-      .finally(() => setChargement(false))
+  const chargerAgents = async () => {
+    try {
+      setChargement(true)
+      setErreur(null)
+      // Récupérer uniquement les agents de facturation
+      const data = await getUtilisateurs({ role: 'AGENT_FACTURATION' })
+      setAgents(data)
+    } catch (error) {
+      console.error('Erreur chargement agents:', error)
+      setErreur('Impossible de charger les agents')
+      showMsg('error', 'Erreur lors du chargement des agents')
+    } finally {
+      setChargement(false)
+    }
   }
 
   const showMsg = (type, texte) => {
@@ -117,19 +81,18 @@ export default function GestionAgents() {
     try {
       if (modeEdition && agentEnEdition) {
         // Modification
-        const agentModifie = await mockModifierAgent(agentEnEdition.id, {
-          ...agentEnEdition,
+        const agentModifie = await api.put(`/auth/users/${agentEnEdition.id}/`, {
           username: form.username,
           email: form.email,
           first_name: form.first_name,
           last_name: form.last_name,
           custom_permissions: form.custom_permissions
         })
-        setAgents(agents.map(a => a.id === agentEnEdition.id ? agentModifie : a))
+        setAgents(agents.map(a => a.id === agentEnEdition.id ? agentModifie.data : a))
         showMsg('success', `Agent « ${form.username} » modifié avec succès`)
       } else {
         // Création
-        const nouvelAgent = await mockCreerAgent({
+        const response = await api.post('/auth/users/', {
           username: form.username,
           email: form.email,
           first_name: form.first_name,
@@ -138,14 +101,16 @@ export default function GestionAgents() {
           role: 'AGENT_FACTURATION',
           custom_permissions: form.custom_permissions
         })
-        setAgents([nouvelAgent, ...agents])
+        setAgents([response.data, ...agents])
         showMsg('success', `Agent « ${form.username} » créé avec succès`)
       }
 
       resetForm()
       setFormOuvert(false)
+      await chargerAgents() // Recharger la liste
     } catch (error) {
-      showMsg('error', 'Erreur lors de l\'opération')
+      const errorMsg = error.response?.data?.message || error.response?.data?.detail || 'Erreur lors de l\'opération'
+      showMsg('error', errorMsg)
       console.error(error)
     }
   }
@@ -166,15 +131,18 @@ export default function GestionAgents() {
   }
 
   const handleToggleStatus = async (agent) => {
-    const nouveauStatut = agent.status === 'ACTIF' ? 'INACTIF' : 'ACTIF'
-    if (!window.confirm(`${nouveauStatut === 'INACTIF' ? 'Désactiver' : 'Activer'} cet agent ?`)) return
+    const nouveauStatut = agent.is_active ? false : true
+    const action = nouveauStatut ? 'Activer' : 'Désactiver'
+    if (!window.confirm(`${action} cet agent ?`)) return
 
     try {
-      await mockToggleStatus(agent.id)
-      setAgents(agents.map(a =>
-        a.id === agent.id ? { ...a, status: nouveauStatut } : a
-      ))
-      showMsg('success', `Agent ${nouveauStatut === 'INACTIF' ? 'désactivé' : 'activé'}`)
+      if (nouveauStatut) {
+        await activerCompte(agent.id)
+      } else {
+        await suspendreCompte(agent.id)
+      }
+      await chargerAgents() // Recharger la liste
+      showMsg('success', `Agent ${nouveauStatut ? 'activé' : 'désactivé'}`)
     } catch {
       showMsg('error', 'Erreur lors du changement de statut')
     }
@@ -201,7 +169,7 @@ export default function GestionAgents() {
 
   const stats = {
     total: agents.length,
-    actifs: agents.filter(a => a.status === 'ACTIF').length,
+    actifs: agents.filter(a => a.is_active).length,
     avecPermissions: agents.filter(a => a.custom_permissions?.includes('accounts.create_agent')).length
   }
 
@@ -211,6 +179,22 @@ export default function GestionAgents() {
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-zinc-300 border-t-[#002a7a] rounded-full animate-spin" />
           <span className="text-sm text-zinc-600">Chargement...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (erreur) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{erreur}</p>
+          <button
+            onClick={chargerAgents}
+            className="px-4 py-2 bg-[#002a7a] text-white rounded-lg hover:bg-[#003399]"
+          >
+            Réessayer
+          </button>
         </div>
       </div>
     )
@@ -528,11 +512,11 @@ export default function GestionAgents() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${agent.status === 'ACTIF'
+                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${agent.is_active
                           ? 'bg-emerald-500/10 text-emerald-700'
                           : 'bg-zinc-500/10 text-zinc-600'
                         }`}>
-                        {agent.status === 'ACTIF' ? 'Actif' : 'Inactif'}
+                        {agent.is_active ? 'Actif' : 'Inactif'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center text-sm text-zinc-600">
@@ -550,12 +534,12 @@ export default function GestionAgents() {
                             </button>
                             <button
                               onClick={() => handleToggleStatus(agent)}
-                              className={`text-sm px-3 py-1 rounded-lg font-medium ${agent.status === 'ACTIF'
+                              className={`text-sm px-3 py-1 rounded-lg font-medium ${agent.is_active
                                   ? 'text-rose-600 hover:bg-rose-50'
                                   : 'text-emerald-600 hover:bg-emerald-50'
                                 }`}
                             >
-                              {agent.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
+                              {agent.is_active ? 'Désactiver' : 'Activer'}
                             </button>
                           </>
                         )}

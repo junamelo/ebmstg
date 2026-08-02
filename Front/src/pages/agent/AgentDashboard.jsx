@@ -63,8 +63,27 @@ export default function AgentDashboard() {
 
   useEffect(() => {
     getStatsAgentFacturation()
-      .then(setStats)
-      .catch(console.error)
+      .then((data) => {
+        // Protection contre les données nulles
+        setStats(data || {
+          facturesNonPubliees: 0,
+          erreursDecoupage: 0, 
+          lignesSansForfait: 0,
+          servicesActifs: [],
+          historiquePublications: []
+        })
+      })
+      .catch((error) => {
+        console.error('Erreur stats:', error)
+        // Données par défaut en cas d'erreur
+        setStats({
+          facturesNonPubliees: 0,
+          erreursDecoupage: 0, 
+          lignesSansForfait: 0,
+          servicesActifs: [],
+          historiquePublications: []
+        })
+      })
       .finally(() => setChargement(false))
   }, [])
 
@@ -74,6 +93,37 @@ export default function AgentDashboard() {
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-zinc-300 border-t-[#002a7a] rounded-full animate-spin" />
           <span className="text-sm text-zinc-600 dark:text-zinc-400">Chargement...</span>
+        </div>
+      </div>
+    )
+  }
+
+  // Si pas de stats, afficher un message informatif
+  if (!stats || Object.keys(stats).length === 0) {
+    return (
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white mb-8">
+          Dashboard Agent
+        </h1>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+          <h3 className="text-lg font-semibold text-blue-900 mb-2">Dashboard en cours de développement</h3>
+          <p className="text-blue-700 mb-4">
+            Les statistiques seront bientôt disponibles. En attendant, vous pouvez accéder à toutes les fonctionnalités :
+          </p>
+          <div className="flex justify-center gap-4">
+            <Link
+              to="/agent/publication"
+              className="bg-[#002a7a] text-white px-6 py-2 rounded-lg hover:bg-[#003087] transition-colors"
+            >
+              📄 Publication PDF
+            </Link>
+            <Link
+              to="/agent/contrats"
+              className="bg-[#e05500] text-white px-6 py-2 rounded-lg hover:bg-[#cc4d00] transition-colors"
+            >
+              📋 Gestion Contrats
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -127,7 +177,7 @@ export default function AgentDashboard() {
 
         <ResponsiveContainer width="100%" height={260}>
           <LineChart
-            data={stats.historiquePublications}
+            data={stats?.historiquePublications || []}
             margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -165,20 +215,20 @@ export default function AgentDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <AlerteMetric
             titre="Factures non publiées"
-            count={stats.facturesNonPubliees}
-            type={stats.facturesNonPubliees > 0 ? 'danger' : 'info'}
+            count={stats?.facturesNonPubliees || 0}
+            type={(stats?.facturesNonPubliees || 0) > 0 ? 'danger' : 'info'}
             delay={0.1}
           />
           <AlerteMetric
             titre="Erreurs de découpage PDF"
-            count={stats.erreursDecoupage}
-            type={stats.erreursDecoupage > 0 ? 'danger' : 'info'}
+            count={stats?.erreursDecoupage || 0}
+            type={(stats?.erreursDecoupage || 0) > 0 ? 'danger' : 'info'}
             delay={0.15}
           />
           <AlerteMetric
             titre="Lignes sans forfait"
-            count={stats.lignesSansForfait}
-            type={stats.lignesSansForfait > 0 ? 'warning' : 'info'}
+            count={stats?.lignesSansForfait || 0}
+            type={(stats?.lignesSansForfait || 0) > 0 ? 'warning' : 'info'}
             delay={0.2}
           />
         </div>
@@ -205,7 +255,7 @@ export default function AgentDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {stats.servicesActifs.map((service, idx) => (
+              {(stats?.servicesActifs || []).map((service, idx) => (
                 <motion.tr
                   key={idx}
                   initial={{ opacity: 0 }}
@@ -296,7 +346,7 @@ export default function AgentDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {stats.historiquePublications.map((pub, idx) => (
+              {(stats?.historiquePublications || []).map((pub, idx) => (
                 <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">{pub.date}</td>
                   <td className="px-6 py-4 font-medium text-zinc-900 dark:text-white">{pub.periode}</td>

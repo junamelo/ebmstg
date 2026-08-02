@@ -1,0 +1,13 @@
+{
+  "dateImport": "2026-07-30 12:56:54",
+  "fichierGLO": "PHYS.OPN.202606.GLO (1).xlsx",
+  "fichierSOM": "PHYS.OPN.202606.SOM (1).xlsx",
+  "statistiques": {
+    "nombrePatients": 36,
+    "nombreConsultations": 36,
+    "nombreTypesPrestation": 4,
+    "montantTotalConsultations": 0,
+    "montantTotalCNAMGS": 0.0,
+    "montantTotalPatients": 0.0
+  }
+}
