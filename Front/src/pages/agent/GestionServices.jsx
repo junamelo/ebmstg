@@ -188,59 +188,56 @@ export default function GestionServices() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {paliersData.map((palier, idx) => (
-              <motion.div
-                key={palier.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.05 }}
-                className="bg-gradient-to-br from-white to-blue-50 rounded-xl border-2 border-blue-200 p-5 hover:shadow-lg transition-shadow"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">
-                    Palier {idx + 1}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => ouvrirModal(palier)}
-                      className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors text-blue-700"
-                      title="Modifier"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleSupprimerPalier(palier.id)}
-                      className="p-1.5 hover:bg-red-100 rounded-lg transition-colors text-red-600"
-                      title="Supprimer"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                
-                <p className="text-sm font-medium text-zinc-700 mb-2">{palier.description}</p>
-                
-                <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-2xl font-black text-blue-700">
-                    {palier.prix.toLocaleString('fr-FR')}
-                  </span>
-                  <span className="text-sm font-semibold text-zinc-600">
-                    {palier.prixParMo ? 'F/Mo' : 'FCFA'}
-                  </span>
-                </div>
-                
-                {palier.prixParMo && (
-                  <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
-                    + 50 000 F de base après 275 Go
-                  </p>
-                )}
-              </motion.div>
-            ))}
+          <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-zinc-100 bg-zinc-50">
+                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Palier</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Tranche</th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-500">Prix</th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {paliersData.map((palier, idx) => (
+                  <motion.tr
+                    key={palier.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: idx * 0.04 }}
+                    className="hover:bg-zinc-50 transition-colors"
+                  >
+                    <td className="px-5 py-3.5">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-zinc-100 text-zinc-700 text-xs font-semibold">
+                        #{idx + 1}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-sm text-zinc-700">{palier.description}</td>
+                    <td className="px-5 py-3.5 text-right">
+                      <span className="text-sm font-bold text-zinc-900">
+                        {palier.prix.toLocaleString('fr-FR')}
+                      </span>
+                      <span className="text-xs text-zinc-500 ml-1">{palier.prixParMo ? 'F/Mo' : 'FCFA'}</span>
+                      {palier.prixParMo && (
+                        <p className="text-xs text-zinc-400 mt-0.5">+ 50 000 F base</p>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button onClick={() => ouvrirModal(palier)}
+                          className="px-2.5 py-1 text-xs font-medium text-zinc-600 border border-zinc-200 rounded-md hover:bg-zinc-100 transition-colors">
+                          Modifier
+                        </button>
+                        <button onClick={() => handleSupprimerPalier(palier.id)}
+                          className="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition-colors">
+                          Suppr.
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </motion.div>
       )}
@@ -271,65 +268,64 @@ export default function GestionServices() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {tarifsVoix.map((tarif, idx) => (
-              <motion.div
-                key={tarif.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.05 }}
-                className="bg-gradient-to-br from-white to-green-50 rounded-xl border-2 border-green-200 p-5 hover:shadow-lg transition-shadow"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full">
-                    Tarif {idx + 1}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => ouvrirModal(tarif)}
-                      className="p-1.5 hover:bg-green-100 rounded-lg transition-colors text-green-700"
-                      title="Modifier"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleSupprimerPalier(tarif.id)}
-                      className="p-1.5 hover:bg-red-100 rounded-lg transition-colors text-red-600"
-                      title="Supprimer"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                
-                <p className="text-sm font-medium text-zinc-700 mb-2">{tarif.description}</p>
-                
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-green-700">
-                    {tarif.prix.toLocaleString('fr-FR')}
-                  </span>
-                  <span className="text-sm font-semibold text-zinc-600">
-                    F/{tarif.unite}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
+          <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-zinc-100 bg-zinc-50">
+                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Tarif</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Tranche</th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-500">Prix</th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {tarifsVoix.map((tarif, idx) => (
+                  <motion.tr
+                    key={tarif.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: idx * 0.04 }}
+                    className="hover:bg-zinc-50 transition-colors"
+                  >
+                    <td className="px-5 py-3.5">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-zinc-100 text-zinc-700 text-xs font-semibold">
+                        #{idx + 1}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-sm text-zinc-700">{tarif.description}</td>
+                    <td className="px-5 py-3.5 text-right">
+                      <span className="text-sm font-bold text-zinc-900">
+                        {tarif.prix.toLocaleString('fr-FR')}
+                      </span>
+                      <span className="text-xs text-zinc-500 ml-1">F/{tarif.unite}</span>
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button onClick={() => ouvrirModal(tarif)}
+                          className="px-2.5 py-1 text-xs font-medium text-zinc-600 border border-zinc-200 rounded-md hover:bg-zinc-100 transition-colors">
+                          Modifier
+                        </button>
+                        <button onClick={() => handleSupprimerPalier(tarif.id)}
+                          className="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition-colors">
+                          Suppr.
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4 text-zinc-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
               </svg>
               <div>
-                <h4 className="font-semibold text-amber-900 mb-1">Règle de facturation</h4>
-                <p className="text-sm text-amber-800">
-                  Exemple : Appel de 1 min 20s = 79 F + (79 F / 2) = 118,50 F<br/>
-                  Appel de 1 min 40s = 79 F × 2 = 158 F
+                <p className="text-xs font-semibold text-zinc-600 mb-0.5">Règle de facturation</p>
+                <p className="text-xs text-zinc-500">
+                  Appel 1 min 20s = 79 F + (79 F / 2) = 118,50 F &nbsp;|&nbsp; Appel 1 min 40s = 79 F x 2 = 158 F
                 </p>
               </div>
             </div>
@@ -352,34 +348,31 @@ export default function GestionServices() {
             </p>
           </div>
 
-          <div className="max-w-md">
-            <form onSubmit={handleSauvegarderTarifSMS} className="bg-gradient-to-br from-white to-purple-50 rounded-xl border-2 border-purple-200 p-6">
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-zinc-700 mb-2">
+          <div className="max-w-sm">
+            <form onSubmit={handleSauvegarderTarifSMS} className="bg-white rounded-xl border border-zinc-200 p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1.5">
                   Prix unitaire (FCFA) *
                 </label>
                 <input
                   name="prix"
                   type="number"
                   step="0.01"
+                  min="0"
                   required
                   defaultValue={tarifSMS.prix}
-                  className="w-full px-4 py-3 bg-white border-2 border-purple-300 rounded-lg text-lg font-bold text-purple-700 focus:ring-2 focus:ring-purple-500 outline-none"
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-[#e05500] outline-none"
                 />
               </div>
-              
-              <div className="flex items-baseline gap-2 mb-4 p-4 bg-purple-100 rounded-lg">
-                <span className="text-3xl font-black text-purple-700">
-                  {tarifSMS.prix}
-                </span>
-                <span className="text-sm font-semibold text-purple-600">
-                  FCFA / SMS
-                </span>
+
+              <div className="flex items-baseline gap-2 p-4 bg-zinc-50 rounded-lg border border-zinc-100">
+                <span className="text-2xl font-bold text-zinc-900">{tarifSMS.prix}</span>
+                <span className="text-sm text-zinc-500">FCFA / SMS</span>
               </div>
 
               <button
                 type="submit"
-                className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
+                className="w-full px-4 py-2.5 bg-[#e05500] hover:bg-[#c44a00] text-white font-semibold rounded-lg transition-colors text-sm"
               >
                 Enregistrer le tarif SMS
               </button>
@@ -391,17 +384,21 @@ export default function GestionServices() {
       {/* Modal ajout/édition palier */}
       <AnimatePresence>
         {modalOuvert && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               className="bg-white rounded-2xl shadow-2xl w-full max-w-lg"
             >
-              <div className="px-6 py-4 border-b border-zinc-200">
-                <h3 className="text-lg font-bold text-zinc-900">
+              <div className="px-6 py-4 border-b border-zinc-200 flex items-center justify-between">
+                <h3 className="text-base font-semibold text-zinc-900">
                   {palierEdite ? `Modifier ${serviceActif === 'DATA' ? 'le palier' : 'le tarif'}` : `Ajouter un ${serviceActif === 'DATA' ? 'palier' : 'tarif'} ${serviceActif}`}
                 </h3>
+                <button type="button" onClick={fermerModal}
+                  className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-zinc-100 text-zinc-400 transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
               </div>
 
               <form onSubmit={handleSauvegarderPalier} className="p-6 space-y-4">

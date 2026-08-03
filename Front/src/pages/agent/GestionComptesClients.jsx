@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'motion/react'
 import PasswordInput from '../../components/common/PasswordInput'
 import { genererMotDePasseDefaut, genererLoginPayeur, genererLoginEmploye } from '../../utils/passwordUtils'
@@ -33,6 +33,8 @@ export default function GestionComptesClients() {
   const [motDePasse, setMotDePasse] = useState('')
   const [forcerChangement, setForcerChangement] = useState(true)
   const [envoyerEmail, setEnvoyerEmail] = useState(true)
+  const [pageCourante, setPageCourante] = useState(1)
+  const ITEMS_PAR_PAGE = 6
 
   const ouvrirModal = (type) => {
     setTypeCompte(type)
@@ -88,6 +90,12 @@ export default function GestionComptesClients() {
     setFormData({})
   }
 
+  const nbPages = Math.ceil(comptes.length / ITEMS_PAR_PAGE)
+  const comptesAffichees = comptes.slice(
+    (pageCourante - 1) * ITEMS_PAR_PAGE,
+    pageCourante * ITEMS_PAR_PAGE
+  )
+
   return (
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center">
@@ -116,7 +124,7 @@ export default function GestionComptesClients() {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {comptes.map((compte) => (
+            {comptesAffichees.map((compte) => (
               <tr key={compte.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
                 <td className="px-6 py-4">
                   <p className="font-semibold text-zinc-900 dark:text-white">
@@ -143,15 +151,47 @@ export default function GestionComptesClients() {
             ))}
           </tbody>
         </table>
+
+        {nbPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-zinc-100 dark:border-zinc-800">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Affichage {(pageCourante - 1) * ITEMS_PAR_PAGE + 1}&ndash;{Math.min(pageCourante * ITEMS_PAR_PAGE, comptes.length)} sur <strong>{comptes.length}</strong> compte(s)
+            </p>
+            <div className="flex items-center gap-1.5">
+              <button disabled={pageCourante === 1} onClick={() => setPageCourante(p => p - 1)}
+                className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm disabled:opacity-40 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                &#8592; Préc.
+              </button>
+              {Array.from({ length: nbPages }, (_, i) => i + 1).map(p => (
+                <button key={p} onClick={() => setPageCourante(p)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    p === pageCourante ? 'bg-[#002a7a] text-white' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                  }`}>
+                  {p}
+                </button>
+              ))}
+              <button disabled={pageCourante === nbPages} onClick={() => setPageCourante(p => p + 1)}
+                className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm disabled:opacity-40 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                Suiv. &#8594;
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {modalOuvert && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[1100] p-4">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex-shrink-0">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex-shrink-0 flex items-center justify-between">
               <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
                 Créer un compte {typeCompte === 'PAYEUR' ? 'Payeur' : 'Employé'}
               </h3>
+              <button type="button" onClick={() => setModalOuvert(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1 overscroll-contain">
               {typeCompte === 'PAYEUR' ? (

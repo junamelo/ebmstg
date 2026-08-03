@@ -278,21 +278,21 @@ export default function GestionForfaits() {
       {/* Modal ajouter option */}
       <AnimatePresence>
         {serviceSelectionne && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
               className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6"
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-semibold text-zinc-900">
-                  {modeEditionOption ? 'Modifier l\'option' : 'Ajouter une option'} — {services.find(s => s.id === serviceSelectionne)?.nom}
+                  {modeEditionOption ? "Modifier l'option" : 'Ajouter une option'} — {services.find(s => s.id === serviceSelectionne)?.nom}
                 </h2>
                 <button onClick={annulerEditionOption}
                   className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-100 text-zinc-400">✕</button>
               </div>
               <form onSubmit={handleAjouterOption} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">Nom de l'option *</label>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">Nom de l&apos;option *</label>
                   <input
                     required type="text"
                     className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-[#e05500] outline-none"
@@ -307,6 +307,8 @@ export default function GestionForfaits() {
                     required 
                     type="number" 
                     step="any"
+                    min="0"
+                    inputMode="decimal"
                     className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-[#e05500] outline-none"
                     placeholder="Ex: 1200"
                     value={formOption.tarif}

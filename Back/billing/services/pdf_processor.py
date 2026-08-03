@@ -180,6 +180,31 @@ class PDFProcessor:
                 'warnings': []
             }
 
+        pdf_file.seek(0)
+        try:
+            reader = PdfReader(pdf_file)
+            blocks, current_block, errors_per_page, warnings = [], None, [], []
+            for page_num, page in enumerate(reader.pages):
+                try:
+                    text = cls.extract_text_from_page(page)
+                    identifiers = cls.find_identifiers(text) if text and len(text.strip()) >= 10 else {}
+                    if identifiers:
+                        if current_block:
+                            blocks.append(current_block)
+                        current_block = {'start_page': page_num, 'end_page': page_num, 'identifiers': identifiers, 'pages': [page_num]}
+                    elif current_block:
+                        current_block['end_page'] = page_num
+                        current_block['pages'].append(page_num)
+                    else:
+                        warnings.append(f"Page {page_num + 1}: Aucun identifiant trouvé")
+                except Exception as error:
+                    errors_per_page.append({'page': page_num + 1, 'error': str(error)})
+            if current_block:
+                blocks.append(current_block)
+            return {'success': True, 'blocks': blocks, 'total_pages': len(reader.pages), 'errors_per_page': errors_per_page, 'warnings': warnings}
+        except Exception as error:
+            return {'success': False, 'error': f"Erreur lors de l'analyse du PDF: {error}", 'blocks': [], 'warnings': []}
+
     @classmethod
     def analyze_global_pdf_structure(cls, pdf_file) -> Dict:
         """Regroupe les pages contiguës d'un même compte pour un PDF GLO."""

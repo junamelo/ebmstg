@@ -15,6 +15,8 @@ export default function GestionContrats() {
   const [recherche, setRecherche] = useState('')
   const [filtreStatut, setFiltreStatut] = useState('tous')
   const [filtreType, setFiltreType] = useState('tous')
+  const [pageCourante, setPageCourante] = useState(1)
+  const ITEMS_PAR_PAGE = 6
 
   useEffect(() => {
     chargerContrats()
@@ -86,6 +88,10 @@ export default function GestionContrats() {
     }
   }
 
+  useEffect(() => {
+    setPageCourante(1)
+  }, [recherche, filtreStatut, filtreType])
+
   const contratsFiltres = contrats.filter(contrat => {
     const matchStatut = filtreStatut === 'tous' || contrat.statut === filtreStatut
     const matchType = filtreType === 'tous' || contrat.typePayeur === filtreType
@@ -124,6 +130,12 @@ export default function GestionContrats() {
 
   const totalLignes = contrats.reduce((sum, c) => sum + c.lignes.length, 0)
   const caTotal = contrats.reduce((sum, c) => sum + c.caMensuel, 0)
+  const nbPages = Math.ceil(contratsFiltres.length / ITEMS_PAR_PAGE)
+  const contratsAffichees = contratsFiltres.slice(
+    (pageCourante - 1) * ITEMS_PAR_PAGE,
+    pageCourante * ITEMS_PAR_PAGE
+  )
+
   const nouveauxCeMois = contrats.filter(c => {
     const dateCreation = new Date(c.dateCreation)
     const maintenant = new Date()
@@ -272,11 +284,50 @@ export default function GestionContrats() {
           </button>
         </motion.div>
       ) : contratsFiltres.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {contratsFiltres.map((contrat, idx) => (
-            <ContratCard key={contrat.id} contrat={contrat} delay={idx * 0.05} onVoirDetails={handleVoirDetails} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {contratsAffichees.map((contrat, idx) => (
+              <ContratCard key={contrat.id} contrat={contrat} delay={idx * 0.05} onVoirDetails={handleVoirDetails} />
+            ))}
+          </div>
+
+          {nbPages > 1 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Affichage {(pageCourante - 1) * ITEMS_PAR_PAGE + 1}–{Math.min(pageCourante * ITEMS_PAR_PAGE, contratsFiltres.length)} sur <strong>{contratsFiltres.length}</strong> contrat(s)
+              </p>
+              <div className="flex items-center gap-1.5">
+                <button
+                  disabled={pageCourante === 1}
+                  onClick={() => setPageCourante(p => p - 1)}
+                  className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-600 dark:text-zinc-400 disabled:opacity-40 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  &#8592; Préc.
+                </button>
+                {Array.from({ length: nbPages }, (_, i) => i + 1).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setPageCourante(p)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      p === pageCourante
+                        ? 'bg-[#002a7a] text-white shadow-sm'
+                        : 'border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  disabled={pageCourante === nbPages}
+                  onClick={() => setPageCourante(p => p + 1)}
+                  className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-600 dark:text-zinc-400 disabled:opacity-40 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  Suiv. &#8594;
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </>
       ) : (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
           <svg className="w-16 h-16 mx-auto text-zinc-400 mb-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
