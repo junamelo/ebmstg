@@ -7,10 +7,11 @@ import api from './api'
  * Upload d'un bloc PDF de factures
  * Endpoint: POST /api/billing/invoices/upload_bulk_pdf/
  */
-export const uploadBlocPdf = async (fichier, cycle, periodeDebut, periodeFin, onProgress) => {
+export const uploadBlocPdf = async (fichier, cycle, periodeDebut, periodeFin, onProgress, typeFacture = 'SOM') => {
   const formData = new FormData()
   formData.append('fichier', fichier)
   formData.append('auto_match', 'true')
+  formData.append('type_facture', typeFacture)
   formData.append('cycle', cycle)
   formData.append('periode_debut', periodeDebut)
   formData.append('periode_fin', periodeFin)
@@ -124,7 +125,17 @@ export const reinitialiserMotDePasseAdmin = async (id) => {
  */
 export const getStatistiques = async () => {
   const response = await api.get('/billing/stats/admin/')
-  return response.data
+  const data = response.data
+  const global = data.statistiques_globales || {}
+  return {
+    ...data,
+    totalContrats: global.total_entreprises || 0,
+    totalLignesActives: global.total_lignes || 0,
+    totalUtilisateursActifs: (data.stats_agents?.agents_actifs || 0) + (data.stats_utilisateurs?.total_payeurs || 0) + (data.stats_utilisateurs?.total_employes || 0),
+    facturationMensuelle: data.evolution_mensuelle || [],
+    historiquePublications: [],
+    dernieresConnexions: [],
+  }
 }
 
 /**
@@ -133,7 +144,17 @@ export const getStatistiques = async () => {
  */
 export const getStatsPayeur = async () => {
   const response = await api.get('/billing/stats/payeur/')
-  return response.data
+  const data = response.data
+  const stats = data.statistiques || {}
+  return {
+    ...data,
+    nombreLignesActives: stats.nombre_lignes || 0,
+    lignesDetail: (data.lignes_a_surveiller || []).map(ligne => ({
+      ...ligne, montant: ligne.montant_facture || 0, forfait: '-', statut: 'ACTIF'
+    })),
+    lignesASurveiller: [],
+    dernieresSimulations: [],
+  }
 }
 
 /**
@@ -142,21 +163,48 @@ export const getStatsPayeur = async () => {
  */
 export const getStatsEmploye = async () => {
   const response = await api.get('/billing/stats/employe/')
-  return response.data
+  const data = response.data
+  return {
+    ...data,
+    dernieresSimulations: (data.simulations?.dernieres || []).map(simulation => ({
+      date: simulation.date_simulation, montant: simulation.montant_estime
+    }))
+  }
 }
 
 /**
- * Récupère les statistiques chef/agent facturation
- * Endpoint: GET /api/billing/stats/chef/ ou /api/billing/stats/agent/
+ * Récupère les statistiques de l'agent de facturation connecté.
+ * Endpoint: GET /api/billing/stats/agent/
  */
 export const getStatsAgentFacturation = async () => {
-  try {
-    // Essayer d'abord avec l'endpoint chef
-    const response = await api.get('/billing/stats/chef/')
-    return response.data
-  } catch (error) {
-    // Fallback sur agent si chef échoue
-    const response = await api.get('/billing/stats/agent/')
-    return response.data
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const isChef = user.role === 'CHEF_FACTURATION'
+  const response = await api.get(isChef ? '/billing/stats/chef/' : '/billing/stats/agent/')
+  if (isChef) {
+    const performance = response.data.performance_equipe || {}
+    return {
+      ...response.data,
+      facturesNonPubliees: 0,
+      erreursDecoupage: 0,
+      lignesSansForfait: 0,
+      servicesActifs: [],
+      historiquePublications: response.data.agents || [],
+      statistiques: {
+        total_publications: performance.total_publications || 0,
+        montant_total: performance.montant_total || 0,
+        lignes_traitees: 0,
+      },
+      evolution_quotidienne: response.data.publications_periode || [],
+      dernieres_publications: response.data.agents || [],
+    }
+  }
+  const data = response.data
+  return {
+    ...data,
+    facturesNonPubliees: 0,
+    erreursDecoupage: 0,
+    lignesSansForfait: 0,
+    servicesActifs: [],
+    historiquePublications: data.dernieres_publications || [],
   }
 }

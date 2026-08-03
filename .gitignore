@@ -1,0 +1,21 @@
+# Environnement et secrets
+.env
+.env.*
+!.env.example
+
+# Donnees locales et medias clients
+Back/db.sqlite3
+Back/media/
+Contexte/testPDF/
+
+# Frontend
+Front/node_modules/
+Front/dist/
+Front/.vite/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+venv/
+.venv/

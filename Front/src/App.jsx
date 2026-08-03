@@ -74,8 +74,8 @@ export default function App() {
             <Route path="publication" element={<PublicationPdf />} />
             <Route path="factures-a-publier" element={<FacturesAPublier />} />
             <Route path="publication/historique" element={<HistoriquePublications />} />
-            <Route path="services" element={<GestionForfaits />} />
-            <Route path="forfaits" element={<GestionServices />} />
+            <Route path="forfaits" element={<GestionForfaits />} />
+            <Route path="services" element={<GestionServices />} />
             <Route path="profil" element={<MonProfil />} />
           </Route>
           
@@ -97,8 +97,8 @@ export default function App() {
             <Route path="publication" element={<PublicationPdf />} />
             <Route path="factures-a-publier" element={<FacturesAPublier />} />
             <Route path="publication/historique" element={<HistoriquePublications />} />
-            <Route path="services" element={<GestionForfaits />} />
-            <Route path="forfaits" element={<GestionServices />} />
+            <Route path="forfaits" element={<GestionForfaits />} />
+            <Route path="services" element={<GestionServices />} />
             <Route path="profil" element={<MonProfil />} />
           </Route>
 
@@ -116,8 +116,8 @@ export default function App() {
             <Route path="comptes" element={<GestionComptes />} />
             <Route path="contrats" element={<GestionContrats />} />
             <Route path="contrats/:id" element={<DetailContrat />} />
-            <Route path="services" element={<GestionForfaits />} />
-            <Route path="forfaits" element={<GestionServices />} />
+            <Route path="forfaits" element={<GestionForfaits />} />
+            <Route path="services" element={<GestionServices />} />
             <Route path="publication" element={<PublicationPdf />} />
             <Route path="publication/historique" element={<HistoriquePublications />} />
             <Route path="profil" element={<MonProfil />} />

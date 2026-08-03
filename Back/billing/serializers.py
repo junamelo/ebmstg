@@ -537,12 +537,30 @@ class UploadPDFSerializer(serializers.Serializer):
     
     def validate_fichier(self, value):
         """Valider que c'est bien un PDF"""
-        if not value.name.endswith('.pdf'):
-            raise serializers.ValidationError("Le fichier doit être au format PDF")
+        # Vérifier l'extension
+        if not value.name.lower().endswith('.pdf'):
+            raise serializers.ValidationError("Le fichier doit avoir l'extension .pdf")
         
         # Vérifier la taille (max 50 Mo)
-        if value.size > 50 * 1024 * 1024:
-            raise serializers.ValidationError("Le fichier ne doit pas dépasser 50 Mo")
+        max_size = 50 * 1024 * 1024
+        if value.size > max_size:
+            raise serializers.ValidationError(
+                f"Le fichier ne doit pas dépasser 50 Mo (taille: {value.size / (1024 * 1024):.1f} Mo)"
+            )
+        
+        # Vérifier que ce n'est pas un fichier vide
+        if value.size == 0:
+            raise serializers.ValidationError("Le fichier PDF est vide")
+        
+        # Vérifier le header PDF basique
+        value.seek(0)
+        header = value.read(8)
+        value.seek(0)  # Remettre au début
+        
+        if not header.startswith(b'%PDF'):
+            raise serializers.ValidationError(
+                "Le fichier ne semble pas être un PDF valide (header manquant)"
+            )
         
         return value
 
@@ -554,6 +572,11 @@ class BulkPDFUploadSerializer(serializers.Serializer):
         default=True,
         help_text="Matcher automatiquement les PDF découpés aux factures"
     )
+    type_facture = serializers.ChoiceField(
+        choices=['SOM', 'GLO'],
+        default='SOM',
+        help_text="Format du PDF : SOM (individuel) ou GLO (global)"
+    )
     cycle = serializers.ChoiceField(
         choices=['HYB', 'OP'],
         required=False,
@@ -564,12 +587,30 @@ class BulkPDFUploadSerializer(serializers.Serializer):
     
     def validate_fichier(self, value):
         """Valider que c'est bien un PDF"""
-        if not value.name.endswith('.pdf'):
-            raise serializers.ValidationError("Le fichier doit être au format PDF")
+        # Vérifier l'extension
+        if not value.name.lower().endswith('.pdf'):
+            raise serializers.ValidationError("Le fichier doit avoir l'extension .pdf")
         
-        # Vérifier la taille (max 200 Mo pour bulk)
-        if value.size > 200 * 1024 * 1024:
-            raise serializers.ValidationError("Le fichier ne doit pas dépasser 200 Mo")
+        # Vérifier la taille (max 50 Mo)
+        max_size = 50 * 1024 * 1024
+        if value.size > max_size:
+            raise serializers.ValidationError(
+                f"Le fichier ne doit pas dépasser 50 Mo (taille: {value.size / (1024 * 1024):.1f} Mo)"
+            )
+        
+        # Vérifier que ce n'est pas un fichier vide
+        if value.size == 0:
+            raise serializers.ValidationError("Le fichier PDF est vide")
+        
+        # Vérifier le header PDF basique
+        value.seek(0)
+        header = value.read(8)
+        value.seek(0)  # Remettre au début
+        
+        if not header.startswith(b'%PDF'):
+            raise serializers.ValidationError(
+                "Le fichier ne semble pas être un PDF valide (header manquant)"
+            )
         
         return value
 

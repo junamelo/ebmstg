@@ -1,0 +1,240 @@
+================================================================================
+RAPPORT DE TEST MANUEL - PHASE 4
+Traitement Robuste des Factures PDF
+================================================================================
+
+DATE: 2 août 2026
+TESTEUR: Agent Kiro
+ENVIRONNEMENT: 
+  - Backend: http://127.0.0.1:8000/
+  - Frontend: http://localhost:3001/
+
+================================================================================
+1. PRÉPARATION DES DONNÉES DE TEST
+================================================================================
+
+✅ Entreprise créée:
+   - Compte: A0000009
+   - Raison sociale: CAFE INFORMATIQUE ET TEL
+
+✅ Comptes utilisateurs créés:
+   - Agent de facturation: agent_factu / test123
+   - Payeur: cafe_payeur / test123
+   - Employé 1: marie.noagbodji / test123
+   - Employé 2: jean.noagbodji / test123
+   - Employé 3: secretariat.tech / test123
+
+✅ Lignes téléphoniques créées:
+   - 99475555 → marie.noagbodji
+   - 99478787 → jean.noagbodji
+   - 99492454 → secretariat.tech
+
+✅ Factures EN_COURS créées (avant upload PDF):
+   - A20260601041-99475555 | 11 798 FCFA | Statut: EN_COURS
+   - A20260601041-99478787 | 43 040 FCFA | Statut: EN_COURS
+   - A20260601041-99492454 | 22 750 FCFA | Statut: EN_COURS
+
+✅ PDF de test préparé:
+   - Fichier: PHYS.OPN.202606.GLO-1-70.pdf
+   - Localisation: C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\testPDF\
+   - Taille: 70 pages
+   - Contenu: Facture globale JUIN 2026 pour compte A0000009
+   - MSISDNs inclus: 99475555, 99478787, 99492454
+
+================================================================================
+2. PROCÉDURE DE TEST MANUEL
+================================================================================
+
+ÉTAPE 1: Connexion en tant qu'agent de facturation
+--------------------------------------------------
+□ Aller sur http://localhost:3001/
+□ Se connecter avec: agent_factu / test123
+□ Vérifier que le menu "Import PDF" ou "Facturation" est accessible
+
+ÉTAPE 2: Upload du PDF via l'interface
+--------------------------------------
+□ Naviguer vers la page d'import de factures PDF
+□ Sélectionner le fichier: PHYS.OPN.202606.GLO-1-70.pdf
+□ Cocher l'option "Rapprochement automatique" (auto_match=true)
+□ Cliquer sur "Importer"
+
+RÉSULTAT ATTENDU:
+□ HTTP 200 OK
+□ Message de succès affiché
+□ Résumé du matching montrant:
+  - successfully_matched: 3
+  - not_matched: 0
+  - skipped_already_processed: 0
+  - errors: []
+
+ÉTAPE 3: Vérification du statut des factures après import
+--------------------------------------------------------
+□ Aller dans la liste des factures
+□ Filtrer par entreprise A0000009 ou par date juin 2026
+□ Vérifier que les 3 factures sont maintenant en statut VALIDEE:
+  - A20260601041-99475555 | VALIDEE | PDF attaché
+  - A20260601041-99478787 | VALIDEE | PDF attaché
+  - A20260601041-99492454 | VALIDEE | PDF attaché
+
+RÈGLE STRICTE PHASE 4:
+□ ✅ Les factures NE DOIVENT PAS être en statut PUBLIEE automatiquement
+□ ✅ Seul le statut VALIDEE est accepté après l'import
+
+ÉTAPE 4: Vérification que les clients ne voient PAS encore les factures
+-----------------------------------------------------------------------
+□ Se déconnecter de l'agent
+□ Se connecter avec: cafe_payeur / test123
+□ Aller sur la page "Mes factures"
+
+RÉSULTAT ATTENDU:
+□ Les 3 factures importées NE DOIVENT PAS apparaître dans la liste
+□ Seules les factures déjà PUBLIEES (si existantes) doivent être visibles
+
+□ Se déconnecter du payeur
+□ Se connecter avec: marie.noagbodji / test123
+□ Aller sur "Ma facture" ou "Mon espace"
+
+RÉSULTAT ATTENDU:
+□ La facture A20260601041-99475555 NE DOIT PAS être visible
+□ Message: "Aucune facture disponible" ou liste vide
+
+ÉTAPE 5: Publication explicite par l'agent
+-----------------------------------------
+□ Se déconnecter et se reconnecter avec: agent_factu / test123
+□ Aller dans la liste des factures VALIDEES
+□ Sélectionner la facture A20260601041-99475555
+□ Cliquer sur "Publier" (action de publication explicite)
+
+RÉSULTAT ATTENDU:
+□ Facture passe au statut PUBLIEE
+□ Message de confirmation: "Facture publiée avec succès"
+
+ÉTAPE 6: Vérification de l'accès client APRÈS publication
+---------------------------------------------------------
+□ Se déconnecter de l'agent
+□ Se connecter avec: marie.noagbodji / test123
+□ Aller sur "Ma facture"
+
+RÉSULTAT ATTENDU:
+□ ✅ La facture A20260601041-99475555 est MAINTENANT visible
+□ ✅ Le PDF peut être téléchargé
+□ ✅ Les détails sont affichés correctement
+
+□ Se déconnecter et se connecter avec: cafe_payeur / test123
+□ Vérifier que la facture A20260601041-99475555 apparaît dans la liste
+
+RÉSULTAT ATTENDU:
+□ ✅ La facture est visible pour le payeur
+□ ✅ Les 2 autres factures (non publiées) ne sont PAS visibles
+
+ÉTAPE 7: Test d'idempotence (réimport du même PDF)
+-------------------------------------------------
+□ Se reconnecter avec: agent_factu / test123
+□ Réuploader le même fichier PHYS.OPN.202606.GLO-1-70.pdf
+
+RÉSULTAT ATTENDU:
+□ HTTP 200 OK
+□ skipped_already_processed: 3
+□ Aucune facture dupliquée créée
+□ Les factures existantes conservent leur statut (1 PUBLIEE, 2 VALIDEES)
+□ Aucune modification des factures PUBLIEES
+
+ÉTAPE 8: Test avec un PDF différent (optionnel)
+----------------------------------------------
+□ Uploader PHYS.OPN.202606.SOM-1-70.pdf
+□ Vérifier le comportement avec un PDF différent
+
+================================================================================
+3. VÉRIFICATIONS TECHNIQUES VIA API (optionnel mais recommandé)
+================================================================================
+
+Requête 1: Vérifier le statut des factures après import
+-------------------------------------------------------
+curl -H "Authorization: Token <agent_token>" \
+  http://127.0.0.1:8000/api/billing/invoices/?numero_facture=A20260601041-99475555
+
+ATTENDU: {"statut": "VALIDEE", "fichier_pdf": "..."}
+
+Requête 2: Essayer d'accéder à la facture en tant qu'employé AVANT publication
+-----------------------------------------------------------------------------
+curl -H "Authorization: Token <marie_token>" \
+  http://127.0.0.1:8000/api/billing/invoices/<invoice_id>/
+
+ATTENDU: 404 NOT FOUND (si non publiée) ou 200 OK (si déjà publiée)
+
+Requête 3: Publier la facture via API
+------------------------------------
+curl -X POST \
+  -H "Authorization: Token <agent_token>" \
+  http://127.0.0.1:8000/api/billing/invoices/<invoice_id>/publier/
+
+ATTENDU: 200 OK, {"statut": "PUBLIEE"}
+
+Requête 4: Accéder à la facture APRÈS publication
+------------------------------------------------
+curl -H "Authorization: Token <marie_token>" \
+  http://127.0.0.1:8000/api/billing/invoices/<invoice_id>/
+
+ATTENDU: 200 OK avec tous les détails de la facture
+
+================================================================================
+4. CRITÈRES DE VALIDATION PHASE 4
+================================================================================
+
+✅ CRITÈRE 1: Import PDF réussi
+   - Upload d'un PDF multi-factures fonctionne
+   - Retourne HTTP 200 avec détails du matching
+
+✅ CRITÈRE 2: Rapprochement automatique correct
+   - Les factures EN_COURS sont correctement matchées par numéro
+   - MSISDN → Ligne → Employé → Facture
+
+✅ CRITÈRE 3: Statut VALIDEE (jamais PUBLIEE automatiquement)
+   - Après import: statut = VALIDEE
+   - Les factures ne sont PAS automatiquement publiées
+
+□ CRITÈRE 4: Visibilité client UNIQUEMENT après publication explicite
+   - Avant publication: clients ne voient PAS les factures
+   - Après publication: clients peuvent consulter leurs factures
+
+□ CRITÈRE 5: Publication explicite fonctionnelle
+   - Agent/Chef peut publier manuellement
+   - Transition VALIDEE → PUBLIEE fonctionne
+
+□ CRITÈRE 6: Idempotence
+   - Réimporter le même PDF ne crée pas de doublons
+   - Les factures PUBLIEES ne sont pas modifiées
+
+□ CRITÈRE 7: Attachement PDF
+   - Le champ fichier_pdf contient bien le PDF découpé
+   - Le PDF est téléchargeable par les clients autorisés
+
+================================================================================
+5. RÉSULTATS DU TEST (À COMPLÉTER)
+================================================================================
+
+Date/Heure du test: __________________
+
+ÉTAPE 1 - Connexion agent: □ OK  □ ÉCHEC  Commentaire: ___________________
+ÉTAPE 2 - Upload PDF:      □ OK  □ ÉCHEC  Commentaire: ___________________
+ÉTAPE 3 - Statut VALIDEE:  □ OK  □ ÉCHEC  Commentaire: ___________________
+ÉTAPE 4 - Non-visibilité:  □ OK  □ ÉCHEC  Commentaire: ___________________
+ÉTAPE 5 - Publication:     □ OK  □ ÉCHEC  Commentaire: ___________________
+ÉTAPE 6 - Accès client:    □ OK  □ ÉCHEC  Commentaire: ___________________
+ÉTAPE 7 - Idempotence:     □ OK  □ ÉCHEC  Commentaire: ___________________
+
+VALIDATION GLOBALE: □ PHASE 4 VALIDÉE  □ PHASE 4 NON VALIDÉE
+
+Problèmes rencontrés:
+_____________________________________________________________________________
+_____________________________________________________________________________
+_____________________________________________________________________________
+
+Notes complémentaires:
+_____________________________________________________________________________
+_____________________________________________________________________________
+_____________________________________________________________________________
+
+================================================================================
+FIN DU RAPPORT DE TEST MANUEL
+================================================================================

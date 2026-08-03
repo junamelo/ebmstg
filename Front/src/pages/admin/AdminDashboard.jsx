@@ -67,13 +67,23 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null)
   const [statsAppareils, setStatsAppareils] = useState(null)
   const [chargement, setChargement] = useState(true)
+  const [erreur, setErreur] = useState(null)
   const [anneeGraphique, setAnneeGraphique] = useState('2026')
 
-  useEffect(() => {
+  const chargerStats = () => {
+    setChargement(true)
+    setErreur(null)
     getStatistiques()
       .then(setStats)
-      .catch(console.error)
+      .catch((err) => {
+        console.error('[AdminDashboard] Erreur chargement stats:', err)
+        setErreur('Impossible de charger les statistiques. Vérifiez votre connexion.')
+      })
       .finally(() => setChargement(false))
+  }
+
+  useEffect(() => {
+    chargerStats()
     setStatsAppareils(getStatsAppareils())
   }, [])
 
@@ -81,6 +91,30 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-zinc-300 border-t-[#002a7a] rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (erreur || !stats) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="max-w-md text-center p-8 bg-white rounded-xl border border-zinc-200">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-900 mb-2">Erreur de chargement</h3>
+          <p className="text-sm text-zinc-500 mb-6">{erreur || 'Les statistiques ne sont pas disponibles.'}</p>
+          <button 
+            onClick={chargerStats}
+            className="px-4 py-2 bg-[#002a7a] text-white rounded-lg hover:bg-[#003399] transition-colors"
+          >
+            Réessayer
+          </button>
+        </div>
       </div>
     )
   }
@@ -98,8 +132,8 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <KpiCard
           label="Contrats actifs"
-          value={stats.totalContrats.toLocaleString('fr-FR')}
-          evolution={stats.evolutionContrats}
+          value={(stats?.totalContrats || 0).toLocaleString('fr-FR')}
+          evolution={stats?.evolutionContrats}
           sub="Entreprises clientes postpayées"
           couleur="#e05500"
           delay={0.1}
@@ -112,8 +146,8 @@ export default function AdminDashboard() {
         />
         <KpiCard
           label="Lignes postpayées"
-          value={stats.totalLignesActives.toLocaleString('fr-FR')}
-          evolution={stats.evolutionLignes}
+          value={(stats?.totalLignesActives || 0).toLocaleString('fr-FR')}
+          evolution={stats?.evolutionLignes}
           sub="Numéros actifs sur le réseau"
           couleur="#002a7a"
           delay={0.15}
@@ -126,8 +160,8 @@ export default function AdminDashboard() {
         />
         <KpiCard
           label="Utilisateurs connectés"
-          value={stats.totalUtilisateursActifs.toLocaleString('fr-FR')}
-          evolution={stats.evolutionUtilisateurs}
+          value={(stats?.totalUtilisateursActifs || 0).toLocaleString('fr-FR')}
+          evolution={stats?.evolutionUtilisateurs}
           sub="Comptes actifs sur le portail"
           couleur="#059669"
           delay={0.2}
@@ -177,7 +211,7 @@ export default function AdminDashboard() {
 
           <ResponsiveContainer width="100%" height={260}>
             <LineChart
-              data={stats.historiquePublications}
+              data={stats?.historiquePublications || []}
               margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -320,23 +354,31 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-50">
-              {stats.dernieresConnexions?.map((conn, idx) => (
-                <tr key={idx} className="hover:bg-zinc-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-zinc-900">{conn.nom}</td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
-                      conn.role === 'SUPER_ADMIN'       ? 'bg-rose-100 text-rose-700'    :
-                      conn.role === 'AGENT_FACTURATION' ? 'bg-violet-100 text-violet-700' :
-                      conn.role === 'PAYEUR'            ? 'bg-blue-100 text-blue-700'    :
-                      'bg-zinc-100 text-zinc-600'
-                    }`}>
-                      {conn.role.replace(/_/g, ' ')}
-                    </span>
+              {(stats?.dernieresConnexions || []).length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="px-6 py-8 text-center text-sm text-zinc-400">
+                    Aucune connexion récente enregistrée
                   </td>
-                  <td className="px-6 py-4 text-sm text-zinc-500">{conn.date}</td>
-                  <td className="px-6 py-4 text-sm font-mono text-zinc-400">{conn.ip}</td>
                 </tr>
-              ))}
+              ) : (
+                stats.dernieresConnexions.map((conn, idx) => (
+                  <tr key={idx} className="hover:bg-zinc-50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-zinc-900">{conn.nom}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
+                        conn.role === 'SUPER_ADMIN'       ? 'bg-rose-100 text-rose-700'    :
+                        conn.role === 'AGENT_FACTURATION' ? 'bg-violet-100 text-violet-700' :
+                        conn.role === 'PAYEUR'            ? 'bg-blue-100 text-blue-700'    :
+                        'bg-zinc-100 text-zinc-600'
+                      }`}>
+                        {conn.role.replace(/_/g, ' ')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-zinc-500">{conn.date}</td>
+                    <td className="px-6 py-4 text-sm font-mono text-zinc-400">{conn.ip}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

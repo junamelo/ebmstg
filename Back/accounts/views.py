@@ -236,19 +236,26 @@ class UserManagementViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
+        queryset = User.objects.all().order_by('-date_creation')
         
-        # Super admin voit tout
+        # Filtrer par rôle si spécifié dans les params
+        role = self.request.query_params.get('role')
+        if role:
+            queryset = queryset.filter(role=role)
+        
+        # Super admin voit tout (déjà filtré par rôle si demandé)
         if user.role == 'SUPER_ADMIN':
-            return User.objects.all().order_by('-date_creation')
+            return queryset
         
-        # Chef voit ses agents + lui-même
+        # Chef voit ses agents + lui-même (filtré par rôle)
         if user.role == 'CHEF_FACTURATION':
-            return User.objects.filter(
+            queryset = queryset.filter(
                 Q(created_by=user) | Q(id=user.id)
-            ).order_by('-date_creation')
+            )
+            return queryset
         
         # Autres rôles voient seulement eux-mêmes
-        return User.objects.filter(id=user.id)
+        return queryset.filter(id=user.id)
     
     def create(self, request, *args, **kwargs):
         """Créer un nouvel utilisateur"""

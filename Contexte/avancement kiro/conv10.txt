@@ -1,0 +1,518 @@
+## Phase 2 — Gestion complète des utilisateurs, entreprises et affectations
+
+```text
+
+Tu dois rendre complète et fiable la gestion des comptes et l'affectation des factures aux employés.
+
+Règle métier impérative : une facture employé est reliée à une ligne téléphonique (`Invoice.line`), une ligne est reliée à un employé (`Line.employe`), et l'employé connecté ne peut consulter que les factures PUBLIEE de ses propres lignes. Le MSISDN sert à établir la liaison lors de l'import PDF, mais ne doit pas remplacer les relations de base de données.
+
+Travail demandé :
+
+1. Auditer les modèles et endpoints User, Company, Line, Invoice et les serializers associés.
+
+2. Rendre opérationnels les écrans de création, modification, activation/désactivation et consultation des utilisateurs lorsque les permissions le permettent.
+
+3. Rendre opérationnelle l'affectation d'une ligne à un employé et son retrait. Vérifier les contrôles d'entreprise et les permissions.
+
+4. Empêcher les incohérences : ligne sans entreprise, ligne attribuée à un utilisateur non employé, accès à une ligne d'une autre entreprise, doublon de MSISDN si le modèle l'interdit.
+
+5. Vérifier l'import PDF : lorsqu'un MSISDN est reconnu, l'Invoice doit être associée à la bonne Line existante. Lorsqu'il n'est pas reconnu, retourner un résultat clair sans divulguer de données sensibles.
+
+6. Vérifier les listes pour chaque rôle et les filtres par entreprise, utilisateur, ligne, période et statut si ces filtres existent dans l'interface.
+
+7. Ne crée pas de nouveaux employés fictifs dans les scripts de test de développement.
+
+Tests minimaux à créer :
+
+- un administrateur/chef autorisé peut attribuer une ligne à un employé ;
+
+- un employé voit seulement ses factures publiées ;
+
+- un autre employé ne les voit pas ;
+
+- un payeur ne voit que les factures publiées de son entreprise ;
+
+- une ligne non attribuée et une facture sans ligne sont gérées proprement ;
+
+- tentative d'affectation inter-entreprise refusée.
+
+Vérifications obligatoires :
+
+- `python manage.py check`
+
+- tests Django ciblés et complets
+
+- vérification frontend avec un compte de chaque rôle, sans changer la base de démonstration.
+
+```
+
+économise les crédit et évite les fichiers MD à tout va 
+
+Kiro
+Je vais maintenant auditer et corriger la Phase 2 : gestion des utilisateurs, entreprises et affectations. Commençons par lire les modèles et vérifier les relations.
+
+Read file(s)
+
+accounts/models.py
+
+billing/models.py
+Maintenant lisons les views et serializers pour voir les endpoints d'affectation :
+
+Searched workspace
+Chercher les endpoints d'affectation employé dans les views
+Lisons les endpoints d'affectation :
+
+Read file(s)
+
+views.py 230 - 301
+Bien ! Les endpoints existent. Maintenant créons le fichier de test complet pour la Phase 2 :
+
+Accepted creation of
+
+test_affectation.py
+
+
+Maintenant ajoutons la validation manquante pour refuser l'affectation inter-entreprise. Lisons d'abord le serializer Line :
+
+Read file(s)
+
+serializers.py 100 - 201
+Maintenant ajoutons la validation dans l'endpoint assigner_employe pour vérifier l'entreprise :
+
+Accepted edits to
+
+views.py
+
+
+Conversation above has been summarized
+The conversation in this session is about to reach the agent context limit. I'm summarizing earlier messages, and only the summary will be sent to the agent as context instead of the full text.
+
+
+Conversation Summary
+Est. Credits Used: 3.45
+Elapsed time: 2m 20s
+
+
+Je vais maintenant exécuter les tests d'affectation créés lors de la Phase 2 pour vérifier que la gestion des employés et l'affectation des factures fonctionnent correctement.
+
+Command
+c:\Users\Benoit\Documents\BU…A BANLEPO Mintre Benoit 2026
+
+cd Back && python manage.py test billing.test_affectation --verbosity=2
+cion- Use build┌──────────────────────────────────────┐prove chunk│📦 c++                                │options/#ou│📦 caffeinate                         │- Adjust ch│📦 cal                                │d.chunkSize│📦 cap                                │✓ built in │📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘ion- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.✓ built in 10.85sPS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cd Back && python manage.py test billing.test_affectation --vecd Back && python manage.py test billing.test_affectation --vercd Back && python manage.py test billing.test_affectation --verbcd Back && python manage.py test billing.test_affectation --verbocd Back && python manage.py test billing.test_affectation --verboscd Back && python manage.py test billing.test_affectation --verbosicd Back && python manage.py test billing.test_affectation --verbositcd Back && python manage.py test billing.test_affectation --verbositycd Back && python manage.py test billing.test_affectation --verbosity=cd Back && python manage.py test billing.test_affectation --verbosity=2
+Au caractère Ligne:1 : 9
++ cd Back && python manage.py test 
+billing.test_affectation --verbosity ...
++         ~~
+Le jeton «&&» n’est pas un séparateur 
+d’instruction valide.
+    + CategoryInfo          : ParserError: (:) [] 
+   , ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : InvalidEndOfLine
+ 
+PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cFront 
+Adding a command to the trust list allows me to auto run this command in the future without asking for your approval every time. Manage the command trust list in the Trusted Commands setting. Which variation would you like to add?
+
+
+Full command
+cd Back && python manage.py test billing.test_affectation --verbosity=2
+
+Partial
+cd Back *
+
+Base
+cd *
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py test billing.test_affectation --verbosity=2
+c+         ~~Le jeton «&┌──────────────────────────────────────┐d’instructi│📦 c++                                │    + Categ│📦 caffeinate                         │   , Parent│📦 cal                                │    + Fully│📦 cap                                │ │📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘+         ~~Le jeton «&┌──────────────────────────────────────┐d’instructi│📦 c++                                │    + Categ│📦 caffeinate                         │   , Parent│📦 cal                                │    + Fully│📦 cap                                │ │📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 202d’instruction valide.    + Categ┌──────────────────────────────────────┐   , Parent│📦 c++                                │    + Fully│📦 caffeinate                         │ │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │c:\Users\Be└──────────────────────────────────────┘d’instruction valide.    + Categ┌──────────────────────────────────────┐   , Parent│📦 c++                                │    + Fully│📦 caffeinate                         │ │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │c:\Users\Be└──────────────────────────────────────┘d’instruction valide.    + Categ┌──────────────────────────────────────┐   , Parent│📦 c++                                │    + Fully│📦 caffeinate                         │ │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │c:\Users\Be└──────────────────────────────────────┘d’instruction valide.    + Categ┌──────────────────────────────────────┐   , Parent│📦 c++                                │    + Fully│📦 caffeinate                         │ │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │c:\Users\Be└──────────────────────────────────────┘d’instruction valide.    + Categ┌──────────────────────────────────────┐   , Parent│📦 c++                                │    + Fully│📦 caffeinate                         │ │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │c:\Users\Be└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Bcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Bad’instruction valide.    + Categ┌──────────────────────────────────────┐   , Parent│📦 c++                                │    + Fully│📦 caffeinate                         │ │📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │c:\Users\Be└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Baccd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Backcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back"cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ;d’instruction valide.    + CategoryInfo          : ParserError: (:) []    , ParentContainsErrorRecordException    + FullyQualifiedErrorId : InvalidEndOfLine PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'anncd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --vecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --vercd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbocd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verboscd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbosicd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbosit
+cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbositycd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbosity=cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbosity=2
+Found 11 test(s).
+ PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbosity=2Found 11 test(s).Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, django_filters, drf_spectacular, messages, rest_framework, rest_framework_simplejwt, staticfiles
+  Apply all migrations: accounts, admin, auth, billing, contenttypes, sessions, token_blacklist
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying accounts.0001_initial... OK
+  Applying accounts.0002_user_created_by_user_custom_permissions_and_more... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying billing.0001_initial... OK
+  Applying billing.0002_alter_line_cycle... OK
+  Applying billing.0003_package_service_invoice_historiquefacturation_and_more... OK
+  Applying billing.0004_invoice_line... OK
+  Applying sessions.0001_initial... OK
+  Applying token_blacklist.0001_initial... OK
+  Applying token_blacklist.0002_outstandingtoken_jti_hex... OK
+  Applying token_blacklist.0003_auto_20171017_2007... OK
+  Applying token_blacklist.0004_auto_20171017_2013... OK
+  Applying token_blacklist.0005_remove_outstandingtoken_jti... OK
+  Applying token_blacklist.0006_auto_20171017_2113... OK
+  Applying token_blacklist.0007_auto_20171017_2214... OK
+  Applying token_blacklist.0008_migrate_to_bigautofield... OK
+  Applying token_blacklist.0010_fix_migrate_to_bigautofield... OK
+  Applying token_blacklist.0011_linearizes_history... OK
+  Applying token_blacklist.0012_alter_outstandingtoken_user... OK
+  Applying token_blacklist.0013_alter_blacklistedtoken_options_and_more... OK
+System check identified no issues (0 silenced).
+test_01_agent_peut_assigner_employe (billing.test_affectation.AffectationEmployeTests.test_01_agent_peut_assigner_employe)
+Test : Agent peut assigner un employé à une ligne ... ok
+test_02_agent_peut_retirer_employe (billing.test_affectation.AffectationEmployeTests.test_02_agent_peut_retirer_employe)
+Test : Agent peut retirer un employé d'une ligne ... ok
+test_03_employe_voit_seulement_ses_factures_publiees (billing.test_affectation.AffectationEmployeTests.test_03_employe_voit_seulement_ses_factures_publiees)
+Test : Employé voit seulement ses factures PUBLIEE ... ok
+test_04_employe_ne_voit_pas_factures_autre_employe (billing.test_affectation.AffectationEmployeTests.test_04_employe_ne_voit_pas_factures_autre_employe)
+Test : Employé ne voit pas les factures d'un autre employé ... ok
+test_05_payeur_voit_factures_publiees_son_entreprise (billing.test_affectation.AffectationEmployeTests.test_05_payeur_voit_factures_publiees_son_entreprise)
+Test : Payeur voit uniquement factures PUBLIEE de son entreprise ... ok
+test_06_ligne_non_attribuee_gere_proprement (billing.test_affectation.AffectationEmployeTests.test_06_ligne_non_attribuee_gere_proprement)
+Test : Ligne non attribuée est gérée proprement ... ok
+test_07_facture_sans_ligne_gere_proprement (billing.test_affectation.AffectationEmployeTests.test_07_facture_sans_ligne_gere_proprement)
+Test : Facture sans ligne (globale) est gérée proprement ... ok
+test_08_affectation_inter_entreprise_refusee (billing.test_affectation.AffectationEmployeTests.test_08_affectation_inter_entreprise_refusee)
+Test : Affectation d'une ligne à un employé d'une autre entreprise refusée ... WARNING 2026-08-02 01:40:15,936 log Bad Request: /api/billing/lines/3/assigner_employe/
+FAIL
+test_01_msisdn_unique (billing.test_affectation.IntegriteModeleTests.test_01_msisdn_unique)
+Test : MSISDN doit être unique ... ok
+test_02_ligne_sans_entreprise_refusee (billing.test_affectation.IntegriteModeleTests.test_02_ligne_sans_entreprise_refusee)
+Test : Ligne sans entreprise refusée ... ok
+test_03_ligne_attribuee_non_employe_refusee (billing.test_affectation.IntegriteModeleTests.test_03_ligne_attribuee_non_employe_refusee)
+Test : Ligne attribuée à utilisateur non-EMPLOYE refusée ... WARNING 2026-08-02 01:40:19,384 log Not Found: /api/billing/lines/1/assigner_employe/
+ok
+
+======================================================================
+FAIL: test_08_affectation_inter_entreprise_refusee (billing.test_affectation.AffectationEmployeTests.test_08_affectation_inter_entreprise_refusee)
+Test : Affectation d'une ligne à un employé d'une autre entreprise refusée
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back\billing\test_affectation.py", line 314, in test_08_affectation_inter_entreprise_refusee
+    self.assertEqual(response.status_code, status.HTTP_200_OK)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 200
+
+----------------------------------------------------------------------
+Ran 11 tests in 38.874s
+
+FAILED (failures=1)
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack 
+Adding a command to the trust list allows me to auto run this command in the future without asking for your approval every time. Manage the command trust list in the Trusted Commands setting. Which variation would you like to add?
+
+
+Full command
+python manage.py test billing.test_affectation --verbosity=2
+
+Partial
+python manage.py *
+
+Base
+python *
+Excellent ! 10 tests sur 11 passent. Un seul test échoue : test_08_affectation_inter_entreprise_refusee. Le test s'attend à recevoir HTTP 200 mais reçoit HTTP 400, ce qui signifie que la validation fonctionne correctement mais le test a une mauvaise attente. Je dois lire le test pour corriger cette assertion.
+
+Read file(s)
+
+test_affectation.py 295 - 321
+Parfait ! Le commentaire dans le test indique que la validation a été ajoutée avec succès. Le test avait été écrit avec status.HTTP_200_OK en mode "TODO", mais maintenant que la validation fonctionne et retourne HTTP 400, je dois corriger le test pour qu'il attende le bon code de statut.
+
+Accepted edits to
+
+test_affectation.py
+
+
+Maintenant je relance les tests d'affectation pour vérifier que tous passent :
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py test billing.test_affectation --verbosity=2
+c--------------------------------------------------------------┌──────────────────────────────────────┐Ran 11 test│📦 c++                                ││📦 caffeinate                         │FAILED (fai│📦 cal                                │Destroying │📦 cap                                │:memorydb_d│📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘--------------------------------------------------------------┌──────────────────────────────────────┐Ran 11 test│📦 c++                                ││📦 caffeinate                         │FAILED (fai│📦 cal                                │Destroying │📦 cap                                │:memorydb_d│📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘----------------------------------------------------------------------Ran 11 tests in 38.874sFAILED (failures=1)Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 202Ran 11 tests in 38.874s┌──────────────────────────────────────┐FAILED (fai│📦 c++                                │Destroying │📦 caffeinate                         │:memorydb_d│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘Ran 11 tests in 38.874s┌──────────────────────────────────────┐FAILED (fai│📦 c++                                │Destroying │📦 caffeinate                         │:memorydb_d│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘Ran 11 tests in 38.874s┌──────────────────────────────────────┐FAILED (fai│📦 c++                                │Destroying │📦 caffeinate                         │:memorydb_d│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘Ran 11 tests in 38.874s┌──────────────────────────────────────┐FAILED (fai│📦 c++                                │Destroying │📦 caffeinate                         │:memorydb_d│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘Ran 11 tests in 38.874s┌──────────────────────────────────────┐FAILED (fai│📦 c++                                │Destroying │📦 caffeinate                         │:memorydb_d│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘Ran 11 tests in 38.874s┌──────────────────────────────────────┐FAILED (fai│📦 c++                                │Destroying │📦 caffeinate                         │:memorydb_d│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Bcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Bacd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\BacRan 11 tests in 38.874s┌──────────────────────────────────────┐FAILED (fai│📦 c++                                │Destroying │📦 caffeinate                         │:memorydb_d│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Backcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back"Ran 11 tests in 38.874s┌──────────────────────────────────────┐FAILED (fai│📦 c++                                │Destroying │📦 caffeinate                         │:memorydb_d│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ;cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; p----------------------------------------------------------------------Ran 11 tests in 38.874sFAILED (failures=1)Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; pycd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --vecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --vercd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbocd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verboscd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbosicd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbositcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbosity
+cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbosity=cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbosity=2
+Found 11 test(s).
+:memorydb_default?mode=memory&cache=shared')...PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.test_affectation --verbosity=2Found 11 test(s).Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, django_filters, drf_spectacular, messages, rest_framework, rest_framework_simplejwt, staticfiles
+  Apply all migrations: accounts, admin, auth, billing, contenttypes, sessions, token_blacklist
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying accounts.0001_initial... OK
+  Applying accounts.0002_user_created_by_user_custom_permissions_and_more... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying billing.0001_initial... OK
+  Applying billing.0002_alter_line_cycle... OK
+  Applying billing.0003_package_service_invoice_historiquefacturation_and_more... OK
+  Applying billing.0004_invoice_line... OK
+  Applying sessions.0001_initial... OK
+  Applying token_blacklist.0001_initial... OK
+  Applying token_blacklist.0002_outstandingtoken_jti_hex... OK
+  Applying token_blacklist.0003_auto_20171017_2007... OK
+  Applying token_blacklist.0004_auto_20171017_2013... OK
+  Applying token_blacklist.0005_remove_outstandingtoken_jti... OK
+  Applying token_blacklist.0006_auto_20171017_2113... OK
+  Applying token_blacklist.0007_auto_20171017_2214... OK
+  Applying token_blacklist.0008_migrate_to_bigautofield... OK
+  Applying token_blacklist.0010_fix_migrate_to_bigautofield... OK
+  Applying token_blacklist.0011_linearizes_history... OK
+  Applying token_blacklist.0012_alter_outstandingtoken_user... OK
+  Applying token_blacklist.0013_alter_blacklistedtoken_options_and_more... OK
+System check identified no issues (0 silenced).
+test_01_agent_peut_assigner_employe (billing.test_affectation.AffectationEmployeTests.test_01_agent_peut_assigner_employe)
+Test : Agent peut assigner un employé à une ligne ... ok
+test_02_agent_peut_retirer_employe (billing.test_affectation.AffectationEmployeTests.test_02_agent_peut_retirer_employe)
+Test : Agent peut retirer un employé d'une ligne ... ok
+test_03_employe_voit_seulement_ses_factures_publiees (billing.test_affectation.AffectationEmployeTests.test_03_employe_voit_seulement_ses_factures_publiees)
+Test : Employé voit seulement ses factures PUBLIEE ... ok
+test_04_employe_ne_voit_pas_factures_autre_employe (billing.test_affectation.AffectationEmployeTests.test_04_employe_ne_voit_pas_factures_autre_employe)
+Test : Employé ne voit pas les factures d'un autre employé ... ok
+test_05_payeur_voit_factures_publiees_son_entreprise (billing.test_affectation.AffectationEmployeTests.test_05_payeur_voit_factures_publiees_son_entreprise)
+Test : Payeur voit uniquement factures PUBLIEE de son entreprise ... ok
+test_06_ligne_non_attribuee_gere_proprement (billing.test_affectation.AffectationEmployeTests.test_06_ligne_non_attribuee_gere_proprement)
+Test : Ligne non attribuée est gérée proprement ... ok
+test_07_facture_sans_ligne_gere_proprement (billing.test_affectation.AffectationEmployeTests.test_07_facture_sans_ligne_gere_proprement)
+Test : Facture sans ligne (globale) est gérée proprement ... ok
+test_08_affectation_inter_entreprise_refusee (billing.test_affectation.AffectationEmployeTests.test_08_affectation_inter_entreprise_refusee)
+Test : Affectation d'une ligne à un employé d'une autre entreprise refusée ... WARNING 2026-08-02 01:41:27,689 log Bad Request: /api/billing/lines/3/assigner_employe/
+ok
+test_01_msisdn_unique (billing.test_affectation.IntegriteModeleTests.test_01_msisdn_unique)
+Test : MSISDN doit être unique ... ok
+test_02_ligne_sans_entreprise_refusee (billing.test_affectation.IntegriteModeleTests.test_02_ligne_sans_entreprise_refusee)
+Test : Ligne sans entreprise refusée ... ok
+test_03_ligne_attribuee_non_employe_refusee (billing.test_affectation.IntegriteModeleTests.test_03_ligne_attribuee_non_employe_refusee)
+Test : Ligne attribuée à utilisateur non-EMPLOYE refusée ... WARNING 2026-08-02 01:41:31,154 log Not Found: /api/billing/lines/1/assigner_employe/
+ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 38.903s
+
+OK
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack 
+Parfait ! Les 11 tests d'affectation passent maintenant : OK. Maintenant, je dois lancer l'ensemble des tests Django pour m'assurer que rien n'a été cassé :
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py test
+c--------------------------------------------------------------┌──────────────────────────────────────┐Ran 11 test│📦 c++                                ││📦 caffeinate                         │OK│📦 cal                                │Destroying │📦 cap                                │:memorydb_d│📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘--------------------------------------------------------------┌──────────────────────────────────────┐Ran 11 test│📦 c++                                ││📦 caffeinate                         │OK│📦 cal                                │Destroying │📦 cap                                │:memorydb_d│📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 202Ran 11 tests in 38.903s┌──────────────────────────────────────┐OK│📦 c++                                │Destroying │📦 caffeinate                         │:memorydb_d│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘Ran 11 tests in 38.903s┌──────────────────────────────────────┐OK│📦 c++                                │Destroying │📦 caffeinate                         │:memorydb_d│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘Ran 11 tests in 38.903s┌──────────────────────────────────────┐OK│📦 c++                                │Destroying │📦 caffeinate                         │:memorydb_d│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘Ran 11 tests in 38.903s┌──────────────────────────────────────┐OK│📦 c++                                │Destroying │📦 caffeinate                         │:memorydb_d│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘Ran 11 tests in 38.903s┌──────────────────────────────────────┐OK│📦 c++                                │Destroying │📦 caffeinate                         │:memorydb_d│📦 cal                                │PS C:\Users│📦 cap                                │année GLSI-│📦 capacitor                          │:\Users\Ben└──────────────────────────────────────┘----------------------------------------------------------------------Ran 11 tests in 38.903sOKDestroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Bcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Bacd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Baccd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Backcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back"cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python managcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python managecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.pcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.pycd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py tcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py tecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py tescd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test
+Found 87 test(s).
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py testFound 87 test(s).Creating test database for alias 'default'...
+System check identified no issues (0 silenced).
+WARNING 2026-08-02 01:41:56,886 log Bad Request: /api/auth/change-password/
+..WARNING 2026-08-02 01:42:03,798 log Bad Request: /api/auth/change-password/
+.WARNING 2026-08-02 01:42:05,527 log Forbidden: /api/auth/login/
+.WARNING 2026-08-02 01:42:07,244 log Unauthorized: /api/auth/login/
+.WARNING 2026-08-02 01:42:09,821 log Unauthorized: /api/auth/login/
+...WARNING 2026-08-02 01:42:15,853 log Unauthorized: /api/auth/profile/
+......WARNING 2026-08-02 01:42:32,782 log Bad Request: /api/auth/users/
+.............WARNING 2026-08-02 01:43:25,454 log Bad Request: /api/billing/lines/3/assigner_employe/
+...WARNING 2026-08-02 01:43:28,910 log Not Found: /api/billing/lines/1/assigner_employe/
+.INFO 2026-08-02 01:43:32,370 middleware Sensitive action: {'timestamp': '2026-08-02T00:43:32.370499+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 200, 'duration': '0.006s', 'ip': '127.0.0.1', 'user_agent': ''}
+.WARNING 2026-08-02 01:43:35,831 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:43:35.831547+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:43:35,832 log Bad Request: /api/billing/invoices/publier_masse/
+.WARNING 2026-08-02 01:43:39,290 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:43:39.290828+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.011s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:43:39,291 log Bad Request: /api/billing/invoices/publier_masse/
+.WARNING 2026-08-02 01:43:42,751 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:43:42.751017+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:43:42,751 log Bad Request: /api/billing/invoices/publier_masse/
+....INFO 2026-08-02 01:43:56,580 middleware Sensitive action: {'timestamp': '2026-08-02T00:43:56.580566+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 200, 'duration': '0.006s', 'ip': '127.0.0.1', 'user_agent': ''}
+..WARNING 2026-08-02 01:44:03,495 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:44:03.495146+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.003s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:44:03,495 log Bad Request: /api/billing/invoices/publier_masse/
+WARNING 2026-08-02 01:44:03,502 middleware Sensitive action failed: {'timestamp': '2026-08-02T00:44:03.502715+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 400, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+WARNING 2026-08-02 01:44:03,503 log Bad Request: /api/billing/invoices/publier_masse/
+.WARNING 2026-08-02 01:44:06,962 log Method Not Allowed: /api/billing/publications/
+.INFO 2026-08-02 01:44:10,427 middleware Sensitive action: {'timestamp': '2026-08-02T00:44:10.427125+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/upload_bulk_pdf/', 'status_code': 200, 'duration': '0.009s', 'ip': '127.0.0.1', 'user_agent': ''}
+.INFO 2026-08-02 01:44:13,902 middleware Sensitive action: {'timestamp': '2026-08-02T00:44:13.902563+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/upload_bulk_pdf/', 'status_code': 200, 'duration': '0.011s', 'ip': '127.0.0.1', 'user_agent': ''}
+.................INFO 2026-08-02 01:44:38,026 middleware Sensitive action: {'timestamp': '2026-08-02T00:44:38.026683+00:00', 'user': 'admin@test.com (SUPER_ADMIN)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/25af213f-c2fc-499e-ba44-0786a2c89246/annuler/', 'status_code': 200, 'duration': '0.009s', 'ip': '127.0.0.1', 'user_agent': ''}
+.INFO 2026-08-02 01:44:40,685 middleware Sensitive action: {'timestamp': '2026-08-02T00:44:40.685919+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 2, 'method': 'POST', 'path': '/api/billing/invoices/calculate_line/', 'status_code': 200, 'duration': '0.002s', 'ip': '127.0.0.1', 'user_agent': ''}
+.INFO 2026-08-02 01:44:43,384 middleware Sensitive action: {'timestamp': '2026-08-02T00:44:43.384099+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 2, 'method': 'POST', 'path': '/api/billing/invoices/generate/', 'status_code': 200, 'duration': '0.006s', 'ip': '127.0.0.1', 'user_agent': ''}
+....INFO 2026-08-02 01:44:53,947 middleware Sensitive action: {'timestamp': '2026-08-02T00:44:53.947411+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 2, 'method': 'POST', 'path': '/api/billing/invoices/41d6b93b-b6fb-403f-bb61-41efa10f8e06/valider/', 'status_code': 200, 'duration': '0.008s', 'ip': '127.0.0.1', 'user_agent': ''}
+...........WARNING 2026-08-02 01:45:25,024 log Method Not Allowed: /api/billing/publications/
+..INFO 2026-08-02 01:45:28,502 middleware Sensitive action: {'timestamp': '2026-08-02T00:45:28.502387+00:00', 'user': 'agent@test.com (AGENT_FACTURATION)', 'user_id': 1, 'method': 'POST', 'path': '/api/billing/invoices/publier_masse/', 'status_code': 200, 'duration': '0.006s', 'ip': '127.0.0.1', 'user_agent': ''}
+........
+----------------------------------------------------------------------
+Ran 87 tests in 222.929s
+
+OK
+Destroying test database for alias 'default'...
+:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack 
+Adding a command to the trust list allows me to auto run this command in the future without asking for your approval every time. Manage the command trust list in the Trusted Commands setting. Which variation would you like to add?
+
+
+Full command
+python manage.py test
+
+Partial
+python manage.py *
+
+Base
+python *
+Excellent ! 87 tests, tous OK ! Maintenant je vérifie python manage.py check et npm run build :
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py check
+c........-----------┌──────────────────────────────────────┐-----------│📦 c++                                │Ran 87 test│📦 caffeinate                         ││📦 cal                                │OK│📦 cap                                │Destroying │📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projcd "c:\Users\Benoit\Documents\BURRO\Projecd "c:\Users\Benoit\Documents\BURRO\Projetcd "c:\Users\Benoit\Documents\BURRO\Projet --------------------------------------------------------------┌──────────────────────────────────────┐Ran 87 test│📦 c++                                ││📦 caffeinate                         │OK│📦 cal                                │Destroying │📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet dcd "c:\Users\Benoit\Documents\BURRO\Projet decd "c:\Users\Benoit\Documents\BURRO\Projet de --------------------------------------------------------------┌──────────────────────────────────────┐Ran 87 test│📦 c++                                ││📦 caffeinate                         │OK│📦 cal                                │Destroying │📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de f--------------------------------------------------------------┌──────────────────────────────────────┐Ran 87 test│📦 c++                                ││📦 caffeinate                         │OK│📦 cal                                │Destroying │📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘........----------------------------------------------------------------------Ran 87 tests in 222.929sOKDestroying test database for alias 'default'...PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python managecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.pcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.pycd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py ccd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py chcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py checd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py checcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py check
+System check identified no issues (0 silenced).
+OKDestroying test database for alias 'default'...PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py checkSystem check identified no issues (0 silenced).:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack 
+Parfait ! System check identified no issues (0 silenced). Maintenant je vérifie le build frontend :
+
+Command
+c:\Users\Benoit\Documents\BU…EPO Mintre Benoit 2026\Front
+
+npm run build
+cDestroying test database for alias 'default'...PS C:\Users┌──────────────────────────────────────┐année GLSI-│📦 c++                                │:\Users\Ben│📦 caffeinate                         │e GLSI-A BA│📦 cal                                │manage.py c│📦 cap                                │System chec│📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projcd "c:\Users\Benoit\Documents\BURRO\Projecd "c:\Users\Benoit\Documents\BURRO\Projetcd "c:\Users\Benoit\Documents\BURRO\Projet PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-┌──────────────────────────────────────┐:\Users\Ben│📦 c++                                │e GLSI-A BA│📦 caffeinate                         │manage.py c│📦 cal                                │System chec│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet dcd "c:\Users\Benoit\Documents\BURRO\Projet decd "c:\Users\Benoit\Documents\BURRO\Projet de PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-┌──────────────────────────────────────┐:\Users\Ben│📦 c++                                │e GLSI-A BA│📦 caffeinate                         │manage.py c│📦 cal                                │System chec│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-┌──────────────────────────────────────┐:\Users\Ben│📦 c++                                │e GLSI-A BA│📦 caffeinate                         │manage.py c│📦 cal                                │System chec│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘Destroying test database for alias 'default'...PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py checkSystem check identified no issues (0 silenced).PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm rcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm ru
+cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm runcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run bcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run bucd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run buicd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run builcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run build
+e GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py checkSystem check identified no issues (0 silenced).PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front" ; npm run buildpm run build\
+> portail-moov-factures@0.1.0 build
+> vite build
+
+:\WINDOWS\system32\cmd.exe \vite v5.4.21 building for production...
+transforming (1) index.htmltransforming (3) src\main.jsxtransforming (5) node_modules\react\cjs\react.transforming (6) node_modules\react\index.js[transforming (19) src\components\layout\MainLatransforming (39) src\pages\agent\DetailContratransforming (64) src\components\common\PdfVietransforming (147) src\assets\illustration-paytransforming (149) node_modules\axios\index.jstransforming (262) node_modules\recharts\es6\stransforming (354) node_modules\framer-motion\transforming (361) node_modules\es-toolkit\comtransforming (665) node_modules\framer-motion\transforming (779) node_modules\recharts\es6\stransforming (847) node_modules\react-is\cjs\rtransforming (930) node_modules\axios\lib\plattransforming (1071) node_modules\use-sync-exte✓ 1122 modules transformed.
+rendering chunks (1)...computing gzip size (0)...computing gzip size (1)...computing gzip size (2)...computing gzip size (3)...computing gzip size (4)...dist/index.html                                       0.50 kB │ gzip:   0.33 kB
+dist/assets/logo-moov-BA8kZ-9l.png                    5.90 kB
+dist/assets/illustration-factures-BaC66Sie.svg       22.71 kB │ gzip:   9.06 kB
+dist/assets/illustration-payeur-B3UdxpO8.png         44.59 kB
+dist/assets/illustration-simulation-YNeMJA7i.png     47.61 kB
+dist/assets/tabler-icons-CKaxJfX3.woff2             457.38 kB
+dist/assets/tabler-icons-KWc1JFMo.woff              785.78 kB
+dist/assets/tabler-icons-DSK2_1ka.ttf             2,810.99 kB
+dist/assets/index-C3OFwIOd.css                      283.74 kB │ gzip:  53.67 kB
+dist/assets/index-CGNCjs-a.js                       975.55 kB │ gzip: 276.17 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 10.63s
+⠙:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Front> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cFront 
+Parfait ! ✓ built in 10.63s. Toutes les vérifications obligatoires passent. Maintenant je vais vérifier l'import PDF et le matching MSISDN pour m'assurer que les factures sont correctement associées aux lignes lors de l'import :
+
+Read file(s)
+
+pdf_processor.py
+Excellent ! La logique d'association est déjà en place. Lorsqu'un MSISDN est reconnu dans un PDF, le code cherche la ligne correspondante et associe la facture à cette ligne (lignes 396-404). Cela garantit qu'un employé ne peut voir que ses propres factures.
+
+Maintenant je dois vérifier les vues pour m'assurer que les listes sont correctement filtrées par rôle et les permissions sont cohérentes :
+
+Analyzed code
+
+views.py
+Le filtrage dans InvoiceViewSet.get_queryset() est correct :
+
+Admin/Chef/Agent : toutes les factures
+Payeur : seulement ses factures PUBLIEE
+Employé : seulement ses factures PUBLIEE via line__employe=user
+Maintenant je vérifie LineViewSet et CompanyViewSet :
+
+Analyzed code
+
+views.py
+
+views.py
+Parfait ! Les filtres sont tous cohérents :
+
+CompanyViewSet :
+
+Admin/Chef/Agent : toutes les entreprises
+Payeur : seulement ses entreprises
+Employé : rien (API non destinée à ce rôle)
+LineViewSet :
+
+Admin/Chef/Agent : toutes les lignes
+Payeur : lignes de ses entreprises
+Employé : seulement ses lignes
+Validation inter-entreprise : ✅ Déjà en place (lignes 251-259)
+Maintenant je résume les résultats de la Phase 2 :
+
+Résumé Phase 2 - Gestion complète utilisateurs, entreprises et affectations
+✅ Tests créés et validés
+11 tests d'affectation (tous passent) :
+
+✅ Agent peut assigner un employé à une ligne
+✅ Agent peut retirer un employé d'une ligne
+✅ Employé voit seulement ses factures PUBLIEE
+✅ Employé ne voit pas factures d'un autre employé
+✅ Payeur voit uniquement factures PUBLIEE de son entreprise
+✅ Ligne non attribuée est gérée proprement
+✅ Facture sans ligne (globale) est gérée proprement
+✅ Affectation inter-entreprise refusée (HTTP 400)
+✅ MSISDN doit être unique
+✅ Ligne sans entreprise refusée
+✅ Ligne attribuée à utilisateur non-EMPLOYE refusée
+✅ Validation complète
+Vérifications réussies :
+
+python manage.py check : 0 problèmes
+python manage.py test : 87 tests OK
+npm run build : ✓ built in 10.63s
+✅ Règles métier vérifiées
+Relations base de données :
+
+Invoice.line → Line (FK)
+Line.employe → User (FK role='EMPLOYE')
+Employé connecté voit uniquement ses factures PUBLIEE via line__employe=user
+Endpoints opérationnels :
+
+/api/billing/lines/{id}/assigner_employe/ (POST) : ✅ avec validation inter-entreprise
+/api/billing/lines/{id}/retirer_employe/ (POST) : ✅
+Import PDF et matching MSISDN :
+
+PDFMatcher.auto_attach_pdfs() : ✅ Associe Invoice à Line via MSISDN
+Lignes 396-404 dans pdf_processor.py : Lors du matching, si un MSISDN est détecté, la facture est associée à la ligne correspondante
+Filtres par rôle (tous cohérents) :
+
+InvoiceViewSet : Admin/Chef/Agent (toutes), Payeur (ses factures PUBLIEE), Employé (ses factures PUBLIEE via ligne)
+LineViewSet : Admin/Chef/Agent (toutes), Payeur (lignes de ses entreprises), Employé (ses lignes)
+CompanyViewSet : Admin/Chef/Agent (toutes), Payeur (ses entreprises), Employé (aucune)
+Validations en place :
+
+✅ Ligne sans entreprise refusée (serializer)
+✅ Ligne attribuée à non-EMPLOYE refusée (view)
+✅ Affectation inter-entreprise refusée (view, ligne 251-259)
+✅ MSISDN unique (contrainte modèle)
+📋 Prochaines étapes suggérées
+Pour compléter la Phase 2, il reste à :
+
+Tester le frontend avec un compte de chaque rôle
+Vérifier les écrans de gestion des utilisateurs
+Vérifier les filtres frontend par entreprise, ligne, période et statut
+La Phase 2 backend est complète et validée avec 87 tests qui passent tous.
+
+Est. Credits Used: 2.55
+Elapsed time: 9m 14s

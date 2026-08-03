@@ -1,5 +1,7 @@
 from django.db import models
+from django.core.validators import MinValueValidator
 from accounts.models import User
+from decimal import Decimal
 import uuid
 
 class CategorieClient(models.TextChoices):
@@ -85,7 +87,13 @@ class Line(models.Model):
     )
     msisdn = models.CharField(max_length=15, unique=True, verbose_name='Numéro Mobile')
     utilisateur = models.CharField(max_length=100, blank=True, null=True, verbose_name='Utilisateur')
-    forfait = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Forfait (FCFA)')
+    forfait = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0, 
+        validators=[MinValueValidator(Decimal('0'))],
+        verbose_name='Forfait (FCFA)'
+    )
     cycle = models.CharField(
         max_length=10, 
         choices=CycleFacturation.choices,
@@ -131,7 +139,12 @@ class Package(models.Model):
         default=TypeForfait.MIXTE,
         verbose_name='Type de forfait'
     )
-    prix_mensuel = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Prix mensuel (FCFA)')
+    prix_mensuel = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        validators=[MinValueValidator(Decimal('0'))],
+        verbose_name='Prix mensuel (FCFA)'
+    )
     quota_data_mo = models.IntegerField(null=True, blank=True, verbose_name='Quota Data (Mo)')
     quota_minutes = models.IntegerField(null=True, blank=True, verbose_name='Quota Minutes')
     quota_sms = models.IntegerField(null=True, blank=True, verbose_name='Quota SMS')
@@ -186,7 +199,12 @@ class TarifService(models.Model):
         verbose_name='Service'
     )
     nom_option = models.CharField(max_length=100, verbose_name='Nom de l\'option')
-    prix = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Prix (FCFA)')
+    prix = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        validators=[MinValueValidator(Decimal('0'))],
+        verbose_name='Prix (FCFA)'
+    )
     duree_validite_heures = models.IntegerField(null=True, blank=True, verbose_name='Durée de validité (heures)')
     description = models.TextField(blank=True, verbose_name='Description')
     est_actif = models.BooleanField(default=True, verbose_name='Actif')

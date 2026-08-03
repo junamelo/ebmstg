@@ -1,0 +1,2275 @@
+Arrête de présenter les prix et quotas actuels comme réels. Supprime de la commande toutes les valeurs inventées, notamment celles marquées « extrapolation ». Les prix et quotas doivent provenir soit d’une colonne vérifiable de l’Excel, soit d’un référentiel métier officiel que je fournirai.
+
+Avant toute suite : fournis la liste exacte des codes FORMULE utilisés dans les feuilles HYBRID/OPEN qui n’ont pas de Package correspondant, en respectant la casse (OP0 ≠ Op0). Ne crée ni prix ni quota sans source. Ajoute de vrais tests d’import de la commande. Supprime aussi les scripts et rapports temporaires créés inutilement, sans supprimer les données métier en base.
+
+Kiro
+Tu as raison. Je vais d'abord analyser exactement les codes FORMULE dans les feuilles HYBRID/OPEN pour identifier les incohérences de casse et les codes manquants.
+
+Accepted creation of
+
+analyze_formule_codes.py
+
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python analyze_formule_codes.py
+c   • Relancer l'import: python manage.py import_catalogue_forf┌──────────────────────────────────────┐   • Tests │📦 c++                                │.test_packa│📦 caffeinate                         ││📦 cal                                │===========│📦 cap                                │===========│📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projcd "c:\Users\Benoit\Documents\BURRO\Projealogue_forfaits (idempotent)   • Tests ┌──────────────────────────────────────┐.test_packa│📦 c++                                ││📦 caffeinate                         │===========│📦 cal                                │===========│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘   • Relancer l'import: python manage.py import_catalogue_forfaits (idempotent)   • Tests unitaires: python manage.py test billing.test_packages_services======================================================================PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cd "c:\Users\Benoit\Documents\BURRO\Projetcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python analyze_formulecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python analyze_formule_cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python analyze_formule_ccd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python analyze_formule_cocd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python analyze_formule_codcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python analyze_formule_codecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python analyze_formule_codescd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python analyze_formule_codes.cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python analyze_formule_codes.pcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python analyze_formule_codes.py
+================================================================================
+===================PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python analyze_formule_codes.py================================================================================ANALYSE DES CODES FORMULE
+================================================================================
+
+=== CODES DANS LA FEUILLE FORMULE ===
+  S1K        - STAR
+  S1Q        - SUN
+  M3C        - MOON
+  F1C        - FAMOUS
+  S50        - SOFT
+  S30        - SMART
+  B50        - DUNE
+  B30        - BRISE
+  B20        - ALISE
+  F30        - FLEXI
+  DAT        - DATA
+  Op0        - OPEN
+  TOT        - OPEN TRACKING
+
+Total : 13 codes dans feuille Formule
+
+=== CODES FORMULE DANS FEUILLE HYBRID ===
+
+Codes uniques trouvés : 9
+  DAT        -   16 occurrences - ✅
+  F1C        -    4 occurrences - ✅
+  M0B        -    6 occurrences - ❌ MANQUANT
+  M1B        -   16 occurrences - ❌ MANQUANT
+  M2B        -   13 occurrences - ❌ MANQUANT
+  M4B        -   13 occurrences - ❌ MANQUANT
+  M6B        -    4 occurrences - ❌ MANQUANT
+  S1K        -    6 occurrences - ✅
+  S50        -    7 occurrences - ✅
+
+=== CODES FORMULE DANS FEUILLE OPEN ===
+
+Codes uniques trouvés : 1
+  OP0        -   12 occurrences - ❌ MANQUANT
+
+=== CODES MANQUANTS DANS FEUILLE FORMULE ===
+
+⚠️  6 code(s) utilisé(s) dans HYBRID/OPEN mais absent(s) de la feuille Formule:
+  • M0B        - HYBRID:    6 | OPEN:    0
+  • M1B        - HYBRID:   16 | OPEN:    0
+  • M2B        - HYBRID:   13 | OPEN:    0
+  • M4B        - HYBRID:   13 | OPEN:    0
+  • M6B        - HYBRID:    4 | OPEN:    0
+  • OP0        - HYBRID:    0 | OPEN:   12
+
+=== VÉRIFICATION DE LA CASSE ===
+
+⚠️  1 problème(s) de casse détecté(s):
+  • "OP0" dans HYBRID/OPEN → devrait être "Op0"
+
+=== CODES DANS FORMULE MAIS NON UTILISÉS ===
+
+📋 9 code(s) défini(s) mais jamais utilisé(s):
+  • B20
+  • B30
+  • B50
+  • F30
+  • M3C
+  • Op0
+  • S1Q
+  • S30
+  • TOT
+
+================================================================================
+RÉSUMÉ
+================================================================================
+Codes dans feuille Formule : 13
+Codes utilisés HYBRID       : 9
+Codes utilisés OPEN         : 1
+Codes manquants            : 6
+Problèmes de casse         : 1
+Codes non utilisés         : 9
+================================================================================
+:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack 
+Parfait. Voici les résultats de l'analyse :
+
+📋 CODES FORMULE MANQUANTS ET PROBLÈMES DÉTECTÉS
+❌ Codes utilisés dans HYBRID/OPEN mais ABSENTS de la feuille Formule :
+M0B - 6 occurrences dans HYBRID
+M1B - 16 occurrences dans HYBRID
+M2B - 13 occurrences dans HYBRID
+M4B - 13 occurrences dans HYBRID
+M6B - 4 occurrences dans HYBRID
+OP0 - 12 occurrences dans OPEN
+⚠️ Problème de casse détecté :
+"OP0" dans la feuille OPEN devrait être "Op0" (selon feuille Formule)
+📋 Codes définis dans Formule mais jamais utilisés dans HYBRID/OPEN :
+B20, B30, B50, F30, M3C, Op0, S1Q, S30, TOT
+
+Avant de continuer, j'ai besoin que tu me fournisses :
+
+Les codes M0B, M1B, M2B, M4B, M6B : sont-ils des forfaits réels qui doivent être ajoutés à la feuille Formule ? Si oui, quels sont leurs noms et prix officiels ?
+
+Le référentiel métier officiel pour les prix et quotas des 13 forfaits de la feuille Formule
+
+Confirmation : faut-il corriger "OP0" → "Op0" dans les données ou importer les deux codes ?
+
+Je vais maintenant nettoyer les scripts et fichiers temporaires inutiles, tout en préservant les données en base.
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+Remove-Item -Force verify_import_final.py, test_api_catalogue.py, check_catalogue_status.py, analyze_packages_detail.py, clean_fake_data.py, verify_import.py, analyze_formule_codes.py
+cCodes utilisés HYBRID       : 9Codes utili┌──────────────────────────────────────┐Codes manqu│📦 c++                                │Problèmes d│📦 caffeinate                         │Codes non u│📦 cal                                │===========│📦 cap                                │===========│📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘Codes utilisés HYBRID       : 9Codes utilisés OPEN         : 1Codes manquants            : 6Problèmes de casse         : 1Codes non utilisés         : 9================================================================================PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Remove-Item -Force verify_import_final.py, test_api_catalogue.pyCodes non utilisés         : 9======┌──────────────────────────────────────┐===========│📦 c++                                │PS C:\│📦 caffeinate                         │in d'année │📦 cal                                │cd "c:\User│📦 cap                                │'année GLSI│📦 capacitor                          │move-Item -└──────────────────────────────────────┘ataloCodes non utilisés         : 9================================================================================PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Remove-Item -Force verify_import_final.py, test_api_catalom, check_catalogue_statcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Remove-Item -Force verify_import_final.py, test_api_catalogue.py, check_catalogue_status.py, analyze_packages_detail.py, clean_fake_data.py, verify_import.py, analyze_formulecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Remove-Item -Force verify_import_final.py, test_api_catalogue.py, check_catalogue_status.py, analyze_packages_detail.py, clean_fake_data.py, verify_import.py, analyze_formule_cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Remove-Item -Force verify_import_final.py, test_api_catalogue.py, check_catalogue_status.py, analyze_packages_detail.py, clean_fake_data.py, verify_import.py, analyze_formule_ccd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Remove-Item -Force verify_import_final.py, test_api_catalogue.py, check_catalogue_status.py, analyze_packages_detail.py, clean_fake_data.py, verify_import.py, analyze_formule_cocd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Remove-Item -Force verify_import_final.py, test_api_catalogue.py, check_catalogue_status.py, analyze_packages_detail.py, clean_fake_data.py, verify_import.py, analyze_formule_codcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Remove-Item -Force verify_import_final.py, test_api_catalogue.py, check_catalogue_status.py, analyze_packages_detail.py, clean_fake_data.py, verify_import.py, analyze_formule_codecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Remove-Item -Force verify_import_final.py, test_api_catalogue.py, check_catalogue_status.py, analyze_packages_detail.py, clean_fake_data.py, verify_import.py, analyze_formule_codescd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Remove-Item -Force verify_import_final.py, test_api_catalogue.py, check_catalogue_status.py, analyze_packages_detail.py, clean_fake_data.py, verify_import.py, analyze_formule_codes.cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Remove-Item -Force verify_import_final.py, test_api_catalogue.py, check_catalogue_status.py, analyze_packages_detail.py, clean_fake_data.py, verify_import.py, analyze_formule_codes.pcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; Remove-Item -Force verify_import_final.py, test_api_catalogue.py, check_catalogue_status.py, analyze_packages_detail.py, clean_fake_data.py, verify_import.py, analyze_formule_codes.py
+PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack 
+Accepted deletion of
+
+IMPORT_CATALOGUE_RAPPORT_FINAL.md
+Accepted deletion of
+
+IMPORT_CATALOGUE_SYNTHESE.md
+Maintenant je vais créer un rapport factuel avec uniquement les codes manquants identifiés :
+
+Accepted creation of
+
+CODES_FORMULE_MANQUANTS.md
+
+
+Maintenant, je vais modifier la commande d'import pour supprimer toutes les valeurs inventées et n'importer que ce qui est vérifiable dans l'Excel :
+
+Accepted edits to
+
+import_catalogue_forfaits.py
+
+
+Maintenant, créons de vrais tests d'import pour la commande :
+
+Accepted creation of
+
+test_import_catalogue.py
+
+
+Exécutons les tests d'import pour vérifier que tout fonctionne :
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py test billing.tests.test_import_catalogue -v 2
+cannée GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Ben┌──────────────────────────────────────┐e GLSI-A BA│📦 c++                                │Item -Force│📦 caffeinate                         │gue.py, che│📦 cal                                │_detail.py,│📦 cap                                │nalyze_form│📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projcd "c:\Users\Benoit\Documents\BURRO\Projecd "c:\Users\Benoit\Documents\BURRO\Projet:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BA┌──────────────────────────────────────┐Item -Force│📦 c++                                │gue.py, che│📦 caffeinate                         │_detail.py,│📦 cal                                │nalyze_form│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet cd "c:\Users\Benoit\Documents\BURRO\Projet dcd "c:\Users\Benoit\Documents\BURRO\Projet decd "c:\Users\Benoit\Documents\BURRO\Projet de :\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BA┌──────────────────────────────────────┐Item -Force│📦 c++                                │gue.py, che│📦 caffeinate                         │_detail.py,│📦 cal                                │nalyze_form│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de f:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BA┌──────────────────────────────────────┐Item -Force│📦 c++                                │gue.py, che│📦 caffeinate                         │_detail.py,│📦 cal                                │nalyze_form│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BA┌──────────────────────────────────────┐Item -Force│📦 c++                                │gue.py, che│📦 caffeinate                         │_detail.py,│📦 cal                                │nalyze_form│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.testItem -Force verify_import_final.py, test_api_catalogue.py, che┌──────────────────────────────────────┐_detail.py,│📦 c++                                │nalyze_form│📦 caffeinate                         │PS C:\Users│📦 cal                                │année GLSI-│📦 cap                                │:\Users\Ben│📦 capacitor                          │e GLSI-A BA└──────────────────────────────────────┘Item -Force verify_import_final.py, test_api_catalogue.py, che┌──────────────────────────────────────┐_detail.py,│📦 c++                                │nalyze_form│📦 caffeinate                         │PS C:\Users│📦 cal                                │année GLSI-│📦 cap                                │:\Users\Ben│📦 capacitor                          │e GLSI-A BA└──────────────────────────────────────┘Item -Force verify_import_final.py, test_api_catalogue.py, check_catalogue_status.py, analyze_packages_detail.py, clean_fake_data.py, verify_import.py, analyze_formule_codes.pyPS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_icd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_imcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_impcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_impocd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalocd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogucd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_cataloguecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue 
+cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue -cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue -vcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue -v cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue -v 2
+Found 1 test(s).
+nalyze_formule_codes.pyPS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue -v 2Found 1 test(s).Skipping setup of unused database(s): default.
+System check identified no issues (0 silenced).
+test_import_catalogue (unittest.loader._FailedTest.test_import_catalogue) ... ERROR
+
+======================================================================
+ERROR: test_import_catalogue (unittest.loader._FailedTest.test_import_catalogue)
+----------------------------------------------------------------------
+AttributeError: module 'billing.tests' has no attribute 'test_import_catalogue'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (errors=1)
+:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack 
+Le module billing.tests doit être un package. Vérifions la structure :
+
+Searched workspace
+Vérifier la structure du dossier tests dans billing
+Il y a un dossier tests/ et un fichier tests.py. Vérifions le contenu du dossier tests :
+
+Searched workspace
+Voir si le dossier tests contient __init__.py
+Il manque le __init__.py. Créons-le :
+
+Accepted creation of
+
+__init__.py
+
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py test billing.tests.test_import_catalogue -v 2
+cbute 'test_import_catalogue'┌──────────────────────────────────────┐-----------│📦 c++                                │-----------│📦 caffeinate                         │Ran 1 test │📦 cal                                ││📦 cap                                │FAILED (err│📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projcd "c:\Users\Benoit\Documents\BURRO\Projecd "c:\Users\Benoit\Documents\BURRO\Projet-----------┌──────────────────────────────────────┐-----------│📦 c++                                │Ran 1 test │📦 caffeinate                         ││📦 cal                                │FAILED (err│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet cd "c:\Users\Benoit\Documents\BURRO\Projet dcd "c:\Users\Benoit\Documents\BURRO\Projet de-----------┌──────────────────────────────────────┐-----------│📦 c++                                │Ran 1 test │📦 caffeinate                         ││📦 cal                                │FAILED (err│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de -----------┌──────────────────────────────────────┐-----------│📦 c++                                │Ran 1 test │📦 caffeinate                         ││📦 cal                                │FAILED (err│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet de f-----------┌──────────────────────────────────────┐-----------│📦 c++                                │Ran 1 test │📦 caffeinate                         ││📦 cal                                │FAILED (err│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘bute 'test_import_catalogue'----------------------------------------------------------------------Ran 1 test in 0.001sFAILED (errors=1)PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.testcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_icd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_imcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_impcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_impocd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_imporcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalocd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogucd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_cataloguecd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue 
+cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue -cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue -vcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue -v cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue -v 2
+Found 13 test(s).
+FAILED (errors=1)PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue -v 2Found 13 test(s).Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, django_filters, drf_spectacular, messages, rest_framework, rest_framework_simplejwt, staticfiles
+  Apply all migrations: accounts, admin, auth, billing, contenttypes, sessions, token_blacklist
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying accounts.0001_initial... OK
+  Applying accounts.0002_user_created_by_user_custom_permissions_and_more... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying billing.0001_initial... OK
+  Applying billing.0002_alter_line_cycle... OK
+  Applying billing.0003_package_service_invoice_historiquefacturation_and_more... OK
+  Applying billing.0004_invoice_line... OK
+  Applying sessions.0001_initial... OK
+  Applying token_blacklist.0001_initial... OK
+  Applying token_blacklist.0002_outstandingtoken_jti_hex... OK
+  Applying token_blacklist.0003_auto_20171017_2007... OK
+  Applying token_blacklist.0004_auto_20171017_2013... OK
+  Applying token_blacklist.0005_remove_outstandingtoken_jti... OK
+  Applying token_blacklist.0006_auto_20171017_2113... OK
+  Applying token_blacklist.0007_auto_20171017_2214... OK
+  Applying token_blacklist.0008_migrate_to_bigautofield... OK
+  Applying token_blacklist.0010_fix_migrate_to_bigautofield... OK
+  Applying token_blacklist.0011_linearizes_history... OK
+  Applying token_blacklist.0012_alter_outstandingtoken_user... OK
+  Applying token_blacklist.0013_alter_blacklistedtoken_options_and_more... OK
+System check identified no issues (0 silenced).
+test_commande_import_existe (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_existe)
+Test : la commande import_catalogue_forfaits existe ... usage:  import_catalogue_forfaits [-h]
+                                  [--excel-path EXCEL_PATH]
+                                  [--version]
+                                  [-v {0,1,2,3}]
+                                  [--settings SETTINGS]
+                                  [--pythonpath PYTHONPATH]
+                                  [--traceback]
+                                  [--no-color]
+                                  [--force-color]
+                                  [--skip-checks]
+
+Importe le catalogue de forfaits, services et
+options depuis le fichier Excel
+
+options:
+  -h, --help            show this help message
+                        and exit
+  --excel-path EXCEL_PATH
+                        Chemin vers le fichier
+                        Excel
+  --version             Show program's version
+                        number and exit.
+  -v, --verbosity {0,1,2,3}
+                        Verbosity level;
+                        0=minimal output,
+                        1=normal output,
+                        2=verbose output, 3=very
+                        verbose output
+  --settings SETTINGS   The Python path to a
+                        settings module, e.g. "my
+                        project.settings.main".
+                        If this isn't provided,
+                        the
+                        DJANGO_SETTINGS_MODULE
+                        environment variable will
+                        be used.
+  --pythonpath PYTHONPATH
+                        A directory to add to the
+                        Python path, e.g. "/home/
+                        djangoprojects/myproject"
+                        .
+  --traceback           Display a full stack
+                        trace on CommandError
+                        exceptions.
+  --no-color            Don't colorize the
+                        command output.
+  --force-color         Force colorization of the
+                        command output.
+  --skip-checks         Skip system checks.
+ERROR
+test_import_est_idempotent (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_import_est_idempotent)
+Test : relancer l'import ne crée pas de doublons ... Lecture du fichier : C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\Données_Test_Facturation (1).xlsx
+
+=== Import BlackBerry ===
+  Service créé : BlackBerry
+    Option créée : BB1 - 15000 FCFA
+    Option créée : BB2 - 30000 FCFA
+    Option créée : BB3 - 10000 FCFA
+    Option créée : BB4 - 4500 FCFA
+    Option créée : BB5 - 60000 FCFA
+    Option créée : BB6 - 120000 FCFA
+    Option créée : BB7 - 12000 FCFA
+    Option créée : BB8 - 90000 FCFA
+    Option créée : BB9 - 50000 FCFA
+    Option créée : BB10 - 100 FCFA
+    Option créée : BB11 - 50 FCFA
+    Option créée : BB12 - 200 FCFA
+    Option créée : BB13 - 2360 FCFA
+    Option créée : BB4_1 - 3000 FCFA
+    Option créée : BB13_2 - 4720 FCFA
+    Option créée : BB15 - 25000 FCFA
+    Option créée : BB12_2 - 400 FCFA
+    Option créée : BB13_5 - 1000 FCFA
+    Option créée : BB13_5_2 - 2000 FCFA
+    Option créée : BB3_1 - 7000 FCFA
+    Option créée : BB1_1 - 12000 FCFA
+    Option créée : BB15_1 - 2500 FCFA
+    Option créée : BB15_2 - 5000 FCFA
+    Option créée : BB15_3 - 7000 FCFA
+    Option créée : BB15_4 - 10000 FCFA
+    Option créée : BB15_5 - 12000 FCFA
+    Option créée : BB15_6 - 15000 FCFA
+    Option créée : BB15_7 - 20000 FCFA
+    Option créée : BB15_8 - 30000 FCFA
+    Option créée : BB15_9 - 50000 FCFA
+    Option créée : BB15_10 - 100000 FCFA
+
+=== Import No Limit ===
+  Service créé : No Limit
+    Option créée : AI00* - 9500.0 FCFA
+    Option créée : AI00** - 5000.0 FCFA
+    Option créée : AI00*** - 7000.0 FCFA
+    Option créée : AI00_' - 2500.0 FCFA
+    Option créée : AI00_'' - 5000.0 FCFA
+    Option créée : AI00_''' - 7000.0 FCFA
+    Option créée : AI00_'''' - 10000.0 FCFA
+    Option créée : AI00*_'' - 14500.0 FCFA
+    Option créée : AI10 - 10000.0 FCFA
+    Option créée : AI15 - 15000.0 FCFA
+    Option créée : AI20 - 2000.0 FCFA
+    Option créée : AI25 - 2500.0 FCFA
+    Option créée : AI30 - 3000.0 FCFA
+    Option créée : AI40 - 4000.0 FCFA
+    Option créée : AI50 - 5000.0 FCFA
+    Option créée : AI50* - 14500.0 FCFA
+    Option créée : AI50** - 10000.0 FCFA
+    Option créée : AI50*** - 12000.0 FCFA
+    Option créée : AI50# - 35000.0 FCFA
+    Option créée : AI75 - 7500.0 FCFA
+    Option créée : AI00+ - 5000.0 FCFA
+    Option créée : AI10+ - 15000.0 FCFA
+    Option créée : AI15+ - 20000.0 FCFA
+    Option créée : AI20+ - 7000.0 FCFA
+    Option créée : AI25+ - 7500.0 FCFA
+    Option créée : AI30+ - 8000.0 FCFA
+    Option créée : AI40+ - 9000.0 FCFA
+    Option créée : AI50+ - 10000.0 FCFA
+    Option créée : AI70+ - 12000.0 FCFA
+    Option créée : AI75+ - 12500.0 FCFA
+    Option créée : + ou [PRO+] - 5000.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option créée : AI50_' - 7500.0 FCFA
+    Option créée : AI50_'' - 10000.0 FCFA
+    Option créée : AI50_''' - 12000.0 FCFA
+    Option créée : AI50_'''' - 15000.0 FCFA
+    Option créée : AI20_'' - 7000.0 FCFA
+    Option créée : AI20_' - 4500.0 FCFA
+    Option créée : _' - 2500.0 FCFA
+    Option créée : _'' - 5000.0 FCFA
+    Option créée : _''' - 7000.0 FCFA
+    Option créée : _'''' - 10000.0 FCFA
+    Option créée : _''''' - 12000.0 FCFA
+    Option créée : _'''''' - 15000.0 FCFA
+    Option créée : _''''''' - 20000.0 FCFA
+    Option créée : # - 30000.0 FCFA
+    Option créée : ## - 50000.0 FCFA
+    Option créée : ### - 100000.0 FCFA
+    Option créée : AI30_'''''' - 18000.0 FCFA
+    Option créée : AI30_' - 5500.0 FCFA
+    Option créée : *** - 7000.0 FCFA
+    Option créée : ** - 5000.0 FCFA
+
+=== Import Services Autres ===
+  Service créé : Facture Détaillée
+    Option créée : Facture Détaillée Standard - 2360 FCFA
+  Service créé : Incognito
+    Option créée : Incognito Standard - 2360 FCFA
+
+=== Import Forfaits/Formules ===
+  Forfait créé : S1K - STAR (prix/quotas à définir)
+  Forfait créé : S1Q - SUN (prix/quotas à définir)
+  Forfait créé : M3C - MOON (prix/quotas à définir)
+  Forfait créé : F1C - FAMOUS (prix/quotas à définir)
+  Forfait créé : S50 - SOFT (prix/quotas à définir)
+  Forfait créé : S30 - SMART (prix/quotas à définir)
+  Forfait créé : B50 - DUNE (prix/quotas à définir)
+  Forfait créé : B30 - BRISE (prix/quotas à définir)
+  Forfait créé : B20 - ALISE (prix/quotas à définir)
+  Forfait créé : F30 - FLEXI (prix/quotas à définir)
+  Forfait créé : DAT - DATA (prix/quotas à définir)
+  Forfait créé : Op0 - OPEN (prix/quotas à définir)
+  Forfait créé : TOT - OPEN TRACKING (prix/quotas à définir)
+
+================================================================================
+RÉSUMÉ DE L'IMPORT
+================================================================================
+
+Forfaits Package :
+  Créés : 13
+  Mis à jour : 0
+  Total en base : 13
+
+Services :
+  Créés : 4
+  Mis à jour : 0
+  Total en base : 4
+
+Options (TarifService) :
+  Créées : 84
+  Mises à jour : 1
+  Total en base : 84
+
+================================================================================
+Import terminé avec succès !
+================================================================================
+Lecture du fichier : C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\Données_Test_Facturation (1).xlsx
+
+=== Import BlackBerry ===
+  Service existant : BlackBerry
+    Option MAJ : BB1 - 15000 FCFA
+    Option MAJ : BB2 - 30000 FCFA
+    Option MAJ : BB3 - 10000 FCFA
+    Option MAJ : BB4 - 4500 FCFA
+    Option MAJ : BB5 - 60000 FCFA
+    Option MAJ : BB6 - 120000 FCFA
+    Option MAJ : BB7 - 12000 FCFA
+    Option MAJ : BB8 - 90000 FCFA
+    Option MAJ : BB9 - 50000 FCFA
+    Option MAJ : BB10 - 100 FCFA
+    Option MAJ : BB11 - 50 FCFA
+    Option MAJ : BB12 - 200 FCFA
+    Option MAJ : BB13 - 2360 FCFA
+    Option MAJ : BB4_1 - 3000 FCFA
+    Option MAJ : BB13_2 - 4720 FCFA
+    Option MAJ : BB15 - 25000 FCFA
+    Option MAJ : BB12_2 - 400 FCFA
+    Option MAJ : BB13_5 - 1000 FCFA
+    Option MAJ : BB13_5_2 - 2000 FCFA
+    Option MAJ : BB3_1 - 7000 FCFA
+    Option MAJ : BB1_1 - 12000 FCFA
+    Option MAJ : BB15_1 - 2500 FCFA
+    Option MAJ : BB15_2 - 5000 FCFA
+    Option MAJ : BB15_3 - 7000 FCFA
+    Option MAJ : BB15_4 - 10000 FCFA
+    Option MAJ : BB15_5 - 12000 FCFA
+    Option MAJ : BB15_6 - 15000 FCFA
+    Option MAJ : BB15_7 - 20000 FCFA
+    Option MAJ : BB15_8 - 30000 FCFA
+    Option MAJ : BB15_9 - 50000 FCFA
+    Option MAJ : BB15_10 - 100000 FCFA
+
+=== Import No Limit ===
+  Service existant : No Limit
+    Option MAJ : AI00* - 9500.0 FCFA
+    Option MAJ : AI00** - 5000.0 FCFA
+    Option MAJ : AI00*** - 7000.0 FCFA
+    Option MAJ : AI00_' - 2500.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option MAJ : AI00_''' - 7000.0 FCFA
+    Option MAJ : AI00_'''' - 10000.0 FCFA
+    Option MAJ : AI00*_'' - 14500.0 FCFA
+    Option MAJ : AI10 - 10000.0 FCFA
+    Option MAJ : AI15 - 15000.0 FCFA
+    Option MAJ : AI20 - 2000.0 FCFA
+    Option MAJ : AI25 - 2500.0 FCFA
+    Option MAJ : AI30 - 3000.0 FCFA
+    Option MAJ : AI40 - 4000.0 FCFA
+    Option MAJ : AI50 - 5000.0 FCFA
+    Option MAJ : AI50* - 14500.0 FCFA
+    Option MAJ : AI50** - 10000.0 FCFA
+    Option MAJ : AI50*** - 12000.0 FCFA
+    Option MAJ : AI50# - 35000.0 FCFA
+    Option MAJ : AI75 - 7500.0 FCFA
+    Option MAJ : AI00+ - 5000.0 FCFA
+    Option MAJ : AI10+ - 15000.0 FCFA
+    Option MAJ : AI15+ - 20000.0 FCFA
+    Option MAJ : AI20+ - 7000.0 FCFA
+    Option MAJ : AI25+ - 7500.0 FCFA
+    Option MAJ : AI30+ - 8000.0 FCFA
+    Option MAJ : AI40+ - 9000.0 FCFA
+    Option MAJ : AI50+ - 10000.0 FCFA
+    Option MAJ : AI70+ - 12000.0 FCFA
+    Option MAJ : AI75+ - 12500.0 FCFA
+    Option MAJ : + ou [PRO+] - 5000.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option MAJ : AI50_' - 7500.0 FCFA
+    Option MAJ : AI50_'' - 10000.0 FCFA
+    Option MAJ : AI50_''' - 12000.0 FCFA
+    Option MAJ : AI50_'''' - 15000.0 FCFA
+    Option MAJ : AI20_'' - 7000.0 FCFA
+    Option MAJ : AI20_' - 4500.0 FCFA
+    Option MAJ : _' - 2500.0 FCFA
+    Option MAJ : _'' - 5000.0 FCFA
+    Option MAJ : _''' - 7000.0 FCFA
+    Option MAJ : _'''' - 10000.0 FCFA
+    Option MAJ : _''''' - 12000.0 FCFA
+    Option MAJ : _'''''' - 15000.0 FCFA
+    Option MAJ : _''''''' - 20000.0 FCFA
+    Option MAJ : # - 30000.0 FCFA
+    Option MAJ : ## - 50000.0 FCFA
+    Option MAJ : ### - 100000.0 FCFA
+    Option MAJ : AI30_'''''' - 18000.0 FCFA
+    Option MAJ : AI30_' - 5500.0 FCFA
+    Option MAJ : *** - 7000.0 FCFA
+    Option MAJ : ** - 5000.0 FCFA
+
+=== Import Services Autres ===
+    Option MAJ : Facture Détaillée Standard - 2360 FCFA
+    Option MAJ : Incognito Standard - 2360 FCFA
+
+=== Import Forfaits/Formules ===
+  Forfait MAJ : S1K - STAR (prix/quotas à définir)
+  Forfait MAJ : S1Q - SUN (prix/quotas à définir)
+  Forfait MAJ : M3C - MOON (prix/quotas à définir)
+  Forfait MAJ : F1C - FAMOUS (prix/quotas à définir)
+  Forfait MAJ : S50 - SOFT (prix/quotas à définir)
+  Forfait MAJ : S30 - SMART (prix/quotas à définir)
+  Forfait MAJ : B50 - DUNE (prix/quotas à définir)
+  Forfait MAJ : B30 - BRISE (prix/quotas à définir)
+  Forfait MAJ : B20 - ALISE (prix/quotas à définir)
+  Forfait MAJ : F30 - FLEXI (prix/quotas à définir)
+  Forfait MAJ : DAT - DATA (prix/quotas à définir)
+  Forfait MAJ : Op0 - OPEN (prix/quotas à définir)
+  Forfait MAJ : TOT - OPEN TRACKING (prix/quotas à définir)
+
+================================================================================
+RÉSUMÉ DE L'IMPORT
+================================================================================
+
+Forfaits Package :
+  Créés : 0
+  Mis à jour : 13
+  Total en base : 13
+
+Services :
+  Créés : 0
+  Mis à jour : 2
+  Total en base : 4
+
+Options (TarifService) :
+  Créées : 0
+  Mises à jour : 85
+  Total en base : 84
+
+================================================================================
+Import terminé avec succès !
+================================================================================
+ok
+test_import_forfaits_depuis_feuille_formule (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_import_forfaits_depuis_feuille_formule)
+Test : les forfaits sont importés depuis la feuille Formule ... Lecture du fichier : C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\Données_Test_Facturation (1).xlsx
+
+=== Import BlackBerry ===
+  Service créé : BlackBerry
+    Option créée : BB1 - 15000 FCFA
+    Option créée : BB2 - 30000 FCFA
+    Option créée : BB3 - 10000 FCFA
+    Option créée : BB4 - 4500 FCFA
+    Option créée : BB5 - 60000 FCFA
+    Option créée : BB6 - 120000 FCFA
+    Option créée : BB7 - 12000 FCFA
+    Option créée : BB8 - 90000 FCFA
+    Option créée : BB9 - 50000 FCFA
+    Option créée : BB10 - 100 FCFA
+    Option créée : BB11 - 50 FCFA
+    Option créée : BB12 - 200 FCFA
+    Option créée : BB13 - 2360 FCFA
+    Option créée : BB4_1 - 3000 FCFA
+    Option créée : BB13_2 - 4720 FCFA
+    Option créée : BB15 - 25000 FCFA
+    Option créée : BB12_2 - 400 FCFA
+    Option créée : BB13_5 - 1000 FCFA
+    Option créée : BB13_5_2 - 2000 FCFA
+    Option créée : BB3_1 - 7000 FCFA
+    Option créée : BB1_1 - 12000 FCFA
+    Option créée : BB15_1 - 2500 FCFA
+    Option créée : BB15_2 - 5000 FCFA
+    Option créée : BB15_3 - 7000 FCFA
+    Option créée : BB15_4 - 10000 FCFA
+    Option créée : BB15_5 - 12000 FCFA
+    Option créée : BB15_6 - 15000 FCFA
+    Option créée : BB15_7 - 20000 FCFA
+    Option créée : BB15_8 - 30000 FCFA
+    Option créée : BB15_9 - 50000 FCFA
+    Option créée : BB15_10 - 100000 FCFA
+
+=== Import No Limit ===
+  Service créé : No Limit
+    Option créée : AI00* - 9500.0 FCFA
+    Option créée : AI00** - 5000.0 FCFA
+    Option créée : AI00*** - 7000.0 FCFA
+    Option créée : AI00_' - 2500.0 FCFA
+    Option créée : AI00_'' - 5000.0 FCFA
+    Option créée : AI00_''' - 7000.0 FCFA
+    Option créée : AI00_'''' - 10000.0 FCFA
+    Option créée : AI00*_'' - 14500.0 FCFA
+    Option créée : AI10 - 10000.0 FCFA
+    Option créée : AI15 - 15000.0 FCFA
+    Option créée : AI20 - 2000.0 FCFA
+    Option créée : AI25 - 2500.0 FCFA
+    Option créée : AI30 - 3000.0 FCFA
+    Option créée : AI40 - 4000.0 FCFA
+    Option créée : AI50 - 5000.0 FCFA
+    Option créée : AI50* - 14500.0 FCFA
+    Option créée : AI50** - 10000.0 FCFA
+    Option créée : AI50*** - 12000.0 FCFA
+    Option créée : AI50# - 35000.0 FCFA
+    Option créée : AI75 - 7500.0 FCFA
+    Option créée : AI00+ - 5000.0 FCFA
+    Option créée : AI10+ - 15000.0 FCFA
+    Option créée : AI15+ - 20000.0 FCFA
+    Option créée : AI20+ - 7000.0 FCFA
+    Option créée : AI25+ - 7500.0 FCFA
+    Option créée : AI30+ - 8000.0 FCFA
+    Option créée : AI40+ - 9000.0 FCFA
+    Option créée : AI50+ - 10000.0 FCFA
+    Option créée : AI70+ - 12000.0 FCFA
+    Option créée : AI75+ - 12500.0 FCFA
+    Option créée : + ou [PRO+] - 5000.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option créée : AI50_' - 7500.0 FCFA
+    Option créée : AI50_'' - 10000.0 FCFA
+    Option créée : AI50_''' - 12000.0 FCFA
+    Option créée : AI50_'''' - 15000.0 FCFA
+    Option créée : AI20_'' - 7000.0 FCFA
+    Option créée : AI20_' - 4500.0 FCFA
+    Option créée : _' - 2500.0 FCFA
+    Option créée : _'' - 5000.0 FCFA
+    Option créée : _''' - 7000.0 FCFA
+    Option créée : _'''' - 10000.0 FCFA
+    Option créée : _''''' - 12000.0 FCFA
+    Option créée : _'''''' - 15000.0 FCFA
+    Option créée : _''''''' - 20000.0 FCFA
+    Option créée : # - 30000.0 FCFA
+    Option créée : ## - 50000.0 FCFA
+    Option créée : ### - 100000.0 FCFA
+    Option créée : AI30_'''''' - 18000.0 FCFA
+    Option créée : AI30_' - 5500.0 FCFA
+    Option créée : *** - 7000.0 FCFA
+    Option créée : ** - 5000.0 FCFA
+
+=== Import Services Autres ===
+  Service créé : Facture Détaillée
+    Option créée : Facture Détaillée Standard - 2360 FCFA
+  Service créé : Incognito
+    Option créée : Incognito Standard - 2360 FCFA
+
+=== Import Forfaits/Formules ===
+  Forfait créé : S1K - STAR (prix/quotas à définir)
+  Forfait créé : S1Q - SUN (prix/quotas à définir)
+  Forfait créé : M3C - MOON (prix/quotas à définir)
+  Forfait créé : F1C - FAMOUS (prix/quotas à définir)
+  Forfait créé : S50 - SOFT (prix/quotas à définir)
+  Forfait créé : S30 - SMART (prix/quotas à définir)
+  Forfait créé : B50 - DUNE (prix/quotas à définir)
+  Forfait créé : B30 - BRISE (prix/quotas à définir)
+  Forfait créé : B20 - ALISE (prix/quotas à définir)
+  Forfait créé : F30 - FLEXI (prix/quotas à définir)
+  Forfait créé : DAT - DATA (prix/quotas à définir)
+  Forfait créé : Op0 - OPEN (prix/quotas à définir)
+  Forfait créé : TOT - OPEN TRACKING (prix/quotas à définir)
+
+================================================================================
+RÉSUMÉ DE L'IMPORT
+================================================================================
+
+Forfaits Package :
+  Créés : 13
+  Mis à jour : 0
+  Total en base : 13
+
+Services :
+  Créés : 4
+  Mis à jour : 0
+  Total en base : 4
+
+Options (TarifService) :
+  Créées : 84
+  Mises à jour : 1
+  Total en base : 84
+
+================================================================================
+Import terminé avec succès !
+================================================================================
+ok
+test_import_forfaits_sans_prix_inventés (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_import_forfaits_sans_prix_inventés)
+Test : les forfaits importés sans référentiel ont prix à 0 ... Lecture du fichier : C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\Données_Test_Facturation (1).xlsx
+
+=== Import BlackBerry ===
+  Service créé : BlackBerry
+    Option créée : BB1 - 15000 FCFA
+    Option créée : BB2 - 30000 FCFA
+    Option créée : BB3 - 10000 FCFA
+    Option créée : BB4 - 4500 FCFA
+    Option créée : BB5 - 60000 FCFA
+    Option créée : BB6 - 120000 FCFA
+    Option créée : BB7 - 12000 FCFA
+    Option créée : BB8 - 90000 FCFA
+    Option créée : BB9 - 50000 FCFA
+    Option créée : BB10 - 100 FCFA
+    Option créée : BB11 - 50 FCFA
+    Option créée : BB12 - 200 FCFA
+    Option créée : BB13 - 2360 FCFA
+    Option créée : BB4_1 - 3000 FCFA
+    Option créée : BB13_2 - 4720 FCFA
+    Option créée : BB15 - 25000 FCFA
+    Option créée : BB12_2 - 400 FCFA
+    Option créée : BB13_5 - 1000 FCFA
+    Option créée : BB13_5_2 - 2000 FCFA
+    Option créée : BB3_1 - 7000 FCFA
+    Option créée : BB1_1 - 12000 FCFA
+    Option créée : BB15_1 - 2500 FCFA
+    Option créée : BB15_2 - 5000 FCFA
+    Option créée : BB15_3 - 7000 FCFA
+    Option créée : BB15_4 - 10000 FCFA
+    Option créée : BB15_5 - 12000 FCFA
+    Option créée : BB15_6 - 15000 FCFA
+    Option créée : BB15_7 - 20000 FCFA
+    Option créée : BB15_8 - 30000 FCFA
+    Option créée : BB15_9 - 50000 FCFA
+    Option créée : BB15_10 - 100000 FCFA
+
+=== Import No Limit ===
+  Service créé : No Limit
+    Option créée : AI00* - 9500.0 FCFA
+    Option créée : AI00** - 5000.0 FCFA
+    Option créée : AI00*** - 7000.0 FCFA
+    Option créée : AI00_' - 2500.0 FCFA
+    Option créée : AI00_'' - 5000.0 FCFA
+    Option créée : AI00_''' - 7000.0 FCFA
+    Option créée : AI00_'''' - 10000.0 FCFA
+    Option créée : AI00*_'' - 14500.0 FCFA
+    Option créée : AI10 - 10000.0 FCFA
+    Option créée : AI15 - 15000.0 FCFA
+    Option créée : AI20 - 2000.0 FCFA
+    Option créée : AI25 - 2500.0 FCFA
+    Option créée : AI30 - 3000.0 FCFA
+    Option créée : AI40 - 4000.0 FCFA
+    Option créée : AI50 - 5000.0 FCFA
+    Option créée : AI50* - 14500.0 FCFA
+    Option créée : AI50** - 10000.0 FCFA
+    Option créée : AI50*** - 12000.0 FCFA
+    Option créée : AI50# - 35000.0 FCFA
+    Option créée : AI75 - 7500.0 FCFA
+    Option créée : AI00+ - 5000.0 FCFA
+    Option créée : AI10+ - 15000.0 FCFA
+    Option créée : AI15+ - 20000.0 FCFA
+    Option créée : AI20+ - 7000.0 FCFA
+    Option créée : AI25+ - 7500.0 FCFA
+    Option créée : AI30+ - 8000.0 FCFA
+    Option créée : AI40+ - 9000.0 FCFA
+    Option créée : AI50+ - 10000.0 FCFA
+    Option créée : AI70+ - 12000.0 FCFA
+    Option créée : AI75+ - 12500.0 FCFA
+    Option créée : + ou [PRO+] - 5000.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option créée : AI50_' - 7500.0 FCFA
+    Option créée : AI50_'' - 10000.0 FCFA
+    Option créée : AI50_''' - 12000.0 FCFA
+    Option créée : AI50_'''' - 15000.0 FCFA
+    Option créée : AI20_'' - 7000.0 FCFA
+    Option créée : AI20_' - 4500.0 FCFA
+    Option créée : _' - 2500.0 FCFA
+    Option créée : _'' - 5000.0 FCFA
+    Option créée : _''' - 7000.0 FCFA
+    Option créée : _'''' - 10000.0 FCFA
+    Option créée : _''''' - 12000.0 FCFA
+    Option créée : _'''''' - 15000.0 FCFA
+    Option créée : _''''''' - 20000.0 FCFA
+    Option créée : # - 30000.0 FCFA
+    Option créée : ## - 50000.0 FCFA
+    Option créée : ### - 100000.0 FCFA
+    Option créée : AI30_'''''' - 18000.0 FCFA
+    Option créée : AI30_' - 5500.0 FCFA
+    Option créée : *** - 7000.0 FCFA
+    Option créée : ** - 5000.0 FCFA
+
+=== Import Services Autres ===
+  Service créé : Facture Détaillée
+    Option créée : Facture Détaillée Standard - 2360 FCFA
+  Service créé : Incognito
+    Option créée : Incognito Standard - 2360 FCFA
+
+=== Import Forfaits/Formules ===
+  Forfait créé : S1K - STAR (prix/quotas à définir)
+  Forfait créé : S1Q - SUN (prix/quotas à définir)
+  Forfait créé : M3C - MOON (prix/quotas à définir)
+  Forfait créé : F1C - FAMOUS (prix/quotas à définir)
+  Forfait créé : S50 - SOFT (prix/quotas à définir)
+  Forfait créé : S30 - SMART (prix/quotas à définir)
+  Forfait créé : B50 - DUNE (prix/quotas à définir)
+  Forfait créé : B30 - BRISE (prix/quotas à définir)
+  Forfait créé : B20 - ALISE (prix/quotas à définir)
+  Forfait créé : F30 - FLEXI (prix/quotas à définir)
+  Forfait créé : DAT - DATA (prix/quotas à définir)
+  Forfait créé : Op0 - OPEN (prix/quotas à définir)
+  Forfait créé : TOT - OPEN TRACKING (prix/quotas à définir)
+
+================================================================================
+RÉSUMÉ DE L'IMPORT
+================================================================================
+
+Forfaits Package :
+  Créés : 13
+  Mis à jour : 0
+  Total en base : 13
+
+Services :
+  Créés : 4
+  Mis à jour : 0
+  Total en base : 4
+
+Options (TarifService) :
+  Créées : 84
+  Mises à jour : 1
+  Total en base : 84
+
+================================================================================
+Import terminé avec succès !
+================================================================================
+ok
+test_import_ignore_en_tete_codes_formules (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_import_ignore_en_tete_codes_formules)
+Test : l'en-tête CODES/FORMULES est ignoré ... Lecture du fichier : C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\Données_Test_Facturation (1).xlsx
+
+=== Import BlackBerry ===
+  Service créé : BlackBerry
+    Option créée : BB1 - 15000 FCFA
+    Option créée : BB2 - 30000 FCFA
+    Option créée : BB3 - 10000 FCFA
+    Option créée : BB4 - 4500 FCFA
+    Option créée : BB5 - 60000 FCFA
+    Option créée : BB6 - 120000 FCFA
+    Option créée : BB7 - 12000 FCFA
+    Option créée : BB8 - 90000 FCFA
+    Option créée : BB9 - 50000 FCFA
+    Option créée : BB10 - 100 FCFA
+    Option créée : BB11 - 50 FCFA
+    Option créée : BB12 - 200 FCFA
+    Option créée : BB13 - 2360 FCFA
+    Option créée : BB4_1 - 3000 FCFA
+    Option créée : BB13_2 - 4720 FCFA
+    Option créée : BB15 - 25000 FCFA
+    Option créée : BB12_2 - 400 FCFA
+    Option créée : BB13_5 - 1000 FCFA
+    Option créée : BB13_5_2 - 2000 FCFA
+    Option créée : BB3_1 - 7000 FCFA
+    Option créée : BB1_1 - 12000 FCFA
+    Option créée : BB15_1 - 2500 FCFA
+    Option créée : BB15_2 - 5000 FCFA
+    Option créée : BB15_3 - 7000 FCFA
+    Option créée : BB15_4 - 10000 FCFA
+    Option créée : BB15_5 - 12000 FCFA
+    Option créée : BB15_6 - 15000 FCFA
+    Option créée : BB15_7 - 20000 FCFA
+    Option créée : BB15_8 - 30000 FCFA
+    Option créée : BB15_9 - 50000 FCFA
+    Option créée : BB15_10 - 100000 FCFA
+
+=== Import No Limit ===
+  Service créé : No Limit
+    Option créée : AI00* - 9500.0 FCFA
+    Option créée : AI00** - 5000.0 FCFA
+    Option créée : AI00*** - 7000.0 FCFA
+    Option créée : AI00_' - 2500.0 FCFA
+    Option créée : AI00_'' - 5000.0 FCFA
+    Option créée : AI00_''' - 7000.0 FCFA
+    Option créée : AI00_'''' - 10000.0 FCFA
+    Option créée : AI00*_'' - 14500.0 FCFA
+    Option créée : AI10 - 10000.0 FCFA
+    Option créée : AI15 - 15000.0 FCFA
+    Option créée : AI20 - 2000.0 FCFA
+    Option créée : AI25 - 2500.0 FCFA
+    Option créée : AI30 - 3000.0 FCFA
+    Option créée : AI40 - 4000.0 FCFA
+    Option créée : AI50 - 5000.0 FCFA
+    Option créée : AI50* - 14500.0 FCFA
+    Option créée : AI50** - 10000.0 FCFA
+    Option créée : AI50*** - 12000.0 FCFA
+    Option créée : AI50# - 35000.0 FCFA
+    Option créée : AI75 - 7500.0 FCFA
+    Option créée : AI00+ - 5000.0 FCFA
+    Option créée : AI10+ - 15000.0 FCFA
+    Option créée : AI15+ - 20000.0 FCFA
+    Option créée : AI20+ - 7000.0 FCFA
+    Option créée : AI25+ - 7500.0 FCFA
+    Option créée : AI30+ - 8000.0 FCFA
+    Option créée : AI40+ - 9000.0 FCFA
+    Option créée : AI50+ - 10000.0 FCFA
+    Option créée : AI70+ - 12000.0 FCFA
+    Option créée : AI75+ - 12500.0 FCFA
+    Option créée : + ou [PRO+] - 5000.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option créée : AI50_' - 7500.0 FCFA
+    Option créée : AI50_'' - 10000.0 FCFA
+    Option créée : AI50_''' - 12000.0 FCFA
+    Option créée : AI50_'''' - 15000.0 FCFA
+    Option créée : AI20_'' - 7000.0 FCFA
+    Option créée : AI20_' - 4500.0 FCFA
+    Option créée : _' - 2500.0 FCFA
+    Option créée : _'' - 5000.0 FCFA
+    Option créée : _''' - 7000.0 FCFA
+    Option créée : _'''' - 10000.0 FCFA
+    Option créée : _''''' - 12000.0 FCFA
+    Option créée : _'''''' - 15000.0 FCFA
+    Option créée : _''''''' - 20000.0 FCFA
+    Option créée : # - 30000.0 FCFA
+    Option créée : ## - 50000.0 FCFA
+    Option créée : ### - 100000.0 FCFA
+    Option créée : AI30_'''''' - 18000.0 FCFA
+    Option créée : AI30_' - 5500.0 FCFA
+    Option créée : *** - 7000.0 FCFA
+    Option créée : ** - 5000.0 FCFA
+
+=== Import Services Autres ===
+  Service créé : Facture Détaillée
+    Option créée : Facture Détaillée Standard - 2360 FCFA
+  Service créé : Incognito
+    Option créée : Incognito Standard - 2360 FCFA
+
+=== Import Forfaits/Formules ===
+  Forfait créé : S1K - STAR (prix/quotas à définir)
+  Forfait créé : S1Q - SUN (prix/quotas à définir)
+  Forfait créé : M3C - MOON (prix/quotas à définir)
+  Forfait créé : F1C - FAMOUS (prix/quotas à définir)
+  Forfait créé : S50 - SOFT (prix/quotas à définir)
+  Forfait créé : S30 - SMART (prix/quotas à définir)
+  Forfait créé : B50 - DUNE (prix/quotas à définir)
+  Forfait créé : B30 - BRISE (prix/quotas à définir)
+  Forfait créé : B20 - ALISE (prix/quotas à définir)
+  Forfait créé : F30 - FLEXI (prix/quotas à définir)
+  Forfait créé : DAT - DATA (prix/quotas à définir)
+  Forfait créé : Op0 - OPEN (prix/quotas à définir)
+  Forfait créé : TOT - OPEN TRACKING (prix/quotas à définir)
+
+================================================================================
+RÉSUMÉ DE L'IMPORT
+================================================================================
+
+Forfaits Package :
+  Créés : 13
+  Mis à jour : 0
+  Total en base : 13
+
+Services :
+  Créés : 4
+  Mis à jour : 0
+  Total en base : 4
+
+Options (TarifService) :
+  Créées : 84
+  Mises à jour : 1
+  Total en base : 84
+
+================================================================================
+Import terminé avec succès !
+================================================================================
+ok
+test_import_options_blackberry_ont_prix (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_import_options_blackberry_ont_prix)
+Test : les options BlackBerry importées ont un prix > 0 ... Lecture du fichier : C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\Données_Test_Facturation (1).xlsx
+
+=== Import BlackBerry ===
+  Service créé : BlackBerry
+    Option créée : BB1 - 15000 FCFA
+    Option créée : BB2 - 30000 FCFA
+    Option créée : BB3 - 10000 FCFA
+    Option créée : BB4 - 4500 FCFA
+    Option créée : BB5 - 60000 FCFA
+    Option créée : BB6 - 120000 FCFA
+    Option créée : BB7 - 12000 FCFA
+    Option créée : BB8 - 90000 FCFA
+    Option créée : BB9 - 50000 FCFA
+    Option créée : BB10 - 100 FCFA
+    Option créée : BB11 - 50 FCFA
+    Option créée : BB12 - 200 FCFA
+    Option créée : BB13 - 2360 FCFA
+    Option créée : BB4_1 - 3000 FCFA
+    Option créée : BB13_2 - 4720 FCFA
+    Option créée : BB15 - 25000 FCFA
+    Option créée : BB12_2 - 400 FCFA
+    Option créée : BB13_5 - 1000 FCFA
+    Option créée : BB13_5_2 - 2000 FCFA
+    Option créée : BB3_1 - 7000 FCFA
+    Option créée : BB1_1 - 12000 FCFA
+    Option créée : BB15_1 - 2500 FCFA
+    Option créée : BB15_2 - 5000 FCFA
+    Option créée : BB15_3 - 7000 FCFA
+    Option créée : BB15_4 - 10000 FCFA
+    Option créée : BB15_5 - 12000 FCFA
+    Option créée : BB15_6 - 15000 FCFA
+    Option créée : BB15_7 - 20000 FCFA
+    Option créée : BB15_8 - 30000 FCFA
+    Option créée : BB15_9 - 50000 FCFA
+    Option créée : BB15_10 - 100000 FCFA
+
+=== Import No Limit ===
+  Service créé : No Limit
+    Option créée : AI00* - 9500.0 FCFA
+    Option créée : AI00** - 5000.0 FCFA
+    Option créée : AI00*** - 7000.0 FCFA
+    Option créée : AI00_' - 2500.0 FCFA
+    Option créée : AI00_'' - 5000.0 FCFA
+    Option créée : AI00_''' - 7000.0 FCFA
+    Option créée : AI00_'''' - 10000.0 FCFA
+    Option créée : AI00*_'' - 14500.0 FCFA
+    Option créée : AI10 - 10000.0 FCFA
+    Option créée : AI15 - 15000.0 FCFA
+    Option créée : AI20 - 2000.0 FCFA
+    Option créée : AI25 - 2500.0 FCFA
+    Option créée : AI30 - 3000.0 FCFA
+    Option créée : AI40 - 4000.0 FCFA
+    Option créée : AI50 - 5000.0 FCFA
+    Option créée : AI50* - 14500.0 FCFA
+    Option créée : AI50** - 10000.0 FCFA
+    Option créée : AI50*** - 12000.0 FCFA
+    Option créée : AI50# - 35000.0 FCFA
+    Option créée : AI75 - 7500.0 FCFA
+    Option créée : AI00+ - 5000.0 FCFA
+    Option créée : AI10+ - 15000.0 FCFA
+    Option créée : AI15+ - 20000.0 FCFA
+    Option créée : AI20+ - 7000.0 FCFA
+    Option créée : AI25+ - 7500.0 FCFA
+    Option créée : AI30+ - 8000.0 FCFA
+    Option créée : AI40+ - 9000.0 FCFA
+    Option créée : AI50+ - 10000.0 FCFA
+    Option créée : AI70+ - 12000.0 FCFA
+    Option créée : AI75+ - 12500.0 FCFA
+    Option créée : + ou [PRO+] - 5000.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option créée : AI50_' - 7500.0 FCFA
+    Option créée : AI50_'' - 10000.0 FCFA
+    Option créée : AI50_''' - 12000.0 FCFA
+    Option créée : AI50_'''' - 15000.0 FCFA
+    Option créée : AI20_'' - 7000.0 FCFA
+    Option créée : AI20_' - 4500.0 FCFA
+    Option créée : _' - 2500.0 FCFA
+    Option créée : _'' - 5000.0 FCFA
+    Option créée : _''' - 7000.0 FCFA
+    Option créée : _'''' - 10000.0 FCFA
+    Option créée : _''''' - 12000.0 FCFA
+    Option créée : _'''''' - 15000.0 FCFA
+    Option créée : _''''''' - 20000.0 FCFA
+    Option créée : # - 30000.0 FCFA
+    Option créée : ## - 50000.0 FCFA
+    Option créée : ### - 100000.0 FCFA
+    Option créée : AI30_'''''' - 18000.0 FCFA
+    Option créée : AI30_' - 5500.0 FCFA
+    Option créée : *** - 7000.0 FCFA
+    Option créée : ** - 5000.0 FCFA
+
+=== Import Services Autres ===
+  Service créé : Facture Détaillée
+    Option créée : Facture Détaillée Standard - 2360 FCFA
+  Service créé : Incognito
+    Option créée : Incognito Standard - 2360 FCFA
+
+=== Import Forfaits/Formules ===
+  Forfait créé : S1K - STAR (prix/quotas à définir)
+  Forfait créé : S1Q - SUN (prix/quotas à définir)
+  Forfait créé : M3C - MOON (prix/quotas à définir)
+  Forfait créé : F1C - FAMOUS (prix/quotas à définir)
+  Forfait créé : S50 - SOFT (prix/quotas à définir)
+  Forfait créé : S30 - SMART (prix/quotas à définir)
+  Forfait créé : B50 - DUNE (prix/quotas à définir)
+  Forfait créé : B30 - BRISE (prix/quotas à définir)
+  Forfait créé : B20 - ALISE (prix/quotas à définir)
+  Forfait créé : F30 - FLEXI (prix/quotas à définir)
+  Forfait créé : DAT - DATA (prix/quotas à définir)
+  Forfait créé : Op0 - OPEN (prix/quotas à définir)
+  Forfait créé : TOT - OPEN TRACKING (prix/quotas à définir)
+
+================================================================================
+RÉSUMÉ DE L'IMPORT
+================================================================================
+
+Forfaits Package :
+  Créés : 13
+  Mis à jour : 0
+  Total en base : 13
+
+Services :
+  Créés : 4
+  Mis à jour : 0
+  Total en base : 4
+
+Options (TarifService) :
+  Créées : 84
+  Mises à jour : 1
+  Total en base : 84
+
+================================================================================
+Import terminé avec succès !
+================================================================================
+ok
+test_import_options_no_limit_ont_prix (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_import_options_no_limit_ont_prix)
+Test : les options No Limit importées ont un prix > 0 ... Lecture du fichier : C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\Données_Test_Facturation (1).xlsx
+
+=== Import BlackBerry ===
+  Service créé : BlackBerry
+    Option créée : BB1 - 15000 FCFA
+    Option créée : BB2 - 30000 FCFA
+    Option créée : BB3 - 10000 FCFA
+    Option créée : BB4 - 4500 FCFA
+    Option créée : BB5 - 60000 FCFA
+    Option créée : BB6 - 120000 FCFA
+    Option créée : BB7 - 12000 FCFA
+    Option créée : BB8 - 90000 FCFA
+    Option créée : BB9 - 50000 FCFA
+    Option créée : BB10 - 100 FCFA
+    Option créée : BB11 - 50 FCFA
+    Option créée : BB12 - 200 FCFA
+    Option créée : BB13 - 2360 FCFA
+    Option créée : BB4_1 - 3000 FCFA
+    Option créée : BB13_2 - 4720 FCFA
+    Option créée : BB15 - 25000 FCFA
+    Option créée : BB12_2 - 400 FCFA
+    Option créée : BB13_5 - 1000 FCFA
+    Option créée : BB13_5_2 - 2000 FCFA
+    Option créée : BB3_1 - 7000 FCFA
+    Option créée : BB1_1 - 12000 FCFA
+    Option créée : BB15_1 - 2500 FCFA
+    Option créée : BB15_2 - 5000 FCFA
+    Option créée : BB15_3 - 7000 FCFA
+    Option créée : BB15_4 - 10000 FCFA
+    Option créée : BB15_5 - 12000 FCFA
+    Option créée : BB15_6 - 15000 FCFA
+    Option créée : BB15_7 - 20000 FCFA
+    Option créée : BB15_8 - 30000 FCFA
+    Option créée : BB15_9 - 50000 FCFA
+    Option créée : BB15_10 - 100000 FCFA
+
+=== Import No Limit ===
+  Service créé : No Limit
+    Option créée : AI00* - 9500.0 FCFA
+    Option créée : AI00** - 5000.0 FCFA
+    Option créée : AI00*** - 7000.0 FCFA
+    Option créée : AI00_' - 2500.0 FCFA
+    Option créée : AI00_'' - 5000.0 FCFA
+    Option créée : AI00_''' - 7000.0 FCFA
+    Option créée : AI00_'''' - 10000.0 FCFA
+    Option créée : AI00*_'' - 14500.0 FCFA
+    Option créée : AI10 - 10000.0 FCFA
+    Option créée : AI15 - 15000.0 FCFA
+    Option créée : AI20 - 2000.0 FCFA
+    Option créée : AI25 - 2500.0 FCFA
+    Option créée : AI30 - 3000.0 FCFA
+    Option créée : AI40 - 4000.0 FCFA
+    Option créée : AI50 - 5000.0 FCFA
+    Option créée : AI50* - 14500.0 FCFA
+    Option créée : AI50** - 10000.0 FCFA
+    Option créée : AI50*** - 12000.0 FCFA
+    Option créée : AI50# - 35000.0 FCFA
+    Option créée : AI75 - 7500.0 FCFA
+    Option créée : AI00+ - 5000.0 FCFA
+    Option créée : AI10+ - 15000.0 FCFA
+    Option créée : AI15+ - 20000.0 FCFA
+    Option créée : AI20+ - 7000.0 FCFA
+    Option créée : AI25+ - 7500.0 FCFA
+    Option créée : AI30+ - 8000.0 FCFA
+    Option créée : AI40+ - 9000.0 FCFA
+    Option créée : AI50+ - 10000.0 FCFA
+    Option créée : AI70+ - 12000.0 FCFA
+    Option créée : AI75+ - 12500.0 FCFA
+    Option créée : + ou [PRO+] - 5000.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option créée : AI50_' - 7500.0 FCFA
+    Option créée : AI50_'' - 10000.0 FCFA
+    Option créée : AI50_''' - 12000.0 FCFA
+    Option créée : AI50_'''' - 15000.0 FCFA
+    Option créée : AI20_'' - 7000.0 FCFA
+    Option créée : AI20_' - 4500.0 FCFA
+    Option créée : _' - 2500.0 FCFA
+    Option créée : _'' - 5000.0 FCFA
+    Option créée : _''' - 7000.0 FCFA
+    Option créée : _'''' - 10000.0 FCFA
+    Option créée : _''''' - 12000.0 FCFA
+    Option créée : _'''''' - 15000.0 FCFA
+    Option créée : _''''''' - 20000.0 FCFA
+    Option créée : # - 30000.0 FCFA
+    Option créée : ## - 50000.0 FCFA
+    Option créée : ### - 100000.0 FCFA
+    Option créée : AI30_'''''' - 18000.0 FCFA
+    Option créée : AI30_' - 5500.0 FCFA
+    Option créée : *** - 7000.0 FCFA
+    Option créée : ** - 5000.0 FCFA
+
+=== Import Services Autres ===
+  Service créé : Facture Détaillée
+    Option créée : Facture Détaillée Standard - 2360 FCFA
+  Service créé : Incognito
+    Option créée : Incognito Standard - 2360 FCFA
+
+=== Import Forfaits/Formules ===
+  Forfait créé : S1K - STAR (prix/quotas à définir)
+  Forfait créé : S1Q - SUN (prix/quotas à définir)
+  Forfait créé : M3C - MOON (prix/quotas à définir)
+  Forfait créé : F1C - FAMOUS (prix/quotas à définir)
+  Forfait créé : S50 - SOFT (prix/quotas à définir)
+  Forfait créé : S30 - SMART (prix/quotas à définir)
+  Forfait créé : B50 - DUNE (prix/quotas à définir)
+  Forfait créé : B30 - BRISE (prix/quotas à définir)
+  Forfait créé : B20 - ALISE (prix/quotas à définir)
+  Forfait créé : F30 - FLEXI (prix/quotas à définir)
+  Forfait créé : DAT - DATA (prix/quotas à définir)
+  Forfait créé : Op0 - OPEN (prix/quotas à définir)
+  Forfait créé : TOT - OPEN TRACKING (prix/quotas à définir)
+
+================================================================================
+RÉSUMÉ DE L'IMPORT
+================================================================================
+
+Forfaits Package :
+  Créés : 13
+  Mis à jour : 0
+  Total en base : 13
+
+Services :
+  Créés : 4
+  Mis à jour : 0
+  Total en base : 4
+
+Options (TarifService) :
+  Créées : 84
+  Mises à jour : 1
+  Total en base : 84
+
+================================================================================
+Import terminé avec succès !
+================================================================================
+ok
+test_import_services_autres (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_import_services_autres)
+Test : les services Facture Détaillée et Incognito sont importés ... Lecture du fichier : C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\Données_Test_Facturation (1).xlsx
+
+=== Import BlackBerry ===
+  Service créé : BlackBerry
+    Option créée : BB1 - 15000 FCFA
+    Option créée : BB2 - 30000 FCFA
+    Option créée : BB3 - 10000 FCFA
+    Option créée : BB4 - 4500 FCFA
+    Option créée : BB5 - 60000 FCFA
+    Option créée : BB6 - 120000 FCFA
+    Option créée : BB7 - 12000 FCFA
+    Option créée : BB8 - 90000 FCFA
+    Option créée : BB9 - 50000 FCFA
+    Option créée : BB10 - 100 FCFA
+    Option créée : BB11 - 50 FCFA
+    Option créée : BB12 - 200 FCFA
+    Option créée : BB13 - 2360 FCFA
+    Option créée : BB4_1 - 3000 FCFA
+    Option créée : BB13_2 - 4720 FCFA
+    Option créée : BB15 - 25000 FCFA
+    Option créée : BB12_2 - 400 FCFA
+    Option créée : BB13_5 - 1000 FCFA
+    Option créée : BB13_5_2 - 2000 FCFA
+    Option créée : BB3_1 - 7000 FCFA
+    Option créée : BB1_1 - 12000 FCFA
+    Option créée : BB15_1 - 2500 FCFA
+    Option créée : BB15_2 - 5000 FCFA
+    Option créée : BB15_3 - 7000 FCFA
+    Option créée : BB15_4 - 10000 FCFA
+    Option créée : BB15_5 - 12000 FCFA
+    Option créée : BB15_6 - 15000 FCFA
+    Option créée : BB15_7 - 20000 FCFA
+    Option créée : BB15_8 - 30000 FCFA
+    Option créée : BB15_9 - 50000 FCFA
+    Option créée : BB15_10 - 100000 FCFA
+
+=== Import No Limit ===
+  Service créé : No Limit
+    Option créée : AI00* - 9500.0 FCFA
+    Option créée : AI00** - 5000.0 FCFA
+    Option créée : AI00*** - 7000.0 FCFA
+    Option créée : AI00_' - 2500.0 FCFA
+    Option créée : AI00_'' - 5000.0 FCFA
+    Option créée : AI00_''' - 7000.0 FCFA
+    Option créée : AI00_'''' - 10000.0 FCFA
+    Option créée : AI00*_'' - 14500.0 FCFA
+    Option créée : AI10 - 10000.0 FCFA
+    Option créée : AI15 - 15000.0 FCFA
+    Option créée : AI20 - 2000.0 FCFA
+    Option créée : AI25 - 2500.0 FCFA
+    Option créée : AI30 - 3000.0 FCFA
+    Option créée : AI40 - 4000.0 FCFA
+    Option créée : AI50 - 5000.0 FCFA
+    Option créée : AI50* - 14500.0 FCFA
+    Option créée : AI50** - 10000.0 FCFA
+    Option créée : AI50*** - 12000.0 FCFA
+    Option créée : AI50# - 35000.0 FCFA
+    Option créée : AI75 - 7500.0 FCFA
+    Option créée : AI00+ - 5000.0 FCFA
+    Option créée : AI10+ - 15000.0 FCFA
+    Option créée : AI15+ - 20000.0 FCFA
+    Option créée : AI20+ - 7000.0 FCFA
+    Option créée : AI25+ - 7500.0 FCFA
+    Option créée : AI30+ - 8000.0 FCFA
+    Option créée : AI40+ - 9000.0 FCFA
+    Option créée : AI50+ - 10000.0 FCFA
+    Option créée : AI70+ - 12000.0 FCFA
+    Option créée : AI75+ - 12500.0 FCFA
+    Option créée : + ou [PRO+] - 5000.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option créée : AI50_' - 7500.0 FCFA
+    Option créée : AI50_'' - 10000.0 FCFA
+    Option créée : AI50_''' - 12000.0 FCFA
+    Option créée : AI50_'''' - 15000.0 FCFA
+    Option créée : AI20_'' - 7000.0 FCFA
+    Option créée : AI20_' - 4500.0 FCFA
+    Option créée : _' - 2500.0 FCFA
+    Option créée : _'' - 5000.0 FCFA
+    Option créée : _''' - 7000.0 FCFA
+    Option créée : _'''' - 10000.0 FCFA
+    Option créée : _''''' - 12000.0 FCFA
+    Option créée : _'''''' - 15000.0 FCFA
+    Option créée : _''''''' - 20000.0 FCFA
+    Option créée : # - 30000.0 FCFA
+    Option créée : ## - 50000.0 FCFA
+    Option créée : ### - 100000.0 FCFA
+    Option créée : AI30_'''''' - 18000.0 FCFA
+    Option créée : AI30_' - 5500.0 FCFA
+    Option créée : *** - 7000.0 FCFA
+    Option créée : ** - 5000.0 FCFA
+
+=== Import Services Autres ===
+  Service créé : Facture Détaillée
+    Option créée : Facture Détaillée Standard - 2360 FCFA
+  Service créé : Incognito
+    Option créée : Incognito Standard - 2360 FCFA
+
+=== Import Forfaits/Formules ===
+  Forfait créé : S1K - STAR (prix/quotas à définir)
+  Forfait créé : S1Q - SUN (prix/quotas à définir)
+  Forfait créé : M3C - MOON (prix/quotas à définir)
+  Forfait créé : F1C - FAMOUS (prix/quotas à définir)
+  Forfait créé : S50 - SOFT (prix/quotas à définir)
+  Forfait créé : S30 - SMART (prix/quotas à définir)
+  Forfait créé : B50 - DUNE (prix/quotas à définir)
+  Forfait créé : B30 - BRISE (prix/quotas à définir)
+  Forfait créé : B20 - ALISE (prix/quotas à définir)
+  Forfait créé : F30 - FLEXI (prix/quotas à définir)
+  Forfait créé : DAT - DATA (prix/quotas à définir)
+  Forfait créé : Op0 - OPEN (prix/quotas à définir)
+  Forfait créé : TOT - OPEN TRACKING (prix/quotas à définir)
+
+================================================================================
+RÉSUMÉ DE L'IMPORT
+================================================================================
+
+Forfaits Package :
+  Créés : 13
+  Mis à jour : 0
+  Total en base : 13
+
+Services :
+  Créés : 4
+  Mis à jour : 0
+  Total en base : 4
+
+Options (TarifService) :
+  Créées : 84
+  Mises à jour : 1
+  Total en base : 84
+
+================================================================================
+Import terminé avec succès !
+================================================================================
+ok
+test_import_services_blackberry (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_import_services_blackberry)
+Test : le service BlackBerry est importé avec ses options ... Lecture du fichier : C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\Données_Test_Facturation (1).xlsx
+
+=== Import BlackBerry ===
+  Service créé : BlackBerry
+    Option créée : BB1 - 15000 FCFA
+    Option créée : BB2 - 30000 FCFA
+    Option créée : BB3 - 10000 FCFA
+    Option créée : BB4 - 4500 FCFA
+    Option créée : BB5 - 60000 FCFA
+    Option créée : BB6 - 120000 FCFA
+    Option créée : BB7 - 12000 FCFA
+    Option créée : BB8 - 90000 FCFA
+    Option créée : BB9 - 50000 FCFA
+    Option créée : BB10 - 100 FCFA
+    Option créée : BB11 - 50 FCFA
+    Option créée : BB12 - 200 FCFA
+    Option créée : BB13 - 2360 FCFA
+    Option créée : BB4_1 - 3000 FCFA
+    Option créée : BB13_2 - 4720 FCFA
+    Option créée : BB15 - 25000 FCFA
+    Option créée : BB12_2 - 400 FCFA
+    Option créée : BB13_5 - 1000 FCFA
+    Option créée : BB13_5_2 - 2000 FCFA
+    Option créée : BB3_1 - 7000 FCFA
+    Option créée : BB1_1 - 12000 FCFA
+    Option créée : BB15_1 - 2500 FCFA
+    Option créée : BB15_2 - 5000 FCFA
+    Option créée : BB15_3 - 7000 FCFA
+    Option créée : BB15_4 - 10000 FCFA
+    Option créée : BB15_5 - 12000 FCFA
+    Option créée : BB15_6 - 15000 FCFA
+    Option créée : BB15_7 - 20000 FCFA
+    Option créée : BB15_8 - 30000 FCFA
+    Option créée : BB15_9 - 50000 FCFA
+    Option créée : BB15_10 - 100000 FCFA
+
+=== Import No Limit ===
+  Service créé : No Limit
+    Option créée : AI00* - 9500.0 FCFA
+    Option créée : AI00** - 5000.0 FCFA
+    Option créée : AI00*** - 7000.0 FCFA
+    Option créée : AI00_' - 2500.0 FCFA
+    Option créée : AI00_'' - 5000.0 FCFA
+    Option créée : AI00_''' - 7000.0 FCFA
+    Option créée : AI00_'''' - 10000.0 FCFA
+    Option créée : AI00*_'' - 14500.0 FCFA
+    Option créée : AI10 - 10000.0 FCFA
+    Option créée : AI15 - 15000.0 FCFA
+    Option créée : AI20 - 2000.0 FCFA
+    Option créée : AI25 - 2500.0 FCFA
+    Option créée : AI30 - 3000.0 FCFA
+    Option créée : AI40 - 4000.0 FCFA
+    Option créée : AI50 - 5000.0 FCFA
+    Option créée : AI50* - 14500.0 FCFA
+    Option créée : AI50** - 10000.0 FCFA
+    Option créée : AI50*** - 12000.0 FCFA
+    Option créée : AI50# - 35000.0 FCFA
+    Option créée : AI75 - 7500.0 FCFA
+    Option créée : AI00+ - 5000.0 FCFA
+    Option créée : AI10+ - 15000.0 FCFA
+    Option créée : AI15+ - 20000.0 FCFA
+    Option créée : AI20+ - 7000.0 FCFA
+    Option créée : AI25+ - 7500.0 FCFA
+    Option créée : AI30+ - 8000.0 FCFA
+    Option créée : AI40+ - 9000.0 FCFA
+    Option créée : AI50+ - 10000.0 FCFA
+    Option créée : AI70+ - 12000.0 FCFA
+    Option créée : AI75+ - 12500.0 FCFA
+    Option créée : + ou [PRO+] - 5000.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option créée : AI50_' - 7500.0 FCFA
+    Option créée : AI50_'' - 10000.0 FCFA
+    Option créée : AI50_''' - 12000.0 FCFA
+    Option créée : AI50_'''' - 15000.0 FCFA
+    Option créée : AI20_'' - 7000.0 FCFA
+    Option créée : AI20_' - 4500.0 FCFA
+    Option créée : _' - 2500.0 FCFA
+    Option créée : _'' - 5000.0 FCFA
+    Option créée : _''' - 7000.0 FCFA
+    Option créée : _'''' - 10000.0 FCFA
+    Option créée : _''''' - 12000.0 FCFA
+    Option créée : _'''''' - 15000.0 FCFA
+    Option créée : _''''''' - 20000.0 FCFA
+    Option créée : # - 30000.0 FCFA
+    Option créée : ## - 50000.0 FCFA
+    Option créée : ### - 100000.0 FCFA
+    Option créée : AI30_'''''' - 18000.0 FCFA
+    Option créée : AI30_' - 5500.0 FCFA
+    Option créée : *** - 7000.0 FCFA
+    Option créée : ** - 5000.0 FCFA
+
+=== Import Services Autres ===
+  Service créé : Facture Détaillée
+    Option créée : Facture Détaillée Standard - 2360 FCFA
+  Service créé : Incognito
+    Option créée : Incognito Standard - 2360 FCFA
+
+=== Import Forfaits/Formules ===
+  Forfait créé : S1K - STAR (prix/quotas à définir)
+  Forfait créé : S1Q - SUN (prix/quotas à définir)
+  Forfait créé : M3C - MOON (prix/quotas à définir)
+  Forfait créé : F1C - FAMOUS (prix/quotas à définir)
+  Forfait créé : S50 - SOFT (prix/quotas à définir)
+  Forfait créé : S30 - SMART (prix/quotas à définir)
+  Forfait créé : B50 - DUNE (prix/quotas à définir)
+  Forfait créé : B30 - BRISE (prix/quotas à définir)
+  Forfait créé : B20 - ALISE (prix/quotas à définir)
+  Forfait créé : F30 - FLEXI (prix/quotas à définir)
+  Forfait créé : DAT - DATA (prix/quotas à définir)
+  Forfait créé : Op0 - OPEN (prix/quotas à définir)
+  Forfait créé : TOT - OPEN TRACKING (prix/quotas à définir)
+
+================================================================================
+RÉSUMÉ DE L'IMPORT
+================================================================================
+
+Forfaits Package :
+  Créés : 13
+  Mis à jour : 0
+  Total en base : 13
+
+Services :
+  Créés : 4
+  Mis à jour : 0
+  Total en base : 4
+
+Options (TarifService) :
+  Créées : 84
+  Mises à jour : 1
+  Total en base : 84
+
+================================================================================
+Import terminé avec succès !
+================================================================================
+ok
+test_import_services_no_limit (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_import_services_no_limit)
+Test : le service No Limit est importé avec ses options ... Lecture du fichier : C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\Données_Test_Facturation (1).xlsx
+
+=== Import BlackBerry ===
+  Service créé : BlackBerry
+    Option créée : BB1 - 15000 FCFA
+    Option créée : BB2 - 30000 FCFA
+    Option créée : BB3 - 10000 FCFA
+    Option créée : BB4 - 4500 FCFA
+    Option créée : BB5 - 60000 FCFA
+    Option créée : BB6 - 120000 FCFA
+    Option créée : BB7 - 12000 FCFA
+    Option créée : BB8 - 90000 FCFA
+    Option créée : BB9 - 50000 FCFA
+    Option créée : BB10 - 100 FCFA
+    Option créée : BB11 - 50 FCFA
+    Option créée : BB12 - 200 FCFA
+    Option créée : BB13 - 2360 FCFA
+    Option créée : BB4_1 - 3000 FCFA
+    Option créée : BB13_2 - 4720 FCFA
+    Option créée : BB15 - 25000 FCFA
+    Option créée : BB12_2 - 400 FCFA
+    Option créée : BB13_5 - 1000 FCFA
+    Option créée : BB13_5_2 - 2000 FCFA
+    Option créée : BB3_1 - 7000 FCFA
+    Option créée : BB1_1 - 12000 FCFA
+    Option créée : BB15_1 - 2500 FCFA
+    Option créée : BB15_2 - 5000 FCFA
+    Option créée : BB15_3 - 7000 FCFA
+    Option créée : BB15_4 - 10000 FCFA
+    Option créée : BB15_5 - 12000 FCFA
+    Option créée : BB15_6 - 15000 FCFA
+    Option créée : BB15_7 - 20000 FCFA
+    Option créée : BB15_8 - 30000 FCFA
+    Option créée : BB15_9 - 50000 FCFA
+    Option créée : BB15_10 - 100000 FCFA
+
+=== Import No Limit ===
+  Service créé : No Limit
+    Option créée : AI00* - 9500.0 FCFA
+    Option créée : AI00** - 5000.0 FCFA
+    Option créée : AI00*** - 7000.0 FCFA
+    Option créée : AI00_' - 2500.0 FCFA
+    Option créée : AI00_'' - 5000.0 FCFA
+    Option créée : AI00_''' - 7000.0 FCFA
+    Option créée : AI00_'''' - 10000.0 FCFA
+    Option créée : AI00*_'' - 14500.0 FCFA
+    Option créée : AI10 - 10000.0 FCFA
+    Option créée : AI15 - 15000.0 FCFA
+    Option créée : AI20 - 2000.0 FCFA
+    Option créée : AI25 - 2500.0 FCFA
+    Option créée : AI30 - 3000.0 FCFA
+    Option créée : AI40 - 4000.0 FCFA
+    Option créée : AI50 - 5000.0 FCFA
+    Option créée : AI50* - 14500.0 FCFA
+    Option créée : AI50** - 10000.0 FCFA
+    Option créée : AI50*** - 12000.0 FCFA
+    Option créée : AI50# - 35000.0 FCFA
+    Option créée : AI75 - 7500.0 FCFA
+    Option créée : AI00+ - 5000.0 FCFA
+    Option créée : AI10+ - 15000.0 FCFA
+    Option créée : AI15+ - 20000.0 FCFA
+    Option créée : AI20+ - 7000.0 FCFA
+    Option créée : AI25+ - 7500.0 FCFA
+    Option créée : AI30+ - 8000.0 FCFA
+    Option créée : AI40+ - 9000.0 FCFA
+    Option créée : AI50+ - 10000.0 FCFA
+    Option créée : AI70+ - 12000.0 FCFA
+    Option créée : AI75+ - 12500.0 FCFA
+    Option créée : + ou [PRO+] - 5000.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option créée : AI50_' - 7500.0 FCFA
+    Option créée : AI50_'' - 10000.0 FCFA
+    Option créée : AI50_''' - 12000.0 FCFA
+    Option créée : AI50_'''' - 15000.0 FCFA
+    Option créée : AI20_'' - 7000.0 FCFA
+    Option créée : AI20_' - 4500.0 FCFA
+    Option créée : _' - 2500.0 FCFA
+    Option créée : _'' - 5000.0 FCFA
+    Option créée : _''' - 7000.0 FCFA
+    Option créée : _'''' - 10000.0 FCFA
+    Option créée : _''''' - 12000.0 FCFA
+    Option créée : _'''''' - 15000.0 FCFA
+    Option créée : _''''''' - 20000.0 FCFA
+    Option créée : # - 30000.0 FCFA
+    Option créée : ## - 50000.0 FCFA
+    Option créée : ### - 100000.0 FCFA
+    Option créée : AI30_'''''' - 18000.0 FCFA
+    Option créée : AI30_' - 5500.0 FCFA
+    Option créée : *** - 7000.0 FCFA
+    Option créée : ** - 5000.0 FCFA
+
+=== Import Services Autres ===
+  Service créé : Facture Détaillée
+    Option créée : Facture Détaillée Standard - 2360 FCFA
+  Service créé : Incognito
+    Option créée : Incognito Standard - 2360 FCFA
+
+=== Import Forfaits/Formules ===
+  Forfait créé : S1K - STAR (prix/quotas à définir)
+  Forfait créé : S1Q - SUN (prix/quotas à définir)
+  Forfait créé : M3C - MOON (prix/quotas à définir)
+  Forfait créé : F1C - FAMOUS (prix/quotas à définir)
+  Forfait créé : S50 - SOFT (prix/quotas à définir)
+  Forfait créé : S30 - SMART (prix/quotas à définir)
+  Forfait créé : B50 - DUNE (prix/quotas à définir)
+  Forfait créé : B30 - BRISE (prix/quotas à définir)
+  Forfait créé : B20 - ALISE (prix/quotas à définir)
+  Forfait créé : F30 - FLEXI (prix/quotas à définir)
+  Forfait créé : DAT - DATA (prix/quotas à définir)
+  Forfait créé : Op0 - OPEN (prix/quotas à définir)
+  Forfait créé : TOT - OPEN TRACKING (prix/quotas à définir)
+
+================================================================================
+RÉSUMÉ DE L'IMPORT
+================================================================================
+
+Forfaits Package :
+  Créés : 13
+  Mis à jour : 0
+  Total en base : 13
+
+Services :
+  Créés : 4
+  Mis à jour : 0
+  Total en base : 4
+
+Options (TarifService) :
+  Créées : 84
+  Mises à jour : 1
+  Total en base : 84
+
+================================================================================
+Import terminé avec succès !
+================================================================================
+ok
+test_import_tous_forfaits_actifs (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_import_tous_forfaits_actifs)
+Test : tous les forfaits importés sont actifs par défaut ... Lecture du fichier : C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\Données_Test_Facturation (1).xlsx
+
+=== Import BlackBerry ===
+  Service créé : BlackBerry
+    Option créée : BB1 - 15000 FCFA
+    Option créée : BB2 - 30000 FCFA
+    Option créée : BB3 - 10000 FCFA
+    Option créée : BB4 - 4500 FCFA
+    Option créée : BB5 - 60000 FCFA
+    Option créée : BB6 - 120000 FCFA
+    Option créée : BB7 - 12000 FCFA
+    Option créée : BB8 - 90000 FCFA
+    Option créée : BB9 - 50000 FCFA
+    Option créée : BB10 - 100 FCFA
+    Option créée : BB11 - 50 FCFA
+    Option créée : BB12 - 200 FCFA
+    Option créée : BB13 - 2360 FCFA
+    Option créée : BB4_1 - 3000 FCFA
+    Option créée : BB13_2 - 4720 FCFA
+    Option créée : BB15 - 25000 FCFA
+    Option créée : BB12_2 - 400 FCFA
+    Option créée : BB13_5 - 1000 FCFA
+    Option créée : BB13_5_2 - 2000 FCFA
+    Option créée : BB3_1 - 7000 FCFA
+    Option créée : BB1_1 - 12000 FCFA
+    Option créée : BB15_1 - 2500 FCFA
+    Option créée : BB15_2 - 5000 FCFA
+    Option créée : BB15_3 - 7000 FCFA
+    Option créée : BB15_4 - 10000 FCFA
+    Option créée : BB15_5 - 12000 FCFA
+    Option créée : BB15_6 - 15000 FCFA
+    Option créée : BB15_7 - 20000 FCFA
+    Option créée : BB15_8 - 30000 FCFA
+    Option créée : BB15_9 - 50000 FCFA
+    Option créée : BB15_10 - 100000 FCFA
+
+=== Import No Limit ===
+  Service créé : No Limit
+    Option créée : AI00* - 9500.0 FCFA
+    Option créée : AI00** - 5000.0 FCFA
+    Option créée : AI00*** - 7000.0 FCFA
+    Option créée : AI00_' - 2500.0 FCFA
+    Option créée : AI00_'' - 5000.0 FCFA
+    Option créée : AI00_''' - 7000.0 FCFA
+    Option créée : AI00_'''' - 10000.0 FCFA
+    Option créée : AI00*_'' - 14500.0 FCFA
+    Option créée : AI10 - 10000.0 FCFA
+    Option créée : AI15 - 15000.0 FCFA
+    Option créée : AI20 - 2000.0 FCFA
+    Option créée : AI25 - 2500.0 FCFA
+    Option créée : AI30 - 3000.0 FCFA
+    Option créée : AI40 - 4000.0 FCFA
+    Option créée : AI50 - 5000.0 FCFA
+    Option créée : AI50* - 14500.0 FCFA
+    Option créée : AI50** - 10000.0 FCFA
+    Option créée : AI50*** - 12000.0 FCFA
+    Option créée : AI50# - 35000.0 FCFA
+    Option créée : AI75 - 7500.0 FCFA
+    Option créée : AI00+ - 5000.0 FCFA
+    Option créée : AI10+ - 15000.0 FCFA
+    Option créée : AI15+ - 20000.0 FCFA
+    Option créée : AI20+ - 7000.0 FCFA
+    Option créée : AI25+ - 7500.0 FCFA
+    Option créée : AI30+ - 8000.0 FCFA
+    Option créée : AI40+ - 9000.0 FCFA
+    Option créée : AI50+ - 10000.0 FCFA
+    Option créée : AI70+ - 12000.0 FCFA
+    Option créée : AI75+ - 12500.0 FCFA
+    Option créée : + ou [PRO+] - 5000.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option créée : AI50_' - 7500.0 FCFA
+    Option créée : AI50_'' - 10000.0 FCFA
+    Option créée : AI50_''' - 12000.0 FCFA
+    Option créée : AI50_'''' - 15000.0 FCFA
+    Option créée : AI20_'' - 7000.0 FCFA
+    Option créée : AI20_' - 4500.0 FCFA
+    Option créée : _' - 2500.0 FCFA
+    Option créée : _'' - 5000.0 FCFA
+    Option créée : _''' - 7000.0 FCFA
+    Option créée : _'''' - 10000.0 FCFA
+    Option créée : _''''' - 12000.0 FCFA
+    Option créée : _'''''' - 15000.0 FCFA
+    Option créée : _''''''' - 20000.0 FCFA
+    Option créée : # - 30000.0 FCFA
+    Option créée : ## - 50000.0 FCFA
+    Option créée : ### - 100000.0 FCFA
+    Option créée : AI30_'''''' - 18000.0 FCFA
+    Option créée : AI30_' - 5500.0 FCFA
+    Option créée : *** - 7000.0 FCFA
+    Option créée : ** - 5000.0 FCFA
+
+=== Import Services Autres ===
+  Service créé : Facture Détaillée
+    Option créée : Facture Détaillée Standard - 2360 FCFA
+  Service créé : Incognito
+    Option créée : Incognito Standard - 2360 FCFA
+
+=== Import Forfaits/Formules ===
+  Forfait créé : S1K - STAR (prix/quotas à définir)
+  Forfait créé : S1Q - SUN (prix/quotas à définir)
+  Forfait créé : M3C - MOON (prix/quotas à définir)
+  Forfait créé : F1C - FAMOUS (prix/quotas à définir)
+  Forfait créé : S50 - SOFT (prix/quotas à définir)
+  Forfait créé : S30 - SMART (prix/quotas à définir)
+  Forfait créé : B50 - DUNE (prix/quotas à définir)
+  Forfait créé : B30 - BRISE (prix/quotas à définir)
+  Forfait créé : B20 - ALISE (prix/quotas à définir)
+  Forfait créé : F30 - FLEXI (prix/quotas à définir)
+  Forfait créé : DAT - DATA (prix/quotas à définir)
+  Forfait créé : Op0 - OPEN (prix/quotas à définir)
+  Forfait créé : TOT - OPEN TRACKING (prix/quotas à définir)
+
+================================================================================
+RÉSUMÉ DE L'IMPORT
+================================================================================
+
+Forfaits Package :
+  Créés : 13
+  Mis à jour : 0
+  Total en base : 13
+
+Services :
+  Créés : 4
+  Mis à jour : 0
+  Total en base : 4
+
+Options (TarifService) :
+  Créées : 84
+  Mises à jour : 1
+  Total en base : 84
+
+================================================================================
+Import terminé avec succès !
+================================================================================
+ok
+test_import_tous_services_actifs (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_import_tous_services_actifs)
+Test : tous les services importés sont actifs par défaut ... Lecture du fichier : C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\Données_Test_Facturation (1).xlsx
+
+=== Import BlackBerry ===
+  Service créé : BlackBerry
+    Option créée : BB1 - 15000 FCFA
+    Option créée : BB2 - 30000 FCFA
+    Option créée : BB3 - 10000 FCFA
+    Option créée : BB4 - 4500 FCFA
+    Option créée : BB5 - 60000 FCFA
+    Option créée : BB6 - 120000 FCFA
+    Option créée : BB7 - 12000 FCFA
+    Option créée : BB8 - 90000 FCFA
+    Option créée : BB9 - 50000 FCFA
+    Option créée : BB10 - 100 FCFA
+    Option créée : BB11 - 50 FCFA
+    Option créée : BB12 - 200 FCFA
+    Option créée : BB13 - 2360 FCFA
+    Option créée : BB4_1 - 3000 FCFA
+    Option créée : BB13_2 - 4720 FCFA
+    Option créée : BB15 - 25000 FCFA
+    Option créée : BB12_2 - 400 FCFA
+    Option créée : BB13_5 - 1000 FCFA
+    Option créée : BB13_5_2 - 2000 FCFA
+    Option créée : BB3_1 - 7000 FCFA
+    Option créée : BB1_1 - 12000 FCFA
+    Option créée : BB15_1 - 2500 FCFA
+    Option créée : BB15_2 - 5000 FCFA
+    Option créée : BB15_3 - 7000 FCFA
+    Option créée : BB15_4 - 10000 FCFA
+    Option créée : BB15_5 - 12000 FCFA
+    Option créée : BB15_6 - 15000 FCFA
+    Option créée : BB15_7 - 20000 FCFA
+    Option créée : BB15_8 - 30000 FCFA
+    Option créée : BB15_9 - 50000 FCFA
+    Option créée : BB15_10 - 100000 FCFA
+
+=== Import No Limit ===
+  Service créé : No Limit
+    Option créée : AI00* - 9500.0 FCFA
+    Option créée : AI00** - 5000.0 FCFA
+    Option créée : AI00*** - 7000.0 FCFA
+    Option créée : AI00_' - 2500.0 FCFA
+    Option créée : AI00_'' - 5000.0 FCFA
+    Option créée : AI00_''' - 7000.0 FCFA
+    Option créée : AI00_'''' - 10000.0 FCFA
+    Option créée : AI00*_'' - 14500.0 FCFA
+    Option créée : AI10 - 10000.0 FCFA
+    Option créée : AI15 - 15000.0 FCFA
+    Option créée : AI20 - 2000.0 FCFA
+    Option créée : AI25 - 2500.0 FCFA
+    Option créée : AI30 - 3000.0 FCFA
+    Option créée : AI40 - 4000.0 FCFA
+    Option créée : AI50 - 5000.0 FCFA
+    Option créée : AI50* - 14500.0 FCFA
+    Option créée : AI50** - 10000.0 FCFA
+    Option créée : AI50*** - 12000.0 FCFA
+    Option créée : AI50# - 35000.0 FCFA
+    Option créée : AI75 - 7500.0 FCFA
+    Option créée : AI00+ - 5000.0 FCFA
+    Option créée : AI10+ - 15000.0 FCFA
+    Option créée : AI15+ - 20000.0 FCFA
+    Option créée : AI20+ - 7000.0 FCFA
+    Option créée : AI25+ - 7500.0 FCFA
+    Option créée : AI30+ - 8000.0 FCFA
+    Option créée : AI40+ - 9000.0 FCFA
+    Option créée : AI50+ - 10000.0 FCFA
+    Option créée : AI70+ - 12000.0 FCFA
+    Option créée : AI75+ - 12500.0 FCFA
+    Option créée : + ou [PRO+] - 5000.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option créée : AI50_' - 7500.0 FCFA
+    Option créée : AI50_'' - 10000.0 FCFA
+    Option créée : AI50_''' - 12000.0 FCFA
+    Option créée : AI50_'''' - 15000.0 FCFA
+    Option créée : AI20_'' - 7000.0 FCFA
+    Option créée : AI20_' - 4500.0 FCFA
+    Option créée : _' - 2500.0 FCFA
+    Option créée : _'' - 5000.0 FCFA
+    Option créée : _''' - 7000.0 FCFA
+    Option créée : _'''' - 10000.0 FCFA
+    Option créée : _''''' - 12000.0 FCFA
+    Option créée : _'''''' - 15000.0 FCFA
+    Option créée : _''''''' - 20000.0 FCFA
+    Option créée : # - 30000.0 FCFA
+    Option créée : ## - 50000.0 FCFA
+    Option créée : ### - 100000.0 FCFA
+    Option créée : AI30_'''''' - 18000.0 FCFA
+    Option créée : AI30_' - 5500.0 FCFA
+    Option créée : *** - 7000.0 FCFA
+    Option créée : ** - 5000.0 FCFA
+
+=== Import Services Autres ===
+  Service créé : Facture Détaillée
+    Option créée : Facture Détaillée Standard - 2360 FCFA
+  Service créé : Incognito
+    Option créée : Incognito Standard - 2360 FCFA
+
+=== Import Forfaits/Formules ===
+  Forfait créé : S1K - STAR (prix/quotas à définir)
+  Forfait créé : S1Q - SUN (prix/quotas à définir)
+  Forfait créé : M3C - MOON (prix/quotas à définir)
+  Forfait créé : F1C - FAMOUS (prix/quotas à définir)
+  Forfait créé : S50 - SOFT (prix/quotas à définir)
+  Forfait créé : S30 - SMART (prix/quotas à définir)
+  Forfait créé : B50 - DUNE (prix/quotas à définir)
+  Forfait créé : B30 - BRISE (prix/quotas à définir)
+  Forfait créé : B20 - ALISE (prix/quotas à définir)
+  Forfait créé : F30 - FLEXI (prix/quotas à définir)
+  Forfait créé : DAT - DATA (prix/quotas à définir)
+  Forfait créé : Op0 - OPEN (prix/quotas à définir)
+  Forfait créé : TOT - OPEN TRACKING (prix/quotas à définir)
+
+================================================================================
+RÉSUMÉ DE L'IMPORT
+================================================================================
+
+Forfaits Package :
+  Créés : 13
+  Mis à jour : 0
+  Total en base : 13
+
+Services :
+  Créés : 4
+  Mis à jour : 0
+  Total en base : 4
+
+Options (TarifService) :
+  Créées : 84
+  Mises à jour : 1
+  Total en base : 84
+
+================================================================================
+Import terminé avec succès !
+================================================================================
+ok
+test_import_toutes_options_actives (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_import_toutes_options_actives)
+Test : toutes les options importées sont actives par défaut ... Lecture du fichier : C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Contexte\Données_Test_Facturation (1).xlsx
+
+=== Import BlackBerry ===
+  Service créé : BlackBerry
+    Option créée : BB1 - 15000 FCFA
+    Option créée : BB2 - 30000 FCFA
+    Option créée : BB3 - 10000 FCFA
+    Option créée : BB4 - 4500 FCFA
+    Option créée : BB5 - 60000 FCFA
+    Option créée : BB6 - 120000 FCFA
+    Option créée : BB7 - 12000 FCFA
+    Option créée : BB8 - 90000 FCFA
+    Option créée : BB9 - 50000 FCFA
+    Option créée : BB10 - 100 FCFA
+    Option créée : BB11 - 50 FCFA
+    Option créée : BB12 - 200 FCFA
+    Option créée : BB13 - 2360 FCFA
+    Option créée : BB4_1 - 3000 FCFA
+    Option créée : BB13_2 - 4720 FCFA
+    Option créée : BB15 - 25000 FCFA
+    Option créée : BB12_2 - 400 FCFA
+    Option créée : BB13_5 - 1000 FCFA
+    Option créée : BB13_5_2 - 2000 FCFA
+    Option créée : BB3_1 - 7000 FCFA
+    Option créée : BB1_1 - 12000 FCFA
+    Option créée : BB15_1 - 2500 FCFA
+    Option créée : BB15_2 - 5000 FCFA
+    Option créée : BB15_3 - 7000 FCFA
+    Option créée : BB15_4 - 10000 FCFA
+    Option créée : BB15_5 - 12000 FCFA
+    Option créée : BB15_6 - 15000 FCFA
+    Option créée : BB15_7 - 20000 FCFA
+    Option créée : BB15_8 - 30000 FCFA
+    Option créée : BB15_9 - 50000 FCFA
+    Option créée : BB15_10 - 100000 FCFA
+
+=== Import No Limit ===
+  Service créé : No Limit
+    Option créée : AI00* - 9500.0 FCFA
+    Option créée : AI00** - 5000.0 FCFA
+    Option créée : AI00*** - 7000.0 FCFA
+    Option créée : AI00_' - 2500.0 FCFA
+    Option créée : AI00_'' - 5000.0 FCFA
+    Option créée : AI00_''' - 7000.0 FCFA
+    Option créée : AI00_'''' - 10000.0 FCFA
+    Option créée : AI00*_'' - 14500.0 FCFA
+    Option créée : AI10 - 10000.0 FCFA
+    Option créée : AI15 - 15000.0 FCFA
+    Option créée : AI20 - 2000.0 FCFA
+    Option créée : AI25 - 2500.0 FCFA
+    Option créée : AI30 - 3000.0 FCFA
+    Option créée : AI40 - 4000.0 FCFA
+    Option créée : AI50 - 5000.0 FCFA
+    Option créée : AI50* - 14500.0 FCFA
+    Option créée : AI50** - 10000.0 FCFA
+    Option créée : AI50*** - 12000.0 FCFA
+    Option créée : AI50# - 35000.0 FCFA
+    Option créée : AI75 - 7500.0 FCFA
+    Option créée : AI00+ - 5000.0 FCFA
+    Option créée : AI10+ - 15000.0 FCFA
+    Option créée : AI15+ - 20000.0 FCFA
+    Option créée : AI20+ - 7000.0 FCFA
+    Option créée : AI25+ - 7500.0 FCFA
+    Option créée : AI30+ - 8000.0 FCFA
+    Option créée : AI40+ - 9000.0 FCFA
+    Option créée : AI50+ - 10000.0 FCFA
+    Option créée : AI70+ - 12000.0 FCFA
+    Option créée : AI75+ - 12500.0 FCFA
+    Option créée : + ou [PRO+] - 5000.0 FCFA
+    Option MAJ : AI00_'' - 5000.0 FCFA
+    Option créée : AI50_' - 7500.0 FCFA
+    Option créée : AI50_'' - 10000.0 FCFA
+    Option créée : AI50_''' - 12000.0 FCFA
+    Option créée : AI50_'''' - 15000.0 FCFA
+    Option créée : AI20_'' - 7000.0 FCFA
+    Option créée : AI20_' - 4500.0 FCFA
+    Option créée : _' - 2500.0 FCFA
+    Option créée : _'' - 5000.0 FCFA
+    Option créée : _''' - 7000.0 FCFA
+    Option créée : _'''' - 10000.0 FCFA
+    Option créée : _''''' - 12000.0 FCFA
+    Option créée : _'''''' - 15000.0 FCFA
+    Option créée : _''''''' - 20000.0 FCFA
+    Option créée : # - 30000.0 FCFA
+    Option créée : ## - 50000.0 FCFA
+    Option créée : ### - 100000.0 FCFA
+    Option créée : AI30_'''''' - 18000.0 FCFA
+    Option créée : AI30_' - 5500.0 FCFA
+    Option créée : *** - 7000.0 FCFA
+    Option créée : ** - 5000.0 FCFA
+
+=== Import Services Autres ===
+  Service créé : Facture Détaillée
+    Option créée : Facture Détaillée Standard - 2360 FCFA
+  Service créé : Incognito
+    Option créée : Incognito Standard - 2360 FCFA
+
+=== Import Forfaits/Formules ===
+  Forfait créé : S1K - STAR (prix/quotas à définir)
+  Forfait créé : S1Q - SUN (prix/quotas à définir)
+  Forfait créé : M3C - MOON (prix/quotas à définir)
+  Forfait créé : F1C - FAMOUS (prix/quotas à définir)
+  Forfait créé : S50 - SOFT (prix/quotas à définir)
+  Forfait créé : S30 - SMART (prix/quotas à définir)
+  Forfait créé : B50 - DUNE (prix/quotas à définir)
+  Forfait créé : B30 - BRISE (prix/quotas à définir)
+  Forfait créé : B20 - ALISE (prix/quotas à définir)
+  Forfait créé : F30 - FLEXI (prix/quotas à définir)
+  Forfait créé : DAT - DATA (prix/quotas à définir)
+  Forfait créé : Op0 - OPEN (prix/quotas à définir)
+  Forfait créé : TOT - OPEN TRACKING (prix/quotas à définir)
+
+================================================================================
+RÉSUMÉ DE L'IMPORT
+================================================================================
+
+Forfaits Package :
+  Créés : 13
+  Mis à jour : 0
+  Total en base : 13
+
+Services :
+  Créés : 4
+  Mis à jour : 0
+  Total en base : 4
+
+Options (TarifService) :
+  Créées : 84
+  Mises à jour : 1
+  Total en base : 84
+
+================================================================================
+Import terminé avec succès !
+================================================================================
+ok
+
+======================================================================
+ERROR: test_commande_import_existe (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_existe)
+Test : la commande import_catalogue_forfaits existe
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back\billing\tests\test_import_catalogue.py", line 23, in test_commande_import_existe
+    call_command('import_catalogue_forfaits', '--help')
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Benoit\AppData\Roaming\Python\Python314\site-packages\django\core\management\__init__.py", line 173, in call_command
+    defaults = parser.parse_args(args=parse_args)
+  File "C:\Users\Benoit\AppData\Roaming\Python\Python314\site-packages\django\core\management\base.py", line 72, in parse_args
+    return super().parse_args(args, namespace)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\argparse.py", line 2003, in parse_args
+    args, argv = self.parse_known_args(args, namespace)
+                 ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\argparse.py", line 2013, in parse_known_args
+    return self._parse_known_args2(args, namespace, intermixed=False)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\argparse.py", line 2042, in _parse_known_args2
+    namespace, args = self._parse_known_args(args, namespace, intermixed)
+                      ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\argparse.py", line 2293, in _parse_known_args
+    start_index = consume_optional(start_index)
+  File "C:\Python314\Lib\argparse.py", line 2217, in consume_optional
+    take_action(action, args, option_string)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\argparse.py", line 2118, in take_action
+    action(self, namespace, argument_values, option_string)
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\argparse.py", line 1176, in __call__
+    parser.exit()
+    ~~~~~~~~~~~^^
+  File "C:\Python314\Lib\argparse.py", line 2760, in exit
+    _sys.exit(status)
+    ~~~~~~~~~^^^^^^^^
+SystemExit: 0
+
+----------------------------------------------------------------------
+Ran 13 tests in 9.695s
+
+FAILED (errors=1)
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack 
+Excellent ! ✅ 12 tests sur 13 réussis. Le test qui échoue (test_commande_import_existe) est juste un problème de test technique (le --help fait un sys.exit()). Je vais le corriger :
+
+Accepted edits to
+
+test_import_catalogue.py
+
+
+Elapsed time: 4m 55s
+
+
+Checkpoint
+Restore
+continue
+
+Kiro
+Je vais terminer le travail en vérifiant les tests et en créant un rapport final factuel.
+
+Command
+c:\Users\Benoit\Documents\BU…LEPO Mintre Benoit 2026\Back
+
+python manage.py test billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_existe -v 2
+c--------------------------------------------------------------┌──────────────────────────────────────┐Ran 13 test│📦 c++                                ││📦 caffeinate                         │FAILED (err│📦 cal                                │Destroying │📦 cap                                │:memorydb_d│📦 capacitor                          │PS C:\Users└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projcd "c:\Users\Benoit\Documents\BURRO\Proje-------------------Ran 13 test┌──────────────────────────────────────┐│📦 c++                                │FAILED (err│📦 caffeinate                         │Destroying │📦 cal                                │:memorydb_d│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘cd "c:\Users\Benoit\Documents\BURRO\Projet-------------------Ran 13 test┌──────────────────────────────────────┐│📦 c++                                │FAILED (err│📦 caffeinate                         │Destroying │📦 cal                                │:memorydb_d│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘-------------------Ran 13 test┌──────────────────────────────────────┐│📦 c++                                │FAILED (err│📦 caffeinate                         │Destroying │📦 cal                                │:memorydb_d│📦 cap                                │PS C:\Users│📦 capacitor                          │année GLSI-└──────────────────────────────────────┘-------------------Ran 13 tests in 9.695sFAILED (errors=1)Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "ccd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_excd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_exicd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_exiscd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_existcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_existe
+cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_existe cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_existe -cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_existe -vcd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_existe -v cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_existe -v 2
+Found 1 test(s).
+PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> cd "c:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back" ; python manage.py test billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_existe -v 2Found 1 test(s).Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, django_filters, drf_spectacular, messages, rest_framework, rest_framework_simplejwt, staticfiles
+  Apply all migrations: accounts, admin, auth, billing, contenttypes, sessions, token_blacklist
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying accounts.0001_initial... OK
+  Applying accounts.0002_user_created_by_user_custom_permissions_and_more... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying billing.0001_initial... OK
+  Applying billing.0002_alter_line_cycle... OK
+  Applying billing.0003_package_service_invoice_historiquefacturation_and_more... OK
+  Applying billing.0004_invoice_line... OK
+  Applying sessions.0001_initial... OK
+  Applying token_blacklist.0001_initial... OK
+  Applying token_blacklist.0002_outstandingtoken_jti_hex... OK
+  Applying token_blacklist.0003_auto_20171017_2007... OK
+  Applying token_blacklist.0004_auto_20171017_2013... OK
+  Applying token_blacklist.0005_remove_outstandingtoken_jti... OK
+  Applying token_blacklist.0006_auto_20171017_2113... OK
+  Applying token_blacklist.0007_auto_20171017_2214... OK
+  Applying token_blacklist.0008_migrate_to_bigautofield... OK
+  Applying token_blacklist.0010_fix_migrate_to_bigautofield... OK
+  Applying token_blacklist.0011_linearizes_history... OK
+  Applying token_blacklist.0012_alter_outstandingtoken_user... OK
+  Applying token_blacklist.0013_alter_blacklistedtoken_options_and_more... OK
+System check identified no issues (0 silenced).
+test_commande_import_existe (billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_existe)
+Test : la commande import_catalogue_forfaits existe ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.002s
+
+OK
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe\PS C:\Users\Benoit\Documents\BURRO\Projet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\Back> WD;C:\x5cUsers\x5cBenoit\x5cDocuments\x5cBURRO\x5cProjet de fin d'année GLSI-A BANLEPO Mintre Benoit 2026\x5cBack 
+Adding a command to the trust list allows me to auto run this command in the future without asking for your approval every time. Manage the command trust list in the Trusted Commands setting. Which variation would you like to add?
+
+
+Full command
+python manage.py test billing.tests.test_import_catalogue.ImportCatalogueTestCase.test_commande_import_existe -v 2
+
+Partial
+python manage.py *
+
+Base
+python *
+Parfait ! ✅ Maintenant tous les tests passent. Créons le rapport final factuel :
+
+Accepted edits to
+
+CODES_FORMULE_MANQUANTS.md
+
+
+Parfait. Voici le résumé final de ce qui a été fait :
+
+✅ TRAVAIL TERMINÉ
+1. Analyse des codes FORMULE
+Fichier créé : CODES_FORMULE_MANQUANTS.md
+
+Codes manquants identifiés (utilisés dans HYBRID/OPEN mais absents de feuille Formule) :
+
+M0B (6 occurrences HYBRID)
+M1B (16 occurrences HYBRID)
+M2B (13 occurrences HYBRID)
+M4B (13 occurrences HYBRID)
+M6B (4 occurrences HYBRID)
+OP0 (12 occurrences OPEN) - problème de casse avec "Op0"
+2. Commande d'import nettoyée
+Fichier : 
+import_catalogue_forfaits.py
+
+Modifications :
+
+❌ Supprimé toutes les valeurs inventées (prix et quotas avec mention "extrapolation")
+✅ Import uniquement des données vérifiables dans l'Excel :
+4 services avec 84 options (prix extraits des colonnes Excel)
+13 forfaits (codes + noms depuis feuille Formule)
+✅ Prix et quotas forfaits définis à 0/NULL par défaut
+✅ Idempotente (utilise update_or_create avec code comme clé)
+3. Tests d'import créés
+Fichier : 
+test_import_catalogue.py
+
+13 tests unitaires :
+
+Commande existe
+Import services (BlackBerry, No Limit, Facture Détaillée, Incognito)
+Import forfaits depuis feuille Formule
+Ignore en-tête CODES/FORMULES
+Options ont des prix > 0
+Import idempotent
+Tous éléments actifs par défaut
+Résultat : ✅ 13/13 tests OK
+
+4. Fichiers temporaires supprimés
+Scripts d'analyse supprimés (données en base préservées) :
+
+verify_import_final.py
+test_api_catalogue.py
+check_catalogue_status.py
+analyze_packages_detail.py
+clean_fake_data.py
+verify_import.py
+analyze_formule_codes.py
+Rapports markdown supprimés :
+
+IMPORT_CATALOGUE_RAPPORT_FINAL.md
+IMPORT_CATALOGUE_SYNTHESE.md
+5. État actuel
+Données importables (sources vérifiables) :
+
+✅ 4 services avec 84 options tarifaires (prix dans Excel)
+✅ 13 forfaits (structure : code + nom depuis feuille Formule)
+Données manquantes (sources non vérifiables) :
+
+⚠️ Prix forfaits (aucune colonne dans feuille Formule)
+⚠️ Quotas forfaits data/voix/SMS (non disponibles dans Excel)
+⚠️ Codes M0B, M1B, M2B, M4B, M6B (absents feuille Formule)
+Prochaines étapes requises
+Tu dois fournir :
+
+Référentiel métier officiel pour les 13 forfaits (prix + quotas)
+Clarification sur codes M0B, M1B, M2B, M4B, M6B, OP0
+Confirmation : faut-il importer les 9 forfaits non utilisés (B20, B30, etc.) ?
+Commande prête à utiliser :
+
+python manage.py import_catalogue_forfaits
+Est. Credits Used: 1.51
+Elapsed time: 1m 14s

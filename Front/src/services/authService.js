@@ -5,12 +5,12 @@ import api from './api'
 /**
  * Connexion d'un utilisateur
  * Endpoint: POST /api/auth/login/
- * Comptes de test :
- *   Admin            → login: admin@moov.tg   / mdp: admin123
- *   Payeur           → login: A0007612        / mdp: payeur123
- *   Employé          → login: 79342735        / mdp: 5678
- *   Agent Facturation→ login: agent@moov.tg   / mdp: agent123
- *   Chef Facturation → login: chef@moov.tg    / mdp: chef123  ⭐
+ * Comptes de test disponibles :
+ *   Admin            → login: admin@moov.tg      / mdp: admin123
+ *   Chef Facturation → login: chef@moov.tg       / mdp: chef123
+ *   Agent Facturation→ login: agent@moov.tg      / mdp: agent123
+ *   Payeur           → login: A26TEST001         / mdp: payeur123
+ *   Employé          → login: 99475555           / mdp: employe123
  */
 export const login = async (loginVal, motDePasse, typeLogin) => {
   // Adapter les paramètres pour l'API Django

@@ -5,6 +5,7 @@ import '../admin/Admin.css'
 export default function PublicationPdf() {
   const [fichier, setFichier] = useState(null)
   const [cycle, setCycle] = useState('HYB')
+  const [typeFacture, setTypeFacture] = useState('SOM')
   const [periodeDebut, setPeriodeDebut] = useState('')
   const [periodeFin, setPeriodeFin] = useState('')
   const [progression, setProgression] = useState(0)
@@ -49,13 +50,22 @@ export default function PublicationPdf() {
     setMessage(null)
     
     try {
-      const resultat = await uploadBlocPdf(fichier, cycle, periodeDebut, periodeFin, setProgression)
+      const resultat = await uploadBlocPdf(fichier, cycle, periodeDebut, periodeFin, setProgression, typeFacture)
       
       // Adapter le message selon la réponse du backend Django
-      const nbFichiers = resultat.files_created || resultat.total_blocks || 0
-      const nbMatches = resultat.auto_match?.matched || 0
-      const nbAlreadyProcessed = resultat.auto_match?.skipped?.length || 0
-      const nbErrors = resultat.auto_match?.errors?.length || 0
+      // Le backend retourne les compteurs dans `summary` et `matching`.
+      // L'ancien code lisait uniquement des clés à la racine, d'où les 0 affichés.
+      const summary = resultat.summary || resultat
+      const matching = resultat.matching || resultat.auto_match || {}
+      const nbFichiers = summary.files_created || summary.total_blocks || 0
+      const nbMatches = matching.successfully_matched ?? matching.matched ?? 0
+      const nbAlreadyProcessed = matching.skipped_already_processed
+        ?? matching.skipped?.length
+        ?? matching.details?.skipped?.length
+        ?? 0
+      const nbErrors = matching.details?.errors?.length
+        ?? matching.errors?.length
+        ?? 0
       
       setMessage({ 
         type: 'success', 
@@ -102,6 +112,13 @@ export default function PublicationPdf() {
 
         <form onSubmit={handleSubmit}>
           <div className="filtres-grid" style={{ marginBottom: 20 }}>
+            <div className="form-group">
+              <label className="form-label">Type de facture</label>
+              <select className="form-control" value={typeFacture} onChange={e => setTypeFacture(e.target.value)}>
+                <option value="SOM">Sommaire (SOM) — une facture par ligne</option>
+                <option value="GLO">Globale (GLO) — une facture par entreprise</option>
+              </select>
+            </div>
             <div className="form-group">
               <label className="form-label">Cycle de facturation</label>
               <select className="form-control" value={cycle} onChange={e => setCycle(e.target.value)}>

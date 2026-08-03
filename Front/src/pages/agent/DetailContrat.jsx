@@ -10,10 +10,26 @@ export default function DetailContrat() {
   const [contrat, setContrat] = useState(null)
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState(null)
+  const [modalAffectation, setModalAffectation] = useState(null)
+  const [modalAjoutLigne, setModalAjoutLigne] = useState(false)
+  const [employes, setEmployes] = useState([])
+  const [message, setMessage] = useState(null)
 
   useEffect(() => {
     chargerContrat()
+    chargerEmployes()
   }, [id])
+
+  const chargerEmployes = async () => {
+    try {
+      // Charger tous les employés disponibles pour affectation
+      const response = await api.get('/auth/users/', { params: { role: 'EMPLOYE' } })
+      const users = response.data.results || response.data
+      setEmployes(users)
+    } catch (error) {
+      console.error('Erreur chargement employés:', error)
+    }
+  }
 
   const chargerContrat = async () => {
     try {
@@ -32,29 +48,27 @@ export default function DetailContrat() {
         id: company.id,
         numeroContrat: company.compte,
         typePayeur: 'ENTREPRISE',
-        raisonSociale: company.raison_sociale,
-        email: company.payeur_email || '',
-        telephone: company.telephone || 'Non renseigné',
-        adresse: company.adresse || 'Non renseignée',
+        raisonSociale: company.raison_sociale || company.nom_commercial,
+        email: company.payeur_info?.email || '',
+        telephone: '',
+        adresse: company.adresse || '',
         dateCreation: company.date_creation,
-        statut: company.est_actif ? 'ACTIF' : 'INACTIF',
-        typeContrat: company.categorie || 'Professionnel',
-        dureeEngagement: 24, // Par défaut
-        modeFacturation: 'Mensuel',
-        agentResponsable: 'Non assigné',
+        statut: company.statut || 'ACTIF',
+        typeContrat: company.categorie || '',
         lignes: lignes.map(l => ({
           id: l.id,
           numero: l.msisdn,
-          employe: {
-            nom: l.employe_last_name || 'N/A',
-            prenom: l.employe_first_name || 'N/A',
-            email: l.employe_email || 'N/A'
-          },
-          statut: l.est_active ? 'ACTIF' : 'SUSPENDU',
-          dateActivation: l.date_activation || l.date_creation,
-          forfaits: l.package_nom ? [l.package_nom] : [],
+          employe: l.employe_info ? {
+            id: l.employe,
+            nom: l.employe_info.nom?.split(' ').pop() || '',
+            prenom: l.employe_info.nom?.split(' ')[0] || '',
+            email: l.employe_info.email || ''
+          } : null,
+          statut: l.statut || 'ACTIF',
+          dateActivation: l.date_creation,
+          forfaits: [],
           consommation: { voix: 0, sms: 0, data: 0 },
-          montantEstime: 0
+          montantEstime: parseFloat(l.forfait) || 0
         })),
         historiqueFacturation: []
       })
@@ -63,6 +77,56 @@ export default function DetailContrat() {
       setErreur('Impossible de charger les détails du contrat')
     } finally {
       setChargement(false)
+    }
+  }
+
+  const affecterEmploye = async (ligneId, employeId) => {
+    try {
+      await api.post(`/billing/lines/${ligneId}/assigner_employe/`, { employe_id: employeId })
+      setMessage({ type: 'success', text: 'Employé affecté avec succès' })
+      chargerContrat()
+      setModalAffectation(null)
+    } catch (error) {
+      const errorMsg = error.response?.data?.error || 'Erreur lors de l\'affectation'
+      setMessage({ type: 'error', text: errorMsg })
+    }
+  }
+
+  const retirerEmploye = async (ligneId) => {
+    if (!window.confirm('Retirer l\'employé de cette ligne ?')) return
+    try {
+      await api.post(`/billing/lines/${ligneId}/retirer_employe/`)
+      setMessage({ type: 'success', text: 'Employé retiré avec succès' })
+      chargerContrat()
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Erreur lors du retrait' })
+    }
+  }
+
+  const ajouterLigne = async (e) => {
+    e.preventDefault()
+    const formData = new FormData(e.target)
+    try {
+      await api.post('/billing/lines/', {
+        company: parseInt(id),
+        msisdn: formData.get('msisdn'),
+        utilisateur: formData.get('utilisateur') || '',
+        cycle: formData.get('cycle'),
+        forfait: parseFloat(formData.get('forfait')) || 0,
+        option_blackberry: '',
+        option_nolimit: '',
+        est_incognito: false,
+        facture_detaillee: false,
+        est_non_revenu: false
+        // employe: optionnel, laissé vide pour l'instant
+      })
+      setMessage({ type: 'success', text: 'Ligne ajoutée avec succès' })
+      setModalAjoutLigne(false)
+      chargerContrat()
+      e.target.reset()
+    } catch (error) {
+      const errorMsg = error.response?.data?.msisdn?.[0] || error.response?.data?.error || 'Erreur lors de l\'ajout'
+      setMessage({ type: 'error', text: errorMsg })
     }
   }
 
@@ -106,6 +170,110 @@ export default function DetailContrat() {
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Message de notification */}
+      {message && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
+          message.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`}>
+          {message.text}
+        </div>
+      )}
+
+      {/* Modal d'affectation */}
+      {modalAffectation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold mb-4">Affecter un employé</h3>
+            <p className="text-sm text-zinc-600 mb-4">Ligne : {modalAffectation.numero}</p>
+            {employes.length === 0 ? (
+              <p className="text-sm text-zinc-500 mb-4">Aucun employé disponible</p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {employes.map(emp => (
+                  <button
+                    key={emp.id}
+                    onClick={() => affecterEmploye(modalAffectation.id, emp.id)}
+                    className="w-full text-left px-4 py-3 hover:bg-zinc-100 rounded-lg"
+                  >
+                    <p className="font-semibold">{emp.first_name} {emp.last_name}</p>
+                    <p className="text-sm text-zinc-500">{emp.email}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              onClick={() => setModalAffectation(null)}
+              className="mt-4 w-full px-4 py-2 bg-zinc-200 rounded-lg hover:bg-zinc-300"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal ajout ligne */}
+      {modalAjoutLigne && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold mb-4">Ajouter une ligne</h3>
+            <form onSubmit={ajouterLigne} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">MSISDN *</label>
+                <input
+                  name="msisdn"
+                  required
+                  pattern="[0-9]{8}"
+                  placeholder="99123456"
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+                <p className="text-xs text-zinc-500 mt-1">8 chiffres sans espaces</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Utilisateur</label>
+                <input
+                  name="utilisateur"
+                  placeholder="Nom de l'utilisateur"
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Cycle *</label>
+                <select name="cycle" required className="w-full px-3 py-2 border rounded-lg">
+                  <option value="HYB">Hybride (HYB)</option>
+                  <option value="OP">Open (OP)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Forfait mensuel (F)</label>
+                <input
+                  name="forfait"
+                  type="number"
+                  step="0.01"
+                  placeholder="0"
+                  defaultValue="0"
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-[#002a7a] text-white rounded-lg hover:bg-[#003399]"
+                >
+                  Ajouter
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalAjoutLigne(false)}
+                  className="flex-1 px-4 py-2 bg-zinc-200 rounded-lg hover:bg-zinc-300"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Header avec retour */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <button onClick={() => navigate('/agent/contrats')}
@@ -127,7 +295,7 @@ export default function DetailContrat() {
             </div>
             <p className="text-zinc-600 dark:text-zinc-400 font-mono text-lg">{contrat.numeroContrat}</p>
           </div>
-          <button className="px-4 py-2.5 bg-gradient-to-br from-[#e05500] to-[#c2410c] text-white font-semibold rounded-lg hover:shadow-lg transition-all">
+          <button className="px-4 py-2.5 bg-gradient-to-br from-[#e05500] to-[#c2410c] text-white font-semibold rounded-lg hover:shadow-lg transition-all" onClick={() => setModalAjoutLigne(true)}>
             + Nouvelle Ligne
           </button>
         </div>
@@ -189,8 +357,8 @@ export default function DetailContrat() {
               </svg>
             </div>
             <div>
-              <p className="text-2xl font-bold text-zinc-900 dark:text-white">{contrat.dureeEngagement}</p>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Mois engagement</p>
+              <p className="text-2xl font-bold text-zinc-900 dark:text-white">-</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Engagement (non défini)</p>
             </div>
           </div>
         </motion.div>
@@ -246,21 +414,13 @@ export default function DetailContrat() {
                   <div className="space-y-3">
                     <div>
                       <p className="text-xs text-zinc-500 mb-1">Type de contrat</p>
-                      <p className="text-zinc-900 dark:text-white font-semibold">{contrat.typeContrat}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-zinc-500 mb-1">Mode de facturation</p>
-                      <p className="text-zinc-900 dark:text-white font-semibold">{contrat.modeFacturation}</p>
+                      <p className="text-zinc-900 dark:text-white font-semibold">{contrat.typeContrat || 'Non défini'}</p>
                     </div>
                     <div>
                       <p className="text-xs text-zinc-500 mb-1">Date de création</p>
                       <p className="text-zinc-900 dark:text-white font-semibold">
                         {new Date(contrat.dateCreation).toLocaleDateString('fr-FR')}
                       </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-zinc-500 mb-1">Agent responsable</p>
-                      <p className="text-zinc-900 dark:text-white font-semibold">{contrat.agentResponsable}</p>
                     </div>
                   </div>
                 </div>
@@ -280,7 +440,7 @@ export default function DetailContrat() {
                       <th className="px-4 py-3 text-left text-xs font-bold uppercase text-zinc-700 dark:text-zinc-300">Forfaits</th>
                       <th className="px-4 py-3 text-right text-xs font-bold uppercase text-zinc-700 dark:text-zinc-300">Consommation</th>
                       <th className="px-4 py-3 text-center text-xs font-bold uppercase text-zinc-700 dark:text-zinc-300">Statut</th>
-                      <th className="px-4 py-3 text-right text-xs font-bold uppercase text-zinc-700 dark:text-zinc-300">Montant</th>
+                      <th className="px-4 py-3 text-right text-xs font-bold uppercase text-zinc-700 dark:text-zinc-300">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -288,8 +448,14 @@ export default function DetailContrat() {
                       <tr key={ligne.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
                         <td className="px-4 py-4 font-mono font-semibold text-zinc-900 dark:text-white">{ligne.numero}</td>
                         <td className="px-4 py-4">
-                          <p className="font-semibold text-zinc-900 dark:text-white">{ligne.employe.prenom} {ligne.employe.nom}</p>
-                          <p className="text-sm text-zinc-500">{ligne.employe.email}</p>
+                          {ligne.employe ? (
+                            <>
+                              <p className="font-semibold text-zinc-900 dark:text-white">{ligne.employe.prenom} {ligne.employe.nom}</p>
+                              <p className="text-sm text-zinc-500">{ligne.employe.email}</p>
+                            </>
+                          ) : (
+                            <span className="text-sm text-zinc-400 italic">Non affecté</span>
+                          )}
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex flex-wrap gap-1">
@@ -310,8 +476,22 @@ export default function DetailContrat() {
                             {ligne.statut}
                           </span>
                         </td>
-                        <td className="px-4 py-4 text-right font-bold text-zinc-900 dark:text-white">
-                          {ligne.montantEstime.toLocaleString()} F
+                        <td className="px-4 py-4 text-right">
+                          {ligne.employe ? (
+                            <button
+                              onClick={() => retirerEmploye(ligne.id)}
+                              className="text-red-600 hover:text-red-800 text-sm font-medium"
+                            >
+                              Retirer
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setModalAffectation(ligne)}
+                              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            >
+                              Affecter
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

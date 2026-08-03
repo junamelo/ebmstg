@@ -157,8 +157,8 @@ class CanManageTarifs(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         
-        # Écriture nécessite permission
-        return request.user.has_permission('tarifs.edit')
+        # Écriture autorisée pour Admin, Chef, Agent
+        return request.user.role in ['SUPER_ADMIN', 'CHEF_FACTURATION', 'AGENT_FACTURATION']
 
 
 class CanManageServices(permissions.BasePermission):
@@ -173,8 +173,8 @@ class CanManageServices(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         
-        # Écriture nécessite permission
-        return request.user.has_permission('services.edit')
+        # Écriture autorisée pour Admin, Chef, Agent
+        return request.user.role in ['SUPER_ADMIN', 'CHEF_FACTURATION', 'AGENT_FACTURATION']
 
 
 # ==================== PERMISSIONS PHASE 4 : FACTURATION ====================

@@ -29,13 +29,36 @@ export default function Simulation() {
         console.log('[Simulation] Tarifs:', t)
         console.log('[Simulation] Services:', s)
         setTarifs(t)
-        // Filtrer uniquement les services actifs
-        const servicesActifs = (s.results || s).filter(srv => srv.est_actif)
-        setServices(servicesActifs)
+        
+        // Adapter les services API au format attendu par l'interface
+        const servicesAPI = s.results || s
+        const servicesAdaptes = servicesAPI
+          .filter(srv => srv.est_actif)
+          .map(srv => ({
+            id: srv.id,
+            nom: srv.nom,
+            code: srv.code,
+            description: srv.description || '',
+            est_actif: srv.est_actif,
+            // Mapper les tarifs vers options pour compatibilité interface
+            options: (srv.tarifs || [])
+              .filter(tarif => tarif.est_actif)
+              .map(tarif => ({
+                id: tarif.id,
+                nom: tarif.nom_option,
+                tarif: parseFloat(tarif.prix),
+                description: tarif.description || '',
+                actif: tarif.est_actif
+              }))
+          }))
+          .filter(srv => srv.options.length > 0) // Ne garder que les services avec au moins une option active
+        
+        console.log('[Simulation] Services adaptés:', servicesAdaptes)
+        setServices(servicesAdaptes)
       })
       .catch((err) => {
         console.error('[Simulation] Erreur chargement:', err)
-        setErreur('Impossible de charger les tarifs.')
+        setErreur('Impossible de charger les tarifs et services.')
       })
       .finally(() => {
         console.log('[Simulation] Chargement terminé')
@@ -274,7 +297,17 @@ export default function Simulation() {
 
               <form onSubmit={handleSubmitHybride}>
                 {/* ── Services — accordéon ── */}
-                {services.length > 0 && (
+                {services.length === 0 ? (
+                  <div className="p-8 text-center bg-zinc-50 rounded-lg border border-zinc-200">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" className="mx-auto mb-3">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="8" x2="12" y2="12"/>
+                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <p className="text-zinc-500 text-sm">Aucun service optionnel disponible pour le moment.</p>
+                    <p className="text-zinc-400 text-xs mt-1">Contactez votre agent de facturation pour plus d'informations.</p>
+                  </div>
+                ) : (
                   <div className="sim-accordion">
                     <button
                       type="button"
@@ -435,7 +468,11 @@ export default function Simulation() {
                 </div>
 
                 {/* Services optionnels également pour OPEN */}
-                {services.length > 0 && (
+                {services.length === 0 ? (
+                  <div className="p-6 text-center bg-zinc-50 rounded-lg border border-zinc-200">
+                    <p className="text-zinc-500 text-sm">Aucun service optionnel disponible.</p>
+                  </div>
+                ) : (
                   <div className="sim-accordion">
                     <button
                       type="button"

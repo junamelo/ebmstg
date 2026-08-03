@@ -251,6 +251,17 @@ class LineViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        # Vérification : l'employé doit appartenir à la même entreprise que la ligne
+        # Si l'employé a déjà des lignes, elles doivent être de la même entreprise
+        lignes_existantes = Line.objects.filter(employe=employe).exclude(id=line.id)
+        if lignes_existantes.exists():
+            entreprise_employe = lignes_existantes.first().company
+            if entreprise_employe != line.company:
+                return Response(
+                    {'error': f'Employé déjà affecté à une ligne de l\'entreprise {entreprise_employe.raison_sociale}. Affectation inter-entreprise refusée.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
         line.employe = employe
         line.save()
         
@@ -331,12 +342,18 @@ class PackageViewSet(viewsets.ModelViewSet):
     """
     ViewSet pour la gestion des forfaits (packages)
     """
-    permission_classes = [IsAuthenticated, CanManageTarifs]
+    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['type_forfait', 'est_actif']
     search_fields = ['nom', 'code']
     ordering_fields = ['date_creation', 'nom', 'prix_mensuel']
     ordering = ['nom']
+    
+    def get_permissions(self):
+        """Lecture pour tous, écriture pour agents/chefs/admins uniquement"""
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), CanManageTarifs()]
     
     def get_serializer_class(self):
         if self.action == 'list':
@@ -385,17 +402,21 @@ class ServiceViewSet(viewsets.ModelViewSet):
     """
     ViewSet pour la gestion des services
     """
-    permission_classes = [IsAuthenticated, CanManageServices]
+    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['type_service', 'est_actif']
     search_fields = ['nom', 'code']
     ordering_fields = ['date_creation', 'nom']
     ordering = ['nom']
     
+    def get_permissions(self):
+        """Lecture pour tous, écriture pour agents/chefs/admins uniquement"""
+        if self.action in ['list', 'retrieve', 'tarifs']:
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), CanManageServices()]
+    
     def get_serializer_class(self):
-        if self.action == 'list':
-            return ServiceListSerializer
-        elif self.action == 'create':
+        if self.action == 'create':
             return ServiceCreateSerializer
         return ServiceSerializer
     
@@ -458,10 +479,16 @@ class TarifServiceViewSet(viewsets.ModelViewSet):
     """
     ViewSet pour la gestion des tarifs de services
     """
-    permission_classes = [IsAuthenticated, CanManageTarifs]
+    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['service', 'est_actif']
     search_fields = ['nom_option']
+    
+    def get_permissions(self):
+        """Lecture pour tous, écriture pour agents/chefs/admins uniquement"""
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), CanManageTarifs()]
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -563,6 +590,36 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             ).select_related('company', 'line', 'line__employe')
 
         return Invoice.objects.none()
+    
+    def update(self, request, *args, **kwargs):
+        """Empêcher modification des factures publiées ou payées"""
+        invoice = self.get_object()
+        if invoice.statut in ['PUBLIEE', 'PAYEE']:
+            return Response(
+                {'error': f'Impossible de modifier une facture au statut {invoice.statut}'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().update(request, *args, **kwargs)
+    
+    def partial_update(self, request, *args, **kwargs):
+        """Empêcher modification partielle des factures publiées ou payées"""
+        invoice = self.get_object()
+        if invoice.statut in ['PUBLIEE', 'PAYEE']:
+            return Response(
+                {'error': f'Impossible de modifier une facture au statut {invoice.statut}'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().partial_update(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Empêcher suppression des factures publiées ou payées"""
+        invoice = self.get_object()
+        if invoice.statut in ['PUBLIEE', 'PAYEE']:
+            return Response(
+                {'error': f'Impossible de supprimer une facture au statut {invoice.statut}'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().destroy(request, *args, **kwargs)
     
     @extend_schema(
         summary="Générer des factures en masse",
@@ -1033,17 +1090,22 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         
         Workflow complet :
         1. Upload du gros PDF
-        2. Analyse et découpage en blocs par client (détection MSISDN/Compte)
-        3. Génération de PDF individuels
-        4. Matching automatique avec les factures existantes
-        5. Attachement des PDF individuels aux factures
-        6. Changement de statut EN_COURS → VALIDEE
+        2. Validation du PDF (format, taille, protection, pages)
+        3. Analyse et découpage en blocs par client (détection MSISDN/Compte)
+        4. Génération de PDF individuels
+        5. Matching automatique avec les factures existantes
+        6. Attachement des PDF individuels aux factures
+        7. Changement de statut EN_COURS → VALIDEE
+        
+        IMPORTANT: Les factures passent à VALIDEE, jamais PUBLIEE automatiquement.
+        La publication doit être explicite via l'endpoint publier_masse.
         """
         serializer = BulkPDFUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         fichier = serializer.validated_data['fichier']
         auto_match = serializer.validated_data.get('auto_match', True)
+        type_facture = serializer.validated_data.get('type_facture', 'SOM')
         cycle = serializer.validated_data.get('cycle')
         periode_debut = serializer.validated_data.get('periode_debut')
         periode_fin = serializer.validated_data.get('periode_fin')
@@ -1056,29 +1118,41 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             PDFProcessor.check_dependencies()
             
             # 1. Traiter le PDF (découpage automatique)
-            result = PDFProcessor.process_bulk_pdf(fichier)
+            result = PDFProcessor.process_global_pdf(fichier) if type_facture == 'GLO' else PDFProcessor.process_bulk_pdf(fichier)
             
             if not result.get('success'):
                 return Response(
-                    {'error': 'Erreur lors du traitement du PDF'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    {
+                        'error': result.get('error', 'Erreur lors du traitement du PDF'),
+                        'warnings': result.get('warnings', []),
+                        'errors_per_page': result.get('errors_per_page', [])
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
                 )
             
             response_data = {
-                'message': f'PDF traité avec succès : {result["files_created"]} fichier(s) créé(s)',
-                'total_pages': result['total_pages'],
-                'total_blocks': result['total_blocks'],
-                'files_created': result['files_created'],
-                'files': []
+                'message': f'PDF traité avec succès',
+                'summary': {
+                    'total_pages': result['total_pages'],
+                    'blocks_detected': result['total_blocks'],
+                    'files_created': result['files_created']
+                },
+                'warnings': result.get('warnings', []),
+                'errors_per_page': result.get('errors_per_page', []),
+                'split_errors': result.get('split_errors', [])
             }
             
             # 2. Si auto_match activé, matcher avec les factures
             if auto_match:
-                # Filtrer les factures candidates
+                # Filtrer les factures candidates (EN_COURS uniquement)
                 invoices_query = self.get_queryset().filter(statut='EN_COURS')
+                # Factures déjà traitées (pour détecter les réimports)
                 processed_invoices_query = self.get_queryset().exclude(statut='EN_COURS')
+                if type_facture == 'GLO':
+                    invoices_query = invoices_query.filter(line__isnull=True)
+                    processed_invoices_query = processed_invoices_query.filter(line__isnull=True)
                 
-                if cycle:
+                if cycle and type_facture != 'GLO':
                     # Filtrer par cycle via les lignes
                     invoices_query = invoices_query.filter(
                         company__lines__cycle=cycle
@@ -1101,19 +1175,20 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 match_result = PDFMatcher.auto_attach_pdfs(
                     result['files'],
                     invoices_query,
-                    processed_invoices_query
+                    processed_invoices_query, invoice_type=type_facture
                 )
                 
-                response_data.update({
-                    'auto_match': {
-                        'total_files': match_result['total_files'],
-                        'matched': match_result['matched'],
-                        'not_matched': match_result['not_matched'],
+                response_data['matching'] = {
+                    'total_files': match_result['total_files'],
+                    'successfully_matched': match_result['matched'],
+                    'not_matched': match_result['not_matched'],
+                    'skipped_already_processed': len(match_result.get('skipped', [])),
+                    'details': {
                         'attached': match_result['attached'],
                         'skipped': match_result['skipped'],
                         'errors': match_result['errors']
                     }
-                })
+                }
                 
                 # Logger l'action dans l'historique pour chaque facture attachée
                 for attached in match_result['attached']:
@@ -1125,7 +1200,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                             type_action='MODIFICATION',
                             ancien_statut='EN_COURS',
                             nouveau_statut=invoice.statut,
-                            commentaire=f'PDF attaché automatiquement depuis upload masse : {attached["filename"]}'
+                            commentaire=f'PDF attaché automatiquement : {attached["filename"]}'
                         )
                     except Invoice.DoesNotExist:
                         pass
@@ -1134,7 +1209,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 # IMPORTANT : les factures restent VALIDEE après l'upload.
                 # La Publication créée ici sert uniquement à tracer l'import,
                 # PAS la publication finale aux clients.
-                if cycle and periode_debut and periode_fin:
+                if cycle and periode_debut and periode_fin and match_result['matched'] > 0:
                     attached_ids = [item['invoice_id'] for item in match_result['attached']]
                     montant_total = Invoice.objects.filter(id__in=attached_ids).aggregate(
                         total=Sum('montant_ttc')
@@ -1154,10 +1229,20 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                             f"{match_result['not_matched']} sans correspondance."
                         )
                     )
-                    response_data['publication'] = PublicationSerializer(publication).data
+                    response_data['import_trace'] = {
+                        'id': str(publication.id),
+                        'note': 'Cette trace documente l\'import, PAS la publication finale'
+                    }
             else:
                 # Juste retourner la liste des fichiers créés sans matching
-                response_data['files'] = result['files']
+                response_data['files_without_matching'] = [
+                    {
+                        'filename': f['filename'],
+                        'identifiers': f['identifiers'],
+                        'pages': f['pages']
+                    }
+                    for f in result['files']
+                ]
                 response_data['message'] += ' (Matching automatique désactivé)'
             
             return Response(response_data, status=status.HTTP_200_OK)
@@ -1172,10 +1257,12 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         except Exception as e:
+            import traceback
             return Response(
                 {
                     'error': f'Erreur lors du traitement du PDF : {str(e)}',
-                    'type': type(e).__name__
+                    'type': type(e).__name__,
+                    'traceback': traceback.format_exc() if settings.DEBUG else None
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
