@@ -351,7 +351,7 @@ export default function AgentDashboard() {
                   <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">{pub.date}</td>
                   <td className="px-6 py-4 font-medium text-zinc-900 dark:text-white">{pub.periode}</td>
                   <td className="px-6 py-4 text-right font-mono text-zinc-700 dark:text-zinc-300">
-                    {pub.nbFactures.toLocaleString('fr-FR')}
+                    {(pub.nbFactures || 0).toLocaleString('fr-FR')}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${

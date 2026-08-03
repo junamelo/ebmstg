@@ -1,384 +1,454 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'motion/react'
-import { getPackages, togglePackageActif, createPackage, updatePackage } from '../../services/packageService'
+import { motion, AnimatePresence } from 'motion/react'
+import {
+  getServices,
+  creerService,
+  toggleService,
+  creerTarifService,
+  toggleTarifService,
+} from '../../services/servicesService'
 
 export default function GestionForfaits() {
-  const [packages, setPackages] = useState([])
+  const [services, setServices] = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState(null)
-  const [modalOuvert, setModalOuvert] = useState(false)
-  const [packageEdite, setPackageEdite] = useState(null)
-  const [message, setMessage] = useState(null)
+  const [message, setMessage]     = useState(null)
+  const [servicesOuverts, setServicesOuverts] = useState({})
+
+  // Modal nouveau service
+  const [formService, setFormService] = useState({ nom: '', description: '' })
+  const [formServiceOuvert, setFormServiceOuvert] = useState(false)
+  const [modeEditionService, setModeEditionService] = useState(false)
+  const [serviceEnEdition, setServiceEnEdition] = useState(null)
+
+  // Modal nouvelle option — on mémorise le serviceId ciblé
+  const [formOption, setFormOption]   = useState({ nom: '', tarif: '' })
+  const [serviceSelectionne, setServiceSelectionne] = useState(null) // id du service en cours d'édition
+  const [modeEditionOption, setModeEditionOption] = useState(false)
+  const [optionEnEdition, setOptionEnEdition] = useState(null)
 
   useEffect(() => {
-    chargerPackages()
+    chargerServices()
   }, [])
 
-  const chargerPackages = async () => {
+  const chargerServices = async () => {
     try {
       setChargement(true)
       setErreur(null)
-      const data = await getPackages()
-      setPackages(data)
+      const response = await getServices()
+      // Adapter la structure backend vers frontend
+      const servicesAdaptes = (response.results || response).map(s => ({
+        id: s.id,
+        nom: s.nom || s.name,
+        description: s.description || '',
+        actif: s.est_actif,
+        is_active: s.est_actif,
+        options: (s.tarifs || []).map(t => ({
+          id: t.id,
+          nom: t.nom_option,
+          tarif: parseFloat(t.prix),
+          actif: t.est_actif
+        }))
+      }))
+      setServices(servicesAdaptes)
     } catch (error) {
-      console.error('Erreur chargement packages:', error)
-      setErreur('Impossible de charger les forfaits')
+      console.error('Erreur chargement services:', error)
+      setErreur('Impossible de charger les services')
+      showMsg('error', 'Erreur lors du chargement des services')
     } finally {
       setChargement(false)
     }
   }
 
-  const handleToggleActif = async (id) => {
-    try {
-      await togglePackageActif(id)
-      showMessage('success', 'Statut modifié avec succès')
-      chargerPackages()
-    } catch (error) {
-      showMessage('error', 'Erreur lors de la modification')
-    }
+  const showMsg = (type, texte) => {
+    setMessage({ type, texte })
+    setTimeout(() => setMessage(null), 4000)
   }
 
-  const showMessage = (type, text) => {
-    setMessage({ type, text })
-    setTimeout(() => setMessage(null), 3000)
-  }
-
-  const ouvrirModal = (pkg = null) => {
-    setPackageEdite(pkg)
-    setModalOuvert(true)
-  }
-
-  const fermerModal = () => {
-    setModalOuvert(false)
-    setPackageEdite(null)
-  }
-
-  const handleSubmit = async (e) => {
+  // ── Créer ou modifier un service ─────────────────────────────
+  const handleCreerService = async (e) => {
     e.preventDefault()
-    const formData = new FormData(e.target)
-    const data = {
-      nom: formData.get('nom'),
-      code: formData.get('code'),
-      prix_mensuel: parseFloat(formData.get('prix_mensuel')),
-      type_forfait: formData.get('type_forfait'),
-      quota_data_mo: parseInt(formData.get('quota_data_mo')) || 0,
-      quota_minutes: parseInt(formData.get('quota_minutes')) || 0,
-      quota_sms: parseInt(formData.get('quota_sms')) || 0,
-      est_actif: formData.get('est_actif') === 'true'
-    }
-
     try {
-      if (packageEdite) {
-        await updatePackage(packageEdite.id, data)
-        showMessage('success', 'Forfait modifié avec succès')
+      if (modeEditionService && serviceEnEdition) {
+        // Mode modification - pas encore implémenté dans l'API
+        showMsg('error', 'Modification de service non disponible pour le moment')
+        return
       } else {
-        await createPackage(data)
-        showMessage('success', 'Forfait créé avec succès')
+        // Mode création
+        const nouveau = await creerService({ 
+          nom: formService.nom, 
+          code: formService.nom.toUpperCase().replace(/\s+/g, '_'),
+          description: formService.description,
+          type_service: 'OPTION'
+        })
+        await chargerServices() // Recharger pour avoir les données à jour
+        showMsg('success', `Forfait « ${nouveau.nom} » créé.`)
       }
-      fermerModal()
-      chargerPackages()
+      setFormService({ nom: '', description: '' })
+      setFormServiceOuvert(false)
+      setModeEditionService(false)
+      setServiceEnEdition(null)
+    } catch (error) { 
+      console.error('Erreur opération service:', error)
+      const errorMsg = error.response?.data?.detail || error.response?.data?.message || 'Erreur lors de l\'opération.'
+      showMsg('error', errorMsg) 
+    }
+  }
+
+  // ── Ouvrir le formulaire de modification de service ──────────
+  const handleModifierService = (service) => {
+    setModeEditionService(true)
+    setServiceEnEdition(service)
+    setFormService({ nom: service.name || service.nom, description: service.description })
+    setFormServiceOuvert(true)
+  }
+
+  // ── Annuler modification service ──────────────────────────────
+  const annulerEditionService = () => {
+    setModeEditionService(false)
+    setServiceEnEdition(null)
+    setFormService({ nom: '', description: '' })
+    setFormServiceOuvert(false)
+  }
+
+  // ── Toggle actif/inactif service ──────────────────────────────
+  const handleToggleService = async (id) => {
+    try {
+      await toggleService(id)
+      await chargerServices() // Recharger pour avoir l'état mis à jour
+      showMsg('success', 'Statut du service mis à jour')
     } catch (error) {
-      showMessage('error', 'Erreur lors de l\'enregistrement')
+      console.error('Erreur toggle service:', error)
+      showMsg('error', 'Erreur lors de la mise à jour du service')
+    }
+  }
+
+  // ── Ajouter ou modifier une option tarifaire ─────────────────
+  const handleAjouterOption = async (e) => {
+    e.preventDefault()
+    if (!serviceSelectionne) return
+    try {
+      if (modeEditionOption && optionEnEdition) {
+        // Mode modification - pas encore implémenté
+        showMsg('error', 'Modification d\'option non disponible pour le moment')
+        return
+      } else {
+        // Mode création
+        await creerTarifService({
+          service: serviceSelectionne,
+          nom_option: formOption.nom,
+          prix: parseFloat(formOption.tarif),
+          description: ''
+        })
+        await chargerServices() // Recharger pour avoir les options à jour
+        showMsg('success', `Option « ${formOption.nom} » ajoutée.`)
+      }
+      setFormOption({ nom: '', tarif: '' })
+      setServiceSelectionne(null)
+      setModeEditionOption(false)
+      setOptionEnEdition(null)
+    } catch (error) {
+      console.error('Erreur ajout option:', error)
+      const errorMsg = error.response?.data?.detail || error.response?.data?.message || 'Erreur lors de l\'opération.'
+      showMsg('error', errorMsg)
+    }
+  }
+
+  // ── Ouvrir le formulaire de modification d'option ────────────
+  const handleModifierOption = (serviceId, option) => {
+    setModeEditionOption(true)
+    setOptionEnEdition(option)
+    setServiceSelectionne(serviceId)
+    setFormOption({ nom: option.nom, tarif: option.tarif.toString() })
+  }
+
+  // ── Annuler modification option ───────────────────────────────
+  const annulerEditionOption = () => {
+    setModeEditionOption(false)
+    setOptionEnEdition(null)
+    setFormOption({ nom: '', tarif: '' })
+    setServiceSelectionne(null)
+  }
+
+  // ── Toggle option ─────────────────────────────────────────────
+  const handleToggleOption = async (serviceId, optionId) => {
+    try {
+      await toggleTarifService(optionId)
+      await chargerServices() // Recharger pour avoir l'état mis à jour
+      showMsg('success', 'Statut de l\'option mis à jour')
+    } catch (error) {
+      console.error('Erreur toggle option:', error)
+      showMsg('error', 'Erreur lors de la mise à jour de l\'option')
     }
   }
 
   if (chargement) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-zinc-300 border-t-[#002a7a] rounded-full animate-spin" />
-          <span className="text-sm text-zinc-600">Chargement des forfaits...</span>
-        </div>
-      </div>
-    )
-  }
-
-  if (erreur) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{erreur}</p>
-          <button
-            onClick={chargerPackages}
-            className="px-4 py-2 bg-[#002a7a] text-white rounded-lg hover:bg-[#003399]"
-          >
-            Réessayer
-          </button>
-        </div>
+        <div className="w-8 h-8 border-2 border-zinc-300 border-t-[#e05500] rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Message */}
-      {message && (
-        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
-          message.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-        }`}>
-          {message.text}
-        </div>
-      )}
 
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">
-              Gestion des Forfaits
-            </h1>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              {packages.length} forfait(s) disponible(s)
-            </p>
-          </div>
-          <button
-            onClick={() => ouvrirModal()}
-            className="px-4 py-2.5 bg-[#002a7a] hover:bg-[#003d9e] text-white font-semibold rounded-lg transition-colors"
-          >
-            + Nouveau forfait
-          </button>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 mb-2">Gestion des Services</h1>
+          <p className="text-zinc-600">
+            Gestion des forfaits et packages (BlackBerry, No Limit, Facture Détaillée, Incognito...)
+          </p>
         </div>
-      </motion.div>
+        <button
+          onClick={() => setFormServiceOuvert(true)}
+          className="px-4 py-2 bg-[#e05500] hover:bg-[#c44a00] text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Nouveau service
+        </button>
+      </div>
 
-      {/* Liste des forfaits */}
-      {packages.length === 0 ? (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-12 text-center">
-          <p className="text-zinc-500 dark:text-zinc-400 mb-4">Aucun forfait disponible</p>
-          <button
-            onClick={() => ouvrirModal()}
-            className="px-4 py-2 bg-[#002a7a] text-white rounded-lg hover:bg-[#003399]"
-          >
-            Créer le premier forfait
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {packages.map((pkg, idx) => (
-            <motion.div
-              key={pkg.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-1">
-                    {pkg.nom}
-                  </h3>
-                  <p className="text-sm text-zinc-500 font-mono">{pkg.code}</p>
-                </div>
-                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                  pkg.est_actif 
-                    ? 'bg-emerald-100 text-emerald-700' 
-                    : 'bg-zinc-100 text-zinc-600'
-                }`}>
-                  {pkg.est_actif ? 'Actif' : 'Inactif'}
-                </span>
-              </div>
-
-              <div className="mb-4">
-                <p className="text-3xl font-bold text-[#002a7a] dark:text-blue-400">
-                  {pkg.prix_mensuel.toLocaleString('fr-FR')} F
-                </p>
-                <p className="text-sm text-zinc-500">/ mois</p>
-              </div>
-
-              <div className="space-y-2 mb-4 text-sm">
-                {pkg.quota_data_mo > 0 && (
-                  <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                    </svg>
-                    {(pkg.quota_data_mo / 1024).toFixed(1)} Go Data
-                  </div>
-                )}
-                {pkg.quota_minutes > 0 && (
-                  <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                    </svg>
-                    {pkg.quota_minutes} min Voix
-                  </div>
-                )}
-                {pkg.quota_sms > 0 && (
-                  <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-                    </svg>
-                    {pkg.quota_sms} SMS
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => ouvrirModal(pkg)}
-                  className="flex-1 px-3 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-medium rounded-lg text-sm transition-colors"
-                >
-                  Modifier
-                </button>
-                <button
-                  onClick={() => handleToggleActif(pkg.id)}
-                  className={`flex-1 px-3 py-2 font-medium rounded-lg text-sm transition-colors ${
-                    pkg.est_actif
-                      ? 'bg-zinc-200 hover:bg-zinc-300 text-zinc-700'
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                  }`}
-                >
-                  {pkg.est_actif ? 'Désactiver' : 'Activer'}
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
-
-      {/* Modal création/édition */}
-      {modalOuvert && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      {/* Message flash */}
+      <AnimatePresence>
+        {message && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+            className={`rounded-lg p-4 text-sm font-medium ${
+              message.type === 'success'
+                ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                : 'bg-rose-50 border border-rose-200 text-rose-800'
+            }`}
           >
-            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
-                {packageEdite ? 'Modifier le forfait' : 'Nouveau forfait'}
-              </h3>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                    Nom du forfait *
-                  </label>
-                  <input
-                    name="nom"
-                    required
-                    defaultValue={packageEdite?.nom}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                    Code *
-                  </label>
-                  <input
-                    name="code"
-                    required
-                    defaultValue={packageEdite?.code}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                    Prix mensuel (F) *
-                  </label>
-                  <input
-                    name="prix_mensuel"
-                    type="number"
-                    step="0.01"
-                    required
-                    defaultValue={packageEdite?.prix_mensuel}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                    Type de forfait *
-                  </label>
-                  <select
-                    name="type_forfait"
-                    required
-                    defaultValue={packageEdite?.type_forfait || 'MIXTE'}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] outline-none"
-                  >
-                    <option value="DATA">Data</option>
-                    <option value="VOIX">Voix</option>
-                    <option value="SMS">SMS</option>
-                    <option value="MIXTE">Mixte (Voix + SMS + Data)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                    Quota Data (Mo)
-                  </label>
-                  <input
-                    name="quota_data_mo"
-                    type="number"
-                    defaultValue={packageEdite?.quota_data_mo || 0}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                    Quota Voix (min)
-                  </label>
-                  <input
-                    name="quota_minutes"
-                    type="number"
-                    defaultValue={packageEdite?.quota_minutes || 0}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                    Quota SMS
-                  </label>
-                  <input
-                    name="quota_sms"
-                    type="number"
-                    defaultValue={packageEdite?.quota_sms || 0}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                  Statut
-                </label>
-                <select
-                  name="est_actif"
-                  defaultValue={packageEdite?.est_actif ? 'true' : 'false'}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] outline-none"
-                >
-                  <option value="true">Actif</option>
-                  <option value="false">Inactif</option>
-                </select>
-              </div>
-
-              <div className="flex items-center gap-3 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2.5 bg-[#002a7a] hover:bg-[#003d9e] text-white font-semibold rounded-lg transition-colors"
-                >
-                  {packageEdite ? 'Enregistrer' : 'Créer'}
-                </button>
-                <button
-                  type="button"
-                  onClick={fermerModal}
-                  className="flex-1 px-4 py-2.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
-                >
-                  Annuler
-                </button>
-              </div>
-            </form>
+            {message.texte}
           </motion.div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
+
+      {/* Modal créer service */}
+      <AnimatePresence>
+        {formServiceOuvert && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-white rounded-xl border border-zinc-200 p-6">
+              <h2 className="text-lg font-semibold text-zinc-900 mb-4">
+                {modeEditionService ? 'Modifier le forfait' : 'Créer un nouveau forfait'}
+              </h2>
+              <form onSubmit={handleCreerService} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">Nom du forfait *</label>
+                    <input
+                      required type="text"
+                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-[#e05500] outline-none"
+                      placeholder="Ex: BlackBerry BB12, No Limit..."
+                      value={formService.nom}
+                      onChange={e => setFormService({ ...formService, nom: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">Description</label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-[#e05500] outline-none"
+                      placeholder="Description courte"
+                      value={formService.description}
+                      onChange={e => setFormService({ ...formService, description: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button type="submit" className="px-5 py-2 bg-[#e05500] text-white rounded-lg text-sm font-medium hover:bg-[#c44a00] transition-colors">
+                    {modeEditionService ? 'Enregistrer' : 'Créer'}
+                  </button>
+                  <button type="button" onClick={annulerEditionService}
+                    className="px-5 py-2 bg-zinc-100 text-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-200 transition-colors">
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal ajouter option */}
+      <AnimatePresence>
+        {serviceSelectionne && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-zinc-900">
+                  {modeEditionOption ? 'Modifier l\'option' : 'Ajouter une option'} — {services.find(s => s.id === serviceSelectionne)?.nom}
+                </h2>
+                <button onClick={annulerEditionOption}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-100 text-zinc-400">✕</button>
+              </div>
+              <form onSubmit={handleAjouterOption} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">Nom de l'option *</label>
+                  <input
+                    required type="text"
+                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-[#e05500] outline-none"
+                    placeholder="Ex: BlackBerry BB12"
+                    value={formOption.nom}
+                    onChange={e => setFormOption({ ...formOption, nom: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">Tarif mensuel (FCFA) *</label>
+                  <input
+                    required type="number" min="0" step="0.01"
+                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-[#e05500] outline-none"
+                    placeholder="Ex: 1200"
+                    value={formOption.tarif}
+                    onChange={e => setFormOption({ ...formOption, tarif: e.target.value })}
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button type="submit" className="px-5 py-2 bg-[#e05500] text-white rounded-lg text-sm font-medium hover:bg-[#c44a00] transition-colors">
+                    {modeEditionOption ? 'Enregistrer' : 'Ajouter l\'option'}
+                  </button>
+                  <button type="button" onClick={annulerEditionOption}
+                    className="px-5 py-2 bg-zinc-100 text-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-200 transition-colors">
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Liste des services */}
+      <div className="space-y-4">
+        {services.map((service, idx) => (
+          <motion.div
+            key={service.id}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.05 }}
+            className="bg-white rounded-xl border border-zinc-200 overflow-hidden"
+          >
+            {/* En-tête service cliquable */}
+            <button
+              onClick={() => setServicesOuverts(prev => ({ ...prev, [service.id]: !prev[service.id] }))}
+              className="w-full flex items-center justify-between px-6 py-4 hover:bg-zinc-50 transition-colors text-left"
+            >
+              <div className="flex items-center gap-4 flex-1">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm ${service.actif ? 'bg-[#e05500]' : 'bg-zinc-400'}`}>
+                  {service.nom[0]}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-zinc-900">{service.nom}</h3>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      service.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-100 text-zinc-500'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${service.actif ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'}`} />
+                      {service.actif ? 'Actif' : 'Inactif'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-zinc-500">{service.description} · {service.options.filter(o => o.actif).length} option(s) active(s)</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className={`w-5 h-5 text-zinc-400 transition-transform ${servicesOuverts[service.id] ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </button>
+
+            {/* Options tarifaires (accordéon) */}
+            <AnimatePresence>
+              {servicesOuverts[service.id] && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden border-t border-zinc-100"
+                >
+                  <div className="p-4 space-y-3">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-medium text-zinc-700">Actions rapides</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleModifierService(service)}
+                          className="px-3 py-1.5 text-xs font-medium text-[#002a7a] border border-[#002a7a] rounded-lg hover:bg-blue-50 transition-colors"
+                        >
+                          ✏️ Modifier
+                        </button>
+                        <button
+                          onClick={() => setServiceSelectionne(service.id)}
+                          className="px-3 py-1.5 text-xs font-medium text-[#e05500] border border-[#e05500] rounded-lg hover:bg-orange-50 transition-colors"
+                        >
+                          + Option
+                        </button>
+                        <button
+                          onClick={() => handleToggleService(service.id)}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                            service.actif
+                              ? 'text-zinc-600 border border-zinc-300 hover:bg-zinc-50'
+                              : 'text-emerald-700 border border-emerald-300 hover:bg-emerald-50'
+                          }`}
+                        >
+                          {service.actif ? 'Désactiver' : 'Activer'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {service.options.length === 0 ? (
+                      <div className="px-4 py-6 text-sm text-zinc-400 italic text-center">
+                        Aucune option tarifaire — cliquez sur « + Option » pour en ajouter.
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-zinc-50">
+                        {service.options.map(opt => (
+                          <div key={opt.id} className="flex items-center justify-between px-4 py-3 hover:bg-zinc-50 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <span className={`w-2 h-2 rounded-full ${opt.actif ? 'bg-emerald-500' : 'bg-zinc-300'}`} />
+                              <span className="text-sm font-medium text-zinc-800">{opt.nom}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="text-sm font-bold text-[#e05500]">
+                                {opt.tarif.toLocaleString('fr-FR')} FCFA<span className="text-xs font-normal text-zinc-500">/mois</span>
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleModifierOption(service.id, opt)}
+                                  className="text-xs px-2.5 py-1 rounded-lg transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                >
+                                  ✏️ Modifier
+                                </button>
+                                <button
+                                  onClick={() => handleToggleOption(service.id, opt.id)}
+                                  className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${
+                                    opt.actif
+                                      ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                                      : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                                  }`}
+                                >
+                                  {opt.actif ? 'Désactiver' : 'Activer'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        ))}
+      </div>
     </div>
   )
 }

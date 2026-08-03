@@ -1,322 +1,546 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import {
-  getServices,
-  creerService,
-  toggleService,
-  creerTarifService,
-  toggleTarifService,
-} from '../../services/servicesService'
 
 export default function GestionServices() {
-  const [services, setServices] = useState([])
-  const [chargement, setChargement] = useState(true)
-  const [erreur, setErreur] = useState(null)
-  const [message, setMessage]     = useState(null)
-  const [servicesOuverts, setServicesOuverts] = useState({})
+  const [message, setMessage] = useState(null)
+  const [serviceActif, setServiceActif] = useState('DATA') // DATA, VOIX, SMS
+  
+  // Paliers DATA (en Go et XOF)
+  const [paliersData, setPaliersData] = useState([
+    { id: 1, min: 0, max: 1, prix: 0, description: '0 à 1 Go' },
+    { id: 2, min: 1, max: 7, prix: 4500, description: '> 1 Go et ≤ 7 Go' },
+    { id: 3, min: 7, max: 15, prix: 5000, description: '> 7 Go et ≤ 15 Go' },
+    { id: 4, min: 15, max: 35, prix: 9000, description: '> 15 Go et ≤ 35 Go' },
+    { id: 5, min: 35, max: 85, prix: 15000, description: '> 35 Go et ≤ 85 Go' },
+    { id: 6, min: 85, max: 275, prix: 50000, description: '> 85 Go et ≤ 275 Go' },
+    { id: 7, min: 275, max: 999999, prix: 5, prixParMo: true, description: '> 275 Go (5 F/Mo après 275 Go + 50 000 F)' }
+  ])
 
-  // Modal nouveau service
-  const [formService, setFormService] = useState({ nom: '', description: '' })
-  const [formServiceOuvert, setFormServiceOuvert] = useState(false)
-  const [modeEditionService, setModeEditionService] = useState(false)
-  const [serviceEnEdition, setServiceEnEdition] = useState(null)
+  // Tarifs VOIX (en FCFA)
+  const [tarifsVoix, setTarifsVoix] = useState([
+    { id: 1, dureeMin: 0, dureeMax: 30, prix: 39.5, unite: 'appel', description: '0 à 30 secondes' },
+    { id: 2, dureeMin: 30, dureeMax: 60, prix: 79, unite: 'minute', description: '> 30s et ≤ 1 minute' },
+    { id: 3, dureeMin: 60, dureeMax: 999999, prix: 79, unite: 'minute', description: 'Au-delà de 1 minute (79 F/min, pas de 30s)' }
+  ])
 
-  // Modal nouvelle option — on mémorise le serviceId ciblé
-  const [formOption, setFormOption]   = useState({ nom: '', tarif: '' })
-  const [serviceSelectionne, setServiceSelectionne] = useState(null) // id du service en cours d'édition
-  const [modeEditionOption, setModeEditionOption] = useState(false)
-  const [optionEnEdition, setOptionEnEdition] = useState(null)
+  // Tarif SMS
+  const [tarifSMS, setTarifSMS] = useState({ prix: 30, unite: 'SMS' })
 
-  useEffect(() => {
-    chargerServices()
-  }, [])
+  const [modalOuvert, setModalOuvert] = useState(false)
+  const [palierEdite, setPalierEdite] = useState(null)
 
-  const chargerServices = async () => {
-    try {
-      setChargement(true)
-      setErreur(null)
-      const response = await getServices()
-      // Adapter la structure backend vers frontend
-      const servicesAdaptes = (response.results || response).map(s => ({
-        id: s.id,
-        nom: s.nom || s.name,
-        description: s.description || '',
-        actif: s.est_actif,
-        is_active: s.est_actif,
-        options: (s.tarifs || []).map(t => ({
-          id: t.id,
-          nom: t.nom_option,
-          tarif: parseFloat(t.prix),
-          actif: t.est_actif
-        }))
-      }))
-      setServices(servicesAdaptes)
-    } catch (error) {
-      console.error('Erreur chargement services:', error)
-      setErreur('Impossible de charger les services')
-      showMsg('error', 'Erreur lors du chargement des services')
-    } finally {
-      setChargement(false)
-    }
-  }
-
-  const showMsg = (type, texte) => {
-    setMessage({ type, texte })
+  const showMessage = (type, text) => {
+    setMessage({ type, text })
     setTimeout(() => setMessage(null), 4000)
   }
 
-  // ── Créer ou modifier un service ─────────────────────────────
-  const handleCreerService = async (e) => {
+  const ouvrirModal = (palier = null) => {
+    setPalierEdite(palier)
+    setModalOuvert(true)
+  }
+
+  const fermerModal = () => {
+    setModalOuvert(false)
+    setPalierEdite(null)
+  }
+
+  const handleSauvegarderPalier = (e) => {
     e.preventDefault()
-    try {
-      if (modeEditionService && serviceEnEdition) {
-        // Mode modification - pas encore implémenté dans l'API
-        showMsg('error', 'Modification de service non disponible pour le moment')
-        return
-      } else {
-        // Mode création
-        const nouveau = await creerService({ 
-          nom: formService.nom, 
-          code: formService.nom.toUpperCase().replace(/\s+/g, '_'),
-          description: formService.description,
-          type_service: 'OPTION'
-        })
-        await chargerServices() // Recharger pour avoir les données à jour
-        showMsg('success', `Forfait « ${nouveau.nom} » créé.`)
+    const formData = new FormData(e.target)
+    
+    if (serviceActif === 'DATA') {
+      const nouveauPalier = {
+        id: palierEdite?.id || Date.now(),
+        min: parseFloat(formData.get('min')),
+        max: parseFloat(formData.get('max')),
+        prix: parseFloat(formData.get('prix')),
+        prixParMo: formData.get('prixParMo') === 'true',
+        description: formData.get('description')
       }
-      setFormService({ nom: '', description: '' })
-      setFormServiceOuvert(false)
-      setModeEditionService(false)
-      setServiceEnEdition(null)
-    } catch (error) { 
-      console.error('Erreur opération service:', error)
-      const errorMsg = error.response?.data?.detail || error.response?.data?.message || 'Erreur lors de l\'opération.'
-      showMsg('error', errorMsg) 
+      
+      if (palierEdite) {
+        setPaliersData(paliersData.map(p => p.id === palierEdite.id ? nouveauPalier : p))
+        showMessage('success', 'Palier DATA modifié avec succès')
+      } else {
+        setPaliersData([...paliersData, nouveauPalier])
+        showMessage('success', 'Palier DATA ajouté avec succès')
+      }
+    } else if (serviceActif === 'VOIX') {
+      const nouveauTarif = {
+        id: palierEdite?.id || Date.now(),
+        dureeMin: parseFloat(formData.get('dureeMin')),
+        dureeMax: parseFloat(formData.get('dureeMax')),
+        prix: parseFloat(formData.get('prix')),
+        unite: formData.get('unite'),
+        description: formData.get('description')
+      }
+      
+      if (palierEdite) {
+        setTarifsVoix(tarifsVoix.map(t => t.id === palierEdite.id ? nouveauTarif : t))
+        showMessage('success', 'Tarif VOIX modifié avec succès')
+      } else {
+        setTarifsVoix([...tarifsVoix, nouveauTarif])
+        showMessage('success', 'Tarif VOIX ajouté avec succès')
+      }
     }
+    
+    fermerModal()
   }
 
-  // ── Ouvrir le formulaire de modification de service ──────────
-  const handleModifierService = (service) => {
-    setModeEditionService(true)
-    setServiceEnEdition(service)
-    setFormService({ nom: service.name || service.nom, description: service.description })
-    setFormServiceOuvert(true)
-  }
-
-  // ── Annuler modification service ──────────────────────────────
-  const annulerEditionService = () => {
-    setModeEditionService(false)
-    setServiceEnEdition(null)
-    setFormService({ nom: '', description: '' })
-    setFormServiceOuvert(false)
-  }
-
-  // ── Toggle actif/inactif service ──────────────────────────────
-  const handleToggleService = async (id) => {
-    try {
-      await toggleService(id)
-      await chargerServices() // Recharger pour avoir l'état mis à jour
-      showMsg('success', 'Statut du service mis à jour')
-    } catch (error) {
-      console.error('Erreur toggle service:', error)
-      showMsg('error', 'Erreur lors de la mise à jour du service')
-    }
-  }
-
-  // ── Ajouter ou modifier une option tarifaire ─────────────────
-  const handleAjouterOption = async (e) => {
+  const handleSauvegarderTarifSMS = (e) => {
     e.preventDefault()
-    if (!serviceSelectionne) return
-    try {
-      if (modeEditionOption && optionEnEdition) {
-        // Mode modification - pas encore implémenté
-        showMsg('error', 'Modification d\'option non disponible pour le moment')
-        return
-      } else {
-        // Mode création
-        await creerTarifService({
-          service: serviceSelectionne,
-          nom_option: formOption.nom,
-          prix: parseFloat(formOption.tarif),
-          description: ''
-        })
-        await chargerServices() // Recharger pour avoir les options à jour
-        showMsg('success', `Option « ${formOption.nom} » ajoutée.`)
-      }
-      setFormOption({ nom: '', tarif: '' })
-      setServiceSelectionne(null)
-      setModeEditionOption(false)
-      setOptionEnEdition(null)
-    } catch (error) {
-      console.error('Erreur ajout option:', error)
-      const errorMsg = error.response?.data?.detail || error.response?.data?.message || 'Erreur lors de l\'opération.'
-      showMsg('error', errorMsg)
+    const formData = new FormData(e.target)
+    setTarifSMS({
+      prix: parseFloat(formData.get('prix')),
+      unite: 'SMS'
+    })
+    showMessage('success', 'Tarif SMS mis à jour avec succès')
+  }
+
+  const handleSupprimerPalier = (id) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce palier ?')) return
+    
+    if (serviceActif === 'DATA') {
+      setPaliersData(paliersData.filter(p => p.id !== id))
+      showMessage('success', 'Palier DATA supprimé')
+    } else if (serviceActif === 'VOIX') {
+      setTarifsVoix(tarifsVoix.filter(t => t.id !== id))
+      showMessage('success', 'Tarif VOIX supprimé')
     }
-  }
-
-  // ── Ouvrir le formulaire de modification d'option ────────────
-  const handleModifierOption = (serviceId, option) => {
-    setModeEditionOption(true)
-    setOptionEnEdition(option)
-    setServiceSelectionne(serviceId)
-    setFormOption({ nom: option.nom, tarif: option.tarif.toString() })
-  }
-
-  // ── Annuler modification option ───────────────────────────────
-  const annulerEditionOption = () => {
-    setModeEditionOption(false)
-    setOptionEnEdition(null)
-    setFormOption({ nom: '', tarif: '' })
-    setServiceSelectionne(null)
-  }
-
-  // ── Toggle option ─────────────────────────────────────────────
-  const handleToggleOption = async (serviceId, optionId) => {
-    try {
-      await toggleTarifService(optionId)
-      await chargerServices() // Recharger pour avoir l'état mis à jour
-      showMsg('success', 'Statut de l\'option mis à jour')
-    } catch (error) {
-      console.error('Erreur toggle option:', error)
-      showMsg('error', 'Erreur lors de la mise à jour de l\'option')
-    }
-  }
-
-  if (chargement) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-zinc-300 border-t-[#e05500] rounded-full animate-spin" />
-      </div>
-    )
   }
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 mb-2">Gestion des Forfaits</h1>
-          <p className="text-zinc-600">
-            Gestion des forfaits et packages (BlackBerry, No Limit, Facture Détaillée, Incognito...)
-          </p>
-        </div>
-        <button
-          onClick={() => setFormServiceOuvert(true)}
-          className="px-4 py-2 bg-[#e05500] hover:bg-[#c44a00] text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-          Nouveau forfait
-        </button>
-      </div>
-
+      
       {/* Message flash */}
       <AnimatePresence>
         {message && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-            className={`rounded-lg p-4 text-sm font-medium ${
+            initial={{ opacity: 0, y: -8 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            exit={{ opacity: 0, y: -8 }}
+            className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-xl ${
               message.type === 'success'
-                ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
-                : 'bg-rose-50 border border-rose-200 text-rose-800'
+                ? 'bg-emerald-500 text-white'
+                : 'bg-rose-500 text-white'
             }`}
           >
-            {message.texte}
+            {message.text}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Modal créer service */}
-      <AnimatePresence>
-        {formServiceOuvert && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 mb-2">
+          Gestion des Services Hors-Forfait
+        </h1>
+        <p className="text-zinc-600">
+          Configuration des paliers de tarification pour DATA, VOIX et SMS
+        </p>
+      </div>
+
+      {/* Tabs Services */}
+      <div className="flex items-center gap-2 border-b border-zinc-200">
+        {[
+          { id: 'DATA', label: 'Data', icon: '📊' },
+          { id: 'VOIX', label: 'Voix', icon: '📞' },
+          { id: 'SMS', label: 'SMS', icon: '💬' }
+        ].map(service => (
+          <button
+            key={service.id}
+            onClick={() => setServiceActif(service.id)}
+            className={`px-6 py-3 font-semibold text-sm transition-colors relative ${
+              serviceActif === service.id
+                ? 'text-[#e05500] border-b-2 border-[#e05500]'
+                : 'text-zinc-600 hover:text-zinc-900'
+            }`}
           >
-            <div className="bg-white rounded-xl border border-zinc-200 p-6">
-              <h2 className="text-lg font-semibold text-zinc-900 mb-4">
-                {modeEditionService ? 'Modifier le forfait' : 'Créer un nouveau forfait'}
-              </h2>
-              <form onSubmit={handleCreerService} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Nom du forfait *</label>
-                    <input
-                      required type="text"
-                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-[#e05500] outline-none"
-                      placeholder="Ex: BlackBerry BB12, No Limit..."
-                      value={formService.nom}
-                      onChange={e => setFormService({ ...formService, nom: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Description</label>
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-[#e05500] outline-none"
-                      placeholder="Description courte"
-                      value={formService.description}
-                      onChange={e => setFormService({ ...formService, description: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <button type="submit" className="px-5 py-2 bg-[#e05500] text-white rounded-lg text-sm font-medium hover:bg-[#c44a00] transition-colors">
-                    {modeEditionService ? 'Enregistrer' : 'Créer'}
-                  </button>
-                  <button type="button" onClick={annulerEditionService}
-                    className="px-5 py-2 bg-zinc-100 text-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-200 transition-colors">
-                    Annuler
-                  </button>
-                </div>
-              </form>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <span className="mr-2">{service.icon}</span>
+            {service.label}
+          </button>
+        ))}
+      </div>
 
-      {/* Modal ajouter option */}
-      <AnimatePresence>
-        {serviceSelectionne && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6"
+      {/* Contenu DATA */}
+      {serviceActif === 'DATA' && (
+        <motion.div
+          key="data"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-zinc-900">Paliers de facturation DATA</h2>
+              <p className="text-sm text-zinc-600 mt-1">
+                Tarification par tranche de consommation en Giga-octets
+              </p>
+            </div>
+            <button
+              onClick={() => ouvrirModal()}
+              className="px-4 py-2.5 bg-[#e05500] hover:bg-[#c44a00] text-white font-medium rounded-lg transition-colors flex items-center gap-2"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-zinc-900">
-                  {modeEditionOption ? 'Modifier l\'option' : 'Ajouter une option'} — {services.find(s => s.id === serviceSelectionne)?.nom}
-                </h2>
-                <button onClick={annulerEditionOption}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-100 text-zinc-400">✕</button>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M12 4v16m8-8H4"/>
+              </svg>
+              Ajouter un palier
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {paliersData.map((palier, idx) => (
+              <motion.div
+                key={palier.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: idx * 0.05 }}
+                className="bg-gradient-to-br from-white to-blue-50 rounded-xl border-2 border-blue-200 p-5 hover:shadow-lg transition-shadow"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">
+                    Palier {idx + 1}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => ouvrirModal(palier)}
+                      className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors text-blue-700"
+                      title="Modifier"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleSupprimerPalier(palier.id)}
+                      className="p-1.5 hover:bg-red-100 rounded-lg transition-colors text-red-600"
+                      title="Supprimer"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                
+                <p className="text-sm font-medium text-zinc-700 mb-2">{palier.description}</p>
+                
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-2xl font-black text-blue-700">
+                    {palier.prix.toLocaleString('fr-FR')}
+                  </span>
+                  <span className="text-sm font-semibold text-zinc-600">
+                    {palier.prixParMo ? 'F/Mo' : 'FCFA'}
+                  </span>
+                </div>
+                
+                {palier.prixParMo && (
+                  <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
+                    + 50 000 F de base après 275 Go
+                  </p>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Contenu VOIX */}
+      {serviceActif === 'VOIX' && (
+        <motion.div
+          key="voix"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-zinc-900">Tarifs VOIX</h2>
+              <p className="text-sm text-zinc-600 mt-1">
+                Tarification des appels avec pas de facturation de 30 secondes
+              </p>
+            </div>
+            <button
+              onClick={() => ouvrirModal()}
+              className="px-4 py-2.5 bg-[#e05500] hover:bg-[#c44a00] text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M12 4v16m8-8H4"/>
+              </svg>
+              Ajouter un tarif
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {tarifsVoix.map((tarif, idx) => (
+              <motion.div
+                key={tarif.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: idx * 0.05 }}
+                className="bg-gradient-to-br from-white to-green-50 rounded-xl border-2 border-green-200 p-5 hover:shadow-lg transition-shadow"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full">
+                    Tarif {idx + 1}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => ouvrirModal(tarif)}
+                      className="p-1.5 hover:bg-green-100 rounded-lg transition-colors text-green-700"
+                      title="Modifier"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleSupprimerPalier(tarif.id)}
+                      className="p-1.5 hover:bg-red-100 rounded-lg transition-colors text-red-600"
+                      title="Supprimer"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                
+                <p className="text-sm font-medium text-zinc-700 mb-2">{tarif.description}</p>
+                
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-green-700">
+                    {tarif.prix.toLocaleString('fr-FR')}
+                  </span>
+                  <span className="text-sm font-semibold text-zinc-600">
+                    F/{tarif.unite}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+              </svg>
+              <div>
+                <h4 className="font-semibold text-amber-900 mb-1">Règle de facturation</h4>
+                <p className="text-sm text-amber-800">
+                  Exemple : Appel de 1 min 20s = 79 F + (79 F / 2) = 118,50 F<br/>
+                  Appel de 1 min 40s = 79 F × 2 = 158 F
+                </p>
               </div>
-              <form onSubmit={handleAjouterOption} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">Nom de l'option *</label>
-                  <input
-                    required type="text"
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-[#e05500] outline-none"
-                    placeholder="Ex: BlackBerry BB12"
-                    value={formOption.nom}
-                    onChange={e => setFormOption({ ...formOption, nom: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">Tarif mensuel (FCFA) *</label>
-                  <input
-                    required type="number" min="0" step="100"
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-[#e05500] outline-none"
-                    placeholder="Ex: 1200"
-                    value={formOption.tarif}
-                    onChange={e => setFormOption({ ...formOption, tarif: e.target.value })}
-                  />
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <button type="submit" className="px-5 py-2 bg-[#e05500] text-white rounded-lg text-sm font-medium hover:bg-[#c44a00] transition-colors">
-                    {modeEditionOption ? 'Enregistrer' : 'Ajouter l\'option'}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Contenu SMS */}
+      {serviceActif === 'SMS' && (
+        <motion.div
+          key="sms"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <div>
+            <h2 className="text-xl font-bold text-zinc-900">Tarif SMS</h2>
+            <p className="text-sm text-zinc-600 mt-1">
+              Prix unitaire par SMS envoyé
+            </p>
+          </div>
+
+          <div className="max-w-md">
+            <form onSubmit={handleSauvegarderTarifSMS} className="bg-gradient-to-br from-white to-purple-50 rounded-xl border-2 border-purple-200 p-6">
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-zinc-700 mb-2">
+                  Prix unitaire (FCFA) *
+                </label>
+                <input
+                  name="prix"
+                  type="number"
+                  step="0.01"
+                  required
+                  defaultValue={tarifSMS.prix}
+                  className="w-full px-4 py-3 bg-white border-2 border-purple-300 rounded-lg text-lg font-bold text-purple-700 focus:ring-2 focus:ring-purple-500 outline-none"
+                />
+              </div>
+              
+              <div className="flex items-baseline gap-2 mb-4 p-4 bg-purple-100 rounded-lg">
+                <span className="text-3xl font-black text-purple-700">
+                  {tarifSMS.prix}
+                </span>
+                <span className="text-sm font-semibold text-purple-600">
+                  FCFA / SMS
+                </span>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
+              >
+                Enregistrer le tarif SMS
+              </button>
+            </form>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Modal ajout/édition palier */}
+      <AnimatePresence>
+        {modalOuvert && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg"
+            >
+              <div className="px-6 py-4 border-b border-zinc-200">
+                <h3 className="text-lg font-bold text-zinc-900">
+                  {palierEdite ? `Modifier ${serviceActif === 'DATA' ? 'le palier' : 'le tarif'}` : `Ajouter un ${serviceActif === 'DATA' ? 'palier' : 'tarif'} ${serviceActif}`}
+                </h3>
+              </div>
+
+              <form onSubmit={handleSauvegarderPalier} className="p-6 space-y-4">
+                {serviceActif === 'DATA' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-zinc-700 mb-1">Min (Go) *</label>
+                        <input
+                          name="min"
+                          type="number"
+                          step="0.01"
+                          required
+                          defaultValue={palierEdite?.min || 0}
+                          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#e05500] outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-zinc-700 mb-1">Max (Go) *</label>
+                        <input
+                          name="max"
+                          type="number"
+                          step="0.01"
+                          required
+                          defaultValue={palierEdite?.max || 0}
+                          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#e05500] outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Prix (FCFA) *</label>
+                      <input
+                        name="prix"
+                        type="number"
+                        step="0.01"
+                        required
+                        defaultValue={palierEdite?.prix || 0}
+                        className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#e05500] outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="flex items-center gap-2">
+                        <input
+                          name="prixParMo"
+                          type="checkbox"
+                          value="true"
+                          defaultChecked={palierEdite?.prixParMo || false}
+                          className="w-4 h-4 text-[#e05500] border-zinc-300 rounded focus:ring-[#e05500]"
+                        />
+                        <span className="text-sm font-medium text-zinc-700">Prix par Mo (au lieu de forfait)</span>
+                      </label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Description *</label>
+                      <input
+                        name="description"
+                        type="text"
+                        required
+                        defaultValue={palierEdite?.description || ''}
+                        placeholder="Ex: > 1 Go et ≤ 7 Go"
+                        className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#e05500] outline-none"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {serviceActif === 'VOIX' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-zinc-700 mb-1">Durée min (s) *</label>
+                        <input
+                          name="dureeMin"
+                          type="number"
+                          required
+                          defaultValue={palierEdite?.dureeMin || 0}
+                          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#e05500] outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-zinc-700 mb-1">Durée max (s) *</label>
+                        <input
+                          name="dureeMax"
+                          type="number"
+                          required
+                          defaultValue={palierEdite?.dureeMax || 0}
+                          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#e05500] outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Prix (FCFA) *</label>
+                      <input
+                        name="prix"
+                        type="number"
+                        step="0.01"
+                        required
+                        defaultValue={palierEdite?.prix || 0}
+                        className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#e05500] outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Unité *</label>
+                      <select
+                        name="unite"
+                        required
+                        defaultValue={palierEdite?.unite || 'minute'}
+                        className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#e05500] outline-none"
+                      >
+                        <option value="appel">Par appel</option>
+                        <option value="minute">Par minute</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Description *</label>
+                      <input
+                        name="description"
+                        type="text"
+                        required
+                        defaultValue={palierEdite?.description || ''}
+                        placeholder="Ex: 0 à 30 secondes"
+                        className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#e05500] outline-none"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="flex items-center gap-3 pt-4">
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2.5 bg-[#e05500] hover:bg-[#c44a00] text-white font-semibold rounded-lg transition-colors"
+                  >
+                    {palierEdite ? 'Enregistrer' : 'Ajouter'}
                   </button>
-                  <button type="button" onClick={annulerEditionOption}
-                    className="px-5 py-2 bg-zinc-100 text-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-200 transition-colors">
+                  <button
+                    type="button"
+                    onClick={fermerModal}
+                    className="flex-1 px-4 py-2.5 bg-zinc-200 text-zinc-700 font-semibold rounded-lg hover:bg-zinc-300 transition-colors"
+                  >
                     Annuler
                   </button>
                 </div>
@@ -325,130 +549,6 @@ export default function GestionServices() {
           </div>
         )}
       </AnimatePresence>
-
-      {/* Liste des services */}
-      <div className="space-y-4">
-        {services.map((service, idx) => (
-          <motion.div
-            key={service.id}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            className="bg-white rounded-xl border border-zinc-200 overflow-hidden"
-          >
-            {/* En-tête service cliquable */}
-            <button
-              onClick={() => setServicesOuverts(prev => ({ ...prev, [service.id]: !prev[service.id] }))}
-              className="w-full flex items-center justify-between px-6 py-4 hover:bg-zinc-50 transition-colors text-left"
-            >
-              <div className="flex items-center gap-4 flex-1">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm ${service.actif ? 'bg-[#e05500]' : 'bg-zinc-400'}`}>
-                  {service.nom[0]}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-zinc-900">{service.nom}</h3>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                      service.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-100 text-zinc-500'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${service.actif ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'}`} />
-                      {service.actif ? 'Actif' : 'Inactif'}
-                    </span>
-                  </div>
-                  <p className="text-sm text-zinc-500">{service.description} · {service.options.filter(o => o.actif).length} option(s) active(s)</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className={`w-5 h-5 text-zinc-400 transition-transform ${servicesOuverts[service.id] ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </button>
-
-            {/* Options tarifaires (accordéon) */}
-            <AnimatePresence>
-              {servicesOuverts[service.id] && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden border-t border-zinc-100"
-                >
-                  <div className="p-4 space-y-3">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm font-medium text-zinc-700">Actions rapides</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleModifierService(service)}
-                          className="px-3 py-1.5 text-xs font-medium text-[#002a7a] border border-[#002a7a] rounded-lg hover:bg-blue-50 transition-colors"
-                        >
-                          ✏️ Modifier
-                        </button>
-                        <button
-                          onClick={() => setServiceSelectionne(service.id)}
-                          className="px-3 py-1.5 text-xs font-medium text-[#e05500] border border-[#e05500] rounded-lg hover:bg-orange-50 transition-colors"
-                        >
-                          + Option
-                        </button>
-                        <button
-                          onClick={() => handleToggleService(service.id)}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                            service.actif
-                              ? 'text-zinc-600 border border-zinc-300 hover:bg-zinc-50'
-                              : 'text-emerald-700 border border-emerald-300 hover:bg-emerald-50'
-                          }`}
-                        >
-                          {service.actif ? 'Désactiver' : 'Activer'}
-                        </button>
-                      </div>
-                    </div>
-
-                    {service.options.length === 0 ? (
-                      <div className="px-4 py-6 text-sm text-zinc-400 italic text-center">
-                        Aucune option tarifaire — cliquez sur « + Option » pour en ajouter.
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-zinc-50">
-                        {service.options.map(opt => (
-                          <div key={opt.id} className="flex items-center justify-between px-4 py-3 hover:bg-zinc-50 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <span className={`w-2 h-2 rounded-full ${opt.actif ? 'bg-emerald-500' : 'bg-zinc-300'}`} />
-                              <span className="text-sm font-medium text-zinc-800">{opt.nom}</span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <span className="text-sm font-bold text-[#e05500]">
-                                {opt.tarif.toLocaleString('fr-FR')} FCFA<span className="text-xs font-normal text-zinc-500">/mois</span>
-                              </span>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => handleModifierOption(service.id, opt)}
-                                  className="text-xs px-2.5 py-1 rounded-lg transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200"
-                                >
-                                  ✏️ Modifier
-                                </button>
-                                <button
-                                  onClick={() => handleToggleOption(service.id, opt.id)}
-                                  className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${
-                                    opt.actif
-                                      ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                                      : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                                  }`}
-                                >
-                                  {opt.actif ? 'Désactiver' : 'Activer'}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        ))}
-      </div>
     </div>
   )
 }

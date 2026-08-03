@@ -4,7 +4,8 @@ import '../admin/Admin.css'
 
 export default function PublicationPdf() {
   const [fichier, setFichier] = useState(null)
-  const [cycle, setCycle] = useState('HYB')
+  // Un fichier mensuel peut regrouper des lignes OP et HYB : aucun filtre cycle.
+  const cycle = ''
   const [typeFacture, setTypeFacture] = useState('SOM')
   const [periodeDebut, setPeriodeDebut] = useState('')
   const [periodeFin, setPeriodeFin] = useState('')
@@ -117,13 +118,6 @@ export default function PublicationPdf() {
               <select className="form-control" value={typeFacture} onChange={e => setTypeFacture(e.target.value)}>
                 <option value="SOM">Sommaire (SOM) — une facture par ligne</option>
                 <option value="GLO">Globale (GLO) — une facture par entreprise</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Cycle de facturation</label>
-              <select className="form-control" value={cycle} onChange={e => setCycle(e.target.value)}>
-                <option value="HYB">Hybride (HYB)</option>
-                <option value="OP">Opérationnel (OP)</option>
               </select>
             </div>
             <div className="form-group">
