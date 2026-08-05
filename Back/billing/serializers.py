@@ -147,6 +147,7 @@ class LineSerializer(serializers.ModelSerializer):
             'id', 'company', 'company_name', 'msisdn', 'utilisateur', 
             'forfait', 'cycle', 'option_blackberry', 'option_nolimit',
             'est_incognito', 'facture_detaillee', 'est_non_revenu',
+            'est_roaming', 'est_internet', 'est_international',
             'statut', 'employe', 'employe_info',
             'date_creation', 'date_modification'
         ]
@@ -186,6 +187,9 @@ class CompanySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'compte', 'raison_sociale', 'code_commercial', 'nom_commercial',
             'categorie', 'adresse', 'adresse2', 'statut', 'payeur', 'payeur_info',
+            'date_effet', 'est_exonere', 'facture_detaillee_defaut', 'option_nolimit_defaut',
+            'option_blackberry_defaut', 'est_incognito_defaut', 'roaming_defaut', 'internet_defaut',
+            'international_defaut', 'est_non_revenu_defaut',
             'lines', 'nombre_lignes', 'nombre_lignes_actives',
             'date_creation', 'date_modification'
         ]
@@ -243,6 +247,9 @@ class CompanyCreateSerializer(serializers.ModelSerializer):
         fields = [
             'compte', 'raison_sociale', 'code_commercial', 'nom_commercial',
             'categorie', 'adresse', 'adresse2', 'payeur', 'lignes'
+            , 'date_effet', 'est_exonere', 'facture_detaillee_defaut', 'option_nolimit_defaut',
+            'option_blackberry_defaut', 'est_incognito_defaut', 'roaming_defaut', 'internet_defaut',
+            'international_defaut', 'est_non_revenu_defaut'
         ]
     
     def validate_compte(self, value):
@@ -277,6 +284,7 @@ class LineCreateSerializer(serializers.ModelSerializer):
             'company', 'msisdn', 'utilisateur', 'forfait', 'cycle',
             'option_blackberry', 'option_nolimit', 'est_incognito',
             'facture_detaillee', 'est_non_revenu', 'employe'
+            , 'est_roaming', 'est_internet', 'est_international'
         ]
     
     def validate_msisdn(self, value):
@@ -290,6 +298,22 @@ class LineCreateSerializer(serializers.ModelSerializer):
         if value and value.role != 'EMPLOYE':
             raise serializers.ValidationError("L'utilisateur doit avoir le rôle EMPLOYE")
         return value
+
+    def create(self, validated_data):
+        company = validated_data['company']
+        defaults = {
+            'option_blackberry': company.option_blackberry_defaut,
+            'option_nolimit': company.option_nolimit_defaut,
+            'est_incognito': company.est_incognito_defaut,
+            'facture_detaillee': company.facture_detaillee_defaut,
+            'est_non_revenu': company.est_non_revenu_defaut,
+            'est_roaming': company.roaming_defaut,
+            'est_internet': company.internet_defaut,
+            'est_international': company.international_defaut,
+        }
+        for key, value in defaults.items():
+            validated_data.setdefault(key, value)
+        return super().create(validated_data)
 
 
 class CompanyStatsSerializer(serializers.Serializer):

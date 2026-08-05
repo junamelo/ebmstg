@@ -187,6 +187,112 @@ export default function ModalNouveauContrat({ onClose, onCreate }) {
             </div>
           </div>
 
+          {/* Services appliqués par défaut à toutes les lignes du contrat */}
+          <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6">
+            <h4 className="text-lg font-bold text-zinc-900 dark:text-white mb-3">Services appliqués par défaut à toutes les lignes du contrat</h4>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">Ces options seront automatiquement activées pour chaque nouvelle ligne ajoutée au contrat</p>
+            
+            <div className="space-y-4">
+              {/* Checkboxes pour services booléens */}
+              <div className="grid grid-cols-2 gap-4">
+                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="facture_detaillee_defaut"
+                    checked={formData.facture_detaillee_defaut || false}
+                    onChange={(e) => setFormData(prev => ({ ...prev, facture_detaillee_defaut: e.target.checked }))}
+                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
+                  />
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Facturation détaillée</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="est_incognito_defaut"
+                    checked={formData.est_incognito_defaut || false}
+                    onChange={(e) => setFormData(prev => ({ ...prev, est_incognito_defaut: e.target.checked }))}
+                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
+                  />
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Incognito</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="roaming_defaut"
+                    checked={formData.roaming_defaut || false}
+                    onChange={(e) => setFormData(prev => ({ ...prev, roaming_defaut: e.target.checked }))}
+                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
+                  />
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Roaming</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="internet_defaut"
+                    checked={formData.internet_defaut || false}
+                    onChange={(e) => setFormData(prev => ({ ...prev, internet_defaut: e.target.checked }))}
+                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
+                  />
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Internet</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="international_defaut"
+                    checked={formData.international_defaut || false}
+                    onChange={(e) => setFormData(prev => ({ ...prev, international_defaut: e.target.checked }))}
+                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
+                  />
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">International</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="est_non_revenu_defaut"
+                    checked={formData.est_non_revenu_defaut || false}
+                    onChange={(e) => setFormData(prev => ({ ...prev, est_non_revenu_defaut: e.target.checked }))}
+                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
+                  />
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Non Revenu</span>
+                </label>
+              </div>
+
+              {/* Champs texte pour No Limit et BlackBerry */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Option No Limit</label>
+                  <input
+                    type="text"
+                    name="option_nolimit_defaut"
+                    value={formData.option_nolimit_defaut || ''}
+                    onChange={handleChange}
+                    placeholder="Ex: No Limit 5000"
+                    className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none"
+                  />
+                  <p className="text-xs text-zinc-500 mt-1">Laissez vide si non applicable</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Option BlackBerry</label>
+                  <input
+                    type="text"
+                    name="option_blackberry_defaut"
+                    value={formData.option_blackberry_defaut || ''}
+                    onChange={handleChange}
+                    placeholder="Ex: BlackBerry Pro"
+                    className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none"
+                  />
+                  <p className="text-xs text-zinc-500 mt-1">Laissez vide si non applicable</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Actions */}
           <div className="flex gap-3 pt-4">
             <button type="button" onClick={onClose}

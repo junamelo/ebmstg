@@ -58,6 +58,17 @@ class Company(models.Model):
     adresse = models.TextField(blank=True, null=True, verbose_name='Adresse')
     adresse2 = models.EmailField(blank=True, null=True, verbose_name='Email')
     statut = models.CharField(max_length=20, default='ACTIF', verbose_name='Statut')
+    date_effet = models.DateField(null=True, blank=True, verbose_name='Date effet')
+    est_exonere = models.BooleanField(default=False, verbose_name='Exonéré')
+    # Services par défaut du contrat, hérités par les nouvelles lignes.
+    facture_detaillee_defaut = models.BooleanField(default=False)
+    option_nolimit_defaut = models.CharField(max_length=20, blank=True, default='')
+    option_blackberry_defaut = models.CharField(max_length=20, blank=True, default='')
+    est_incognito_defaut = models.BooleanField(default=False)
+    roaming_defaut = models.BooleanField(default=False)
+    internet_defaut = models.BooleanField(default=False)
+    international_defaut = models.BooleanField(default=False)
+    est_non_revenu_defaut = models.BooleanField(default=False)
     payeur = models.ForeignKey(
         User, 
         on_delete=models.SET_NULL, 
@@ -105,6 +116,9 @@ class Line(models.Model):
     est_incognito = models.BooleanField(default=False, verbose_name='Incognito')
     facture_detaillee = models.BooleanField(default=False, verbose_name='Facture Détaillée')
     est_non_revenu = models.BooleanField(default=False, verbose_name='Non Revenu')
+    est_roaming = models.BooleanField(default=False, verbose_name='Roaming')
+    est_internet = models.BooleanField(default=False, verbose_name='Internet')
+    est_international = models.BooleanField(default=False, verbose_name='International')
     statut = models.CharField(max_length=20, default='ACTIF', verbose_name='Statut')
     employe = models.ForeignKey(
         User,

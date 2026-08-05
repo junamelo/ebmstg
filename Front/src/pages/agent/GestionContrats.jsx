@@ -110,7 +110,16 @@ export default function GestionContrats() {
         nom_commercial: nouveauContrat.raisonSociale || nouveauContrat.nom,
         categorie: nouveauContrat.typePayeur === 'ENTREPRISE' ? 'ENTREPRISE' : 'PARTICULIER',
         adresse: nouveauContrat.adresse || '',
-        payeur: nouveauContrat.payeur_id || null
+        payeur: nouveauContrat.payeur_id || null,
+        // Services par défaut du contrat
+        facture_detaillee_defaut: nouveauContrat.facture_detaillee_defaut || false,
+        option_nolimit_defaut: nouveauContrat.option_nolimit_defaut || '',
+        option_blackberry_defaut: nouveauContrat.option_blackberry_defaut || '',
+        est_incognito_defaut: nouveauContrat.est_incognito_defaut || false,
+        roaming_defaut: nouveauContrat.roaming_defaut || false,
+        internet_defaut: nouveauContrat.internet_defaut || false,
+        international_defaut: nouveauContrat.international_defaut || false,
+        est_non_revenu_defaut: nouveauContrat.est_non_revenu_defaut || false
       })
       
       setMessage({ type: 'success', text: 'Contrat créé avec succès' })

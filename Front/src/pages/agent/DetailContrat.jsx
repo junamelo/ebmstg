@@ -12,6 +12,8 @@ export default function DetailContrat() {
   const [erreur, setErreur] = useState(null)
   const [modalAffectation, setModalAffectation] = useState(null)
   const [modalAjoutLigne, setModalAjoutLigne] = useState(false)
+  const [modalModifierServices, setModalModifierServices] = useState(null)
+  const [servicesLigne, setServicesLigne] = useState({})
   const [employes, setEmployes] = useState([])
   const [message, setMessage] = useState(null)
 
@@ -55,21 +57,46 @@ export default function DetailContrat() {
         dateCreation: company.date_creation,
         statut: company.statut || 'ACTIF',
         typeContrat: company.categorie || '',
-        lignes: lignes.map(l => ({
-          id: l.id,
-          numero: l.msisdn,
-          employe: l.employe_info ? {
-            id: l.employe,
-            nom: l.employe_info.nom?.split(' ').pop() || '',
-            prenom: l.employe_info.nom?.split(' ')[0] || '',
-            email: l.employe_info.email || ''
-          } : null,
-          statut: l.statut || 'ACTIF',
-          dateActivation: l.date_creation,
-          forfaits: [],
-          consommation: { voix: 0, sms: 0, data: 0 },
-          montantEstime: parseFloat(l.forfait) || 0
-        })),
+        lignes: lignes.map(l => {
+          // Construire liste des services actifs
+          const services = []
+          if (l.facture_detaillee) services.push('Facturation détaillée')
+          if (l.option_nolimit) services.push(`No Limit: ${l.option_nolimit}`)
+          if (l.option_blackberry) services.push(`BlackBerry: ${l.option_blackberry}`)
+          if (l.est_incognito) services.push('Incognito')
+          if (l.est_roaming) services.push('Roaming')
+          if (l.est_internet) services.push('Internet')
+          if (l.est_international) services.push('International')
+          if (l.est_non_revenu) services.push('Non Revenu')
+          
+          return {
+            id: l.id,
+            numero: l.msisdn,
+            employe: l.employe_info ? {
+              id: l.employe,
+              nom: l.employe_info.nom?.split(' ').pop() || '',
+              prenom: l.employe_info.nom?.split(' ')[0] || '',
+              email: l.employe_info.email || ''
+            } : null,
+            statut: l.statut || 'ACTIF',
+            dateActivation: l.date_creation,
+            services: services,
+            // Garder les données brutes pour modification
+            _raw: {
+              facture_detaillee: l.facture_detaillee,
+              option_nolimit: l.option_nolimit || '',
+              option_blackberry: l.option_blackberry || '',
+              est_incognito: l.est_incognito,
+              est_roaming: l.est_roaming,
+              est_internet: l.est_internet,
+              est_international: l.est_international,
+              est_non_revenu: l.est_non_revenu
+            },
+            forfaits: [],
+            consommation: { voix: 0, sms: 0, data: 0 },
+            montantEstime: parseFloat(l.forfait) || 0
+          }
+        }),
         historiqueFacturation: []
       })
     } catch (error) {
@@ -107,17 +134,15 @@ export default function DetailContrat() {
     e.preventDefault()
     const formData = new FormData(e.target)
     try {
+      // Ne pas envoyer les valeurs par défaut des services
+      // Le backend appliquera automatiquement les valeurs du contrat
       await api.post('/billing/lines/', {
         company: parseInt(id),
         msisdn: formData.get('msisdn'),
         utilisateur: formData.get('utilisateur') || '',
         cycle: formData.get('cycle'),
-        forfait: parseFloat(formData.get('forfait')) || 0,
-        option_blackberry: '',
-        option_nolimit: '',
-        est_incognito: false,
-        facture_detaillee: false,
-        est_non_revenu: false
+        forfait: parseFloat(formData.get('forfait')) || 0
+        // Les services seront hérités automatiquement du contrat
         // employe: optionnel, laissé vide pour l'instant
       })
       setMessage({ type: 'success', text: 'Ligne ajoutée avec succès' })
@@ -126,6 +151,26 @@ export default function DetailContrat() {
       e.target.reset()
     } catch (error) {
       const errorMsg = error.response?.data?.msisdn?.[0] || error.response?.data?.error || 'Erreur lors de l\'ajout'
+      setMessage({ type: 'error', text: errorMsg })
+    }
+  }
+
+  const ouvrirModalServices = (ligne) => {
+    setModalModifierServices(ligne)
+    setServicesLigne(ligne._raw || {})
+  }
+
+  const modifierServicesLigne = async () => {
+    if (!modalModifierServices) return
+    
+    try {
+      await api.patch(`/billing/lines/${modalModifierServices.id}/`, servicesLigne)
+      setMessage({ type: 'success', text: 'Services modifiés avec succès' })
+      setModalModifierServices(null)
+      setServicesLigne({})
+      chargerContrat()
+    } catch (error) {
+      const errorMsg = error.response?.data?.error || 'Erreur lors de la modification'
       setMessage({ type: 'error', text: errorMsg })
     }
   }
@@ -270,6 +315,131 @@ export default function DetailContrat() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal modification services ligne */}
+      {modalModifierServices && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-y-auto p-4">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 my-8">
+            <h3 className="text-lg font-bold mb-2">Modifier les services de la ligne</h3>
+            <p className="text-sm text-zinc-600 mb-4">Ligne : {modalModifierServices.numero}</p>
+            <p className="text-xs text-zinc-500 mb-6 bg-amber-50 border border-amber-200 rounded-lg p-3">
+              ⚠️ Les modifications s'appliquent uniquement à cette ligne. Le contrat et les autres lignes ne seront pas affectés.
+            </p>
+            
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              {/* Checkboxes pour services booléens */}
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 hover:bg-zinc-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={servicesLigne.facture_detaillee || false}
+                    onChange={(e) => setServicesLigne(prev => ({ ...prev, facture_detaillee: e.target.checked }))}
+                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
+                  />
+                  <span className="text-sm font-medium text-zinc-700">Facturation détaillée</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 hover:bg-zinc-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={servicesLigne.est_incognito || false}
+                    onChange={(e) => setServicesLigne(prev => ({ ...prev, est_incognito: e.target.checked }))}
+                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
+                  />
+                  <span className="text-sm font-medium text-zinc-700">Incognito</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 hover:bg-zinc-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={servicesLigne.est_roaming || false}
+                    onChange={(e) => setServicesLigne(prev => ({ ...prev, est_roaming: e.target.checked }))}
+                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
+                  />
+                  <span className="text-sm font-medium text-zinc-700">Roaming</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 hover:bg-zinc-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={servicesLigne.est_internet || false}
+                    onChange={(e) => setServicesLigne(prev => ({ ...prev, est_internet: e.target.checked }))}
+                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
+                  />
+                  <span className="text-sm font-medium text-zinc-700">Internet</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 hover:bg-zinc-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={servicesLigne.est_international || false}
+                    onChange={(e) => setServicesLigne(prev => ({ ...prev, est_international: e.target.checked }))}
+                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
+                  />
+                  <span className="text-sm font-medium text-zinc-700">International</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 hover:bg-zinc-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={servicesLigne.est_non_revenu || false}
+                    onChange={(e) => setServicesLigne(prev => ({ ...prev, est_non_revenu: e.target.checked }))}
+                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
+                  />
+                  <span className="text-sm font-medium text-zinc-700">Non Revenu</span>
+                </label>
+              </div>
+
+              {/* Champs texte pour No Limit et BlackBerry */}
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-2">Option No Limit</label>
+                  <input
+                    type="text"
+                    value={servicesLigne.option_nolimit || ''}
+                    onChange={(e) => setServicesLigne(prev => ({ ...prev, option_nolimit: e.target.value }))}
+                    placeholder="Ex: No Limit 5000"
+                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#002a7a] outline-none"
+                  />
+                  <p className="text-xs text-zinc-500 mt-1">Laissez vide pour désactiver</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-2">Option BlackBerry</label>
+                  <input
+                    type="text"
+                    value={servicesLigne.option_blackberry || ''}
+                    onChange={(e) => setServicesLigne(prev => ({ ...prev, option_blackberry: e.target.value }))}
+                    placeholder="Ex: BlackBerry Pro"
+                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#002a7a] outline-none"
+                  />
+                  <p className="text-xs text-zinc-500 mt-1">Laissez vide pour désactiver</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-6 pt-4 border-t">
+              <button
+                type="button"
+                onClick={modifierServicesLigne}
+                className="flex-1 px-4 py-2 bg-[#002a7a] text-white rounded-lg hover:bg-[#003399]"
+              >
+                Enregistrer les modifications
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setModalModifierServices(null)
+                  setServicesLigne({})
+                }}
+                className="flex-1 px-4 py-2 bg-zinc-200 rounded-lg hover:bg-zinc-300"
+              >
+                Annuler
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -437,7 +607,7 @@ export default function DetailContrat() {
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-bold uppercase text-zinc-700 dark:text-zinc-300">Numéro</th>
                       <th className="px-4 py-3 text-left text-xs font-bold uppercase text-zinc-700 dark:text-zinc-300">Employé</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold uppercase text-zinc-700 dark:text-zinc-300">Forfaits</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold uppercase text-zinc-700 dark:text-zinc-300">Services actifs</th>
                       <th className="px-4 py-3 text-right text-xs font-bold uppercase text-zinc-700 dark:text-zinc-300">Consommation</th>
                       <th className="px-4 py-3 text-center text-xs font-bold uppercase text-zinc-700 dark:text-zinc-300">Statut</th>
                       <th className="px-4 py-3 text-right text-xs font-bold uppercase text-zinc-700 dark:text-zinc-300">Actions</th>
@@ -458,12 +628,15 @@ export default function DetailContrat() {
                           )}
                         </td>
                         <td className="px-4 py-4">
-                          <div className="flex flex-wrap gap-1">
-                            {ligne.forfaits.map((forfait, i) => (
+                          <div className="flex flex-wrap gap-1 max-w-xs">
+                            {ligne.services && ligne.services.map((service, i) => (
                               <span key={i} className="px-2 py-0.5 rounded text-xs font-medium bg-[#002a7a]/10 text-[#002a7a]">
-                                {forfait}
+                                {service}
                               </span>
                             ))}
+                            {(!ligne.services || ligne.services.length === 0) && (
+                              <span className="text-xs text-zinc-400 italic">Aucun service actif</span>
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-4 text-right text-sm">
@@ -477,21 +650,29 @@ export default function DetailContrat() {
                           </span>
                         </td>
                         <td className="px-4 py-4 text-right">
-                          {ligne.employe ? (
+                          <div className="flex flex-col gap-1 items-end">
+                            {ligne.employe ? (
+                              <button
+                                onClick={() => retirerEmploye(ligne.id)}
+                                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                              >
+                                Retirer employé
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => setModalAffectation(ligne)}
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                              >
+                                Affecter employé
+                              </button>
+                            )}
                             <button
-                              onClick={() => retirerEmploye(ligne.id)}
-                              className="text-red-600 hover:text-red-800 text-sm font-medium"
+                              onClick={() => ouvrirModalServices(ligne)}
+                              className="text-[#002a7a] hover:text-[#003399] text-sm font-medium"
                             >
-                              Retirer
+                              Modifier services
                             </button>
-                          ) : (
-                            <button
-                              onClick={() => setModalAffectation(ligne)}
-                              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                            >
-                              Affecter
-                            </button>
-                          )}
+                          </div>
                         </td>
                       </tr>
                     ))}
