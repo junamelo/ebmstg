@@ -6,7 +6,51 @@ from .models import (
     Company, Line, Package, Service, TarifService,
     CategorieClient, CycleFacturation, TypeForfait, TypeService
 )
+from .models import Commercial, AuditContrat, ModeReglement, StatutFacturation
 from accounts.models import User
+
+
+class CommercialSerializer(serializers.ModelSerializer):
+    nombre_contrats = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Commercial
+        fields = [
+            'id', 'nom', 'prenom', 'matricule', 'telephone', 'email',
+            'est_actif', 'nombre_contrats', 'date_creation', 'date_modification'
+        ]
+        read_only_fields = ['id', 'date_creation', 'date_modification']
+
+    def get_nombre_contrats(self, obj):
+        return obj.contrats.count()
+
+
+class CommercialCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Commercial
+        fields = ['nom', 'prenom', 'matricule', 'telephone', 'email']
+
+    def validate_matricule(self, value):
+        if Commercial.objects.filter(matricule=value).exists():
+            raise serializers.ValidationError("Ce matricule est déjà utilisé.")
+        return value
+
+
+class AuditContratSerializer(serializers.ModelSerializer):
+    utilisateur_nom = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AuditContrat
+        fields = [
+            'id', 'company', 'utilisateur', 'utilisateur_nom',
+            'type_action', 'description', 'anciennes_valeurs', 'nouvelles_valeurs', 'date_action'
+        ]
+        read_only_fields = ['id', 'date_action']
+
+    def get_utilisateur_nom(self, obj):
+        if obj.utilisateur:
+            return f"{obj.utilisateur.first_name} {obj.utilisateur.last_name}".strip() or obj.utilisateur.email
+        return "Système"
 
 
 class TarifServiceSerializer(serializers.ModelSerializer):
@@ -178,6 +222,7 @@ class LineListSerializer(serializers.ModelSerializer):
 class CompanySerializer(serializers.ModelSerializer):
     """Serializer pour les entreprises/contrats"""
     payeur_info = serializers.SerializerMethodField()
+    commercial_info = serializers.SerializerMethodField()
     lines = LineListSerializer(many=True, read_only=True)
     nombre_lignes = serializers.SerializerMethodField()
     nombre_lignes_actives = serializers.SerializerMethodField()
@@ -191,7 +236,10 @@ class CompanySerializer(serializers.ModelSerializer):
             'option_blackberry_defaut', 'est_incognito_defaut', 'roaming_defaut', 'internet_defaut',
             'international_defaut', 'est_non_revenu_defaut',
             'lines', 'nombre_lignes', 'nombre_lignes_actives',
-            'date_creation', 'date_modification'
+            'date_creation', 'date_modification',
+            'commercial', 'commercial_info', 'statut_factures', 'email_facturation',
+            'adresse_ligne2', 'date_fin', 'observation', 'type_revenu', 'motif_exoneration',
+            'mode_reglement', 'est_resilie', 'date_resiliation', 'motif_resiliation', 'observation_resiliation',
         ]
         read_only_fields = ['id', 'date_creation', 'date_modification']
     
@@ -202,6 +250,17 @@ class CompanySerializer(serializers.ModelSerializer):
                 'nom': f"{obj.payeur.first_name} {obj.payeur.last_name}",
                 'email': obj.payeur.email,
                 'username': obj.payeur.username
+            }
+        return None
+
+    def get_commercial_info(self, obj):
+        if obj.commercial:
+            return {
+                'id': obj.commercial.id,
+                'nom': obj.commercial.nom,
+                'prenom': obj.commercial.prenom,
+                'matricule': obj.commercial.matricule,
+                'telephone': obj.commercial.telephone,
             }
         return None
     
@@ -215,18 +274,31 @@ class CompanySerializer(serializers.ModelSerializer):
 class CompanyListSerializer(serializers.ModelSerializer):
     """Serializer simplifié pour la liste des entreprises"""
     payeur_name = serializers.SerializerMethodField()
+    commercial_info = serializers.SerializerMethodField()
     nombre_lignes = serializers.SerializerMethodField()
     
     class Meta:
         model = Company
         fields = [
             'id', 'compte', 'raison_sociale', 'categorie', 'statut',
-            'payeur', 'payeur_name', 'nombre_lignes', 'date_creation'
+            'payeur', 'payeur_name', 'commercial_info', 'nombre_lignes', 'date_creation',
+            'statut_factures', 'est_resilie', 'mode_reglement',
         ]
     
     def get_payeur_name(self, obj):
         if obj.payeur:
             return f"{obj.payeur.first_name} {obj.payeur.last_name}"
+        return None
+
+    def get_commercial_info(self, obj):
+        if obj.commercial:
+            return {
+                'id': obj.commercial.id,
+                'nom': obj.commercial.nom,
+                'prenom': obj.commercial.prenom,
+                'matricule': obj.commercial.matricule,
+                'telephone': obj.commercial.telephone,
+            }
         return None
     
     def get_nombre_lignes(self, obj):
@@ -246,10 +318,13 @@ class CompanyCreateSerializer(serializers.ModelSerializer):
         model = Company
         fields = [
             'compte', 'raison_sociale', 'code_commercial', 'nom_commercial',
-            'categorie', 'adresse', 'adresse2', 'payeur', 'lignes'
-            , 'date_effet', 'est_exonere', 'facture_detaillee_defaut', 'option_nolimit_defaut',
+            'categorie', 'adresse', 'adresse2', 'payeur', 'lignes',
+            'date_effet', 'est_exonere', 'facture_detaillee_defaut', 'option_nolimit_defaut',
             'option_blackberry_defaut', 'est_incognito_defaut', 'roaming_defaut', 'internet_defaut',
-            'international_defaut', 'est_non_revenu_defaut'
+            'international_defaut', 'est_non_revenu_defaut',
+            'commercial', 'statut_factures', 'email_facturation', 'adresse_ligne2', 'date_fin',
+            'observation', 'type_revenu', 'motif_exoneration', 'mode_reglement',
+            'est_resilie', 'date_resiliation', 'motif_resiliation', 'observation_resiliation',
         ]
     
     def validate_compte(self, value):
@@ -263,6 +338,16 @@ class CompanyCreateSerializer(serializers.ModelSerializer):
         if value and value.role != 'PAYEUR':
             raise serializers.ValidationError("L'utilisateur doit avoir le rôle PAYEUR")
         return value
+
+    def validate(self, data):
+        if data.get('est_resilie'):
+            if not data.get('date_resiliation'):
+                raise serializers.ValidationError({'date_resiliation': 'Obligatoire si le contrat est résilié.'})
+            if not data.get('motif_resiliation'):
+                raise serializers.ValidationError({'motif_resiliation': 'Obligatoire si le contrat est résilié.'})
+            if data.get('date_effet') and data.get('date_resiliation') < data.get('date_effet'):
+                raise serializers.ValidationError({'date_resiliation': "La date de résiliation ne peut pas être antérieure à la date d'effet."})
+        return data
     
     def create(self, validated_data):
         lignes_data = validated_data.pop('lignes', [])

@@ -15,6 +15,8 @@ export default function GestionContrats() {
   const [recherche, setRecherche] = useState('')
   const [filtreStatut, setFiltreStatut] = useState('tous')
   const [filtreType, setFiltreType] = useState('tous')
+  const [filtreStatutFact, setFiltreStatutFact] = useState('tous')
+  const [filtreResilie, setFiltreResilie] = useState('non_resilie')
   const [pageCourante, setPageCourante] = useState(1)
   const ITEMS_PAR_PAGE = 6
 
@@ -49,6 +51,9 @@ export default function GestionContrats() {
               dateCreation: company.date_creation,
               statut: company.statut || 'ACTIF',
               typeContrat: company.categorie || '',
+              est_resilie: company.est_resilie || false,
+              statut_factures: company.statut_factures || 'EN_ATTENTE',
+              commercial: company.commercial_info || null,
               lignes: lignes.map(l => ({
                 id: l.id,
                 numero: l.msisdn,
@@ -72,6 +77,9 @@ export default function GestionContrats() {
               dateCreation: company.date_creation,
               statut: company.statut || 'ACTIF',
               typeContrat: company.categorie || '',
+              est_resilie: company.est_resilie || false,
+              statut_factures: company.statut_factures || 'EN_ATTENTE',
+              commercial: company.commercial_info || null,
               lignes: [],
               caMensuel: 0
             }
@@ -90,46 +98,31 @@ export default function GestionContrats() {
 
   useEffect(() => {
     setPageCourante(1)
-  }, [recherche, filtreStatut, filtreType])
+  }, [recherche, filtreStatut, filtreType, filtreStatutFact, filtreResilie])
 
   const contratsFiltres = contrats.filter(contrat => {
     const matchStatut = filtreStatut === 'tous' || contrat.statut === filtreStatut
     const matchType = filtreType === 'tous' || contrat.typePayeur === filtreType
+    const matchStatutFact = filtreStatutFact === 'tous' || contrat.statut_factures === filtreStatutFact
+    const matchResilie = filtreResilie === 'tous' ||
+      (filtreResilie === 'resilie' && contrat.est_resilie) ||
+      (filtreResilie === 'non_resilie' && !contrat.est_resilie)
     const matchRecherche = recherche === '' ||
       contrat.numeroContrat.toLowerCase().includes(recherche.toLowerCase()) ||
-      (contrat.raisonSociale && contrat.raisonSociale.toLowerCase().includes(recherche.toLowerCase())) ||
-      (contrat.nom && `${contrat.prenom} ${contrat.nom}`.toLowerCase().includes(recherche.toLowerCase()))
-    return matchStatut && matchType && matchRecherche
+      (contrat.raisonSociale && contrat.raisonSociale.toLowerCase().includes(recherche.toLowerCase()))
+    return matchStatut && matchType && matchStatutFact && matchResilie && matchRecherche
   })
 
-  const handleCreerContrat = async (nouveauContrat) => {
+  const handleCreerContrat = async (payload) => {
     try {
-      const response = await api.post('/billing/companies/', {
-        compte: nouveauContrat.numeroContrat,
-        raison_sociale: nouveauContrat.raisonSociale || nouveauContrat.nom,
-        nom_commercial: nouveauContrat.raisonSociale || nouveauContrat.nom,
-        categorie: nouveauContrat.typePayeur === 'ENTREPRISE' ? 'ENTREPRISE' : 'PARTICULIER',
-        adresse: nouveauContrat.adresse || '',
-        payeur: nouveauContrat.payeur_id || null,
-        // Services par défaut du contrat
-        facture_detaillee_defaut: nouveauContrat.facture_detaillee_defaut || false,
-        option_nolimit_defaut: nouveauContrat.option_nolimit_defaut || '',
-        option_blackberry_defaut: nouveauContrat.option_blackberry_defaut || '',
-        est_incognito_defaut: nouveauContrat.est_incognito_defaut || false,
-        roaming_defaut: nouveauContrat.roaming_defaut || false,
-        internet_defaut: nouveauContrat.internet_defaut || false,
-        international_defaut: nouveauContrat.international_defaut || false,
-        est_non_revenu_defaut: nouveauContrat.est_non_revenu_defaut || false
-      })
-      
+      await api.post('/billing/companies/', payload)
       setMessage({ type: 'success', text: 'Contrat créé avec succès' })
       setModalOuvert(false)
       chargerContrats()
     } catch (error) {
-      const errorMsg = error.response?.data?.compte?.[0] || 
-                       error.response?.data?.error || 
-                       'Erreur lors de la création'
-      setMessage({ type: 'error', text: errorMsg })
+      const data = error.response?.data || {}
+      const msg = data.compte?.[0] || data.error || data.detail || 'Erreur lors de la création'
+      setMessage({ type: 'error', text: msg })
     }
   }
 
@@ -258,15 +251,23 @@ export default function GestionContrats() {
                 className="pl-10 pr-4 py-2 w-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] focus:border-transparent outline-none"/>
             </div>
           </div>
-          <select value={filtreType} onChange={(e) => setFiltreType(e.target.value)}
+          <select value={filtreResilie} onChange={(e) => setFiltreResilie(e.target.value)}
             className="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-[#002a7a] outline-none">
-            <option value="tous">Tous les types</option>
-            <option value="ENTREPRISE">Entreprises</option>
-            <option value="PARTICULIER">Particuliers</option>
+            <option value="tous">Tous (résilié inclus)</option>
+            <option value="non_resilie">Non résiliés</option>
+            <option value="resilie">Résiliés</option>
+          </select>
+          <select value={filtreStatutFact} onChange={(e) => setFiltreStatutFact(e.target.value)}
+            className="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-[#002a7a] outline-none">
+            <option value="tous">Tous statuts fact.</option>
+            <option value="ACTIF">Actif</option>
+            <option value="EN_ATTENTE">En attente</option>
+            <option value="SUSPENDU">Suspendu</option>
+            <option value="CLOS">Clos</option>
           </select>
           <select value={filtreStatut} onChange={(e) => setFiltreStatut(e.target.value)}
             className="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-[#002a7a] outline-none">
-            <option value="tous">Tous les statuts</option>
+            <option value="tous">Tous statuts</option>
             <option value="ACTIF">Actifs</option>
             <option value="SUSPENDU">Suspendus</option>
             <option value="RESILIE">Résiliés</option>

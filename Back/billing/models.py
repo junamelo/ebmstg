@@ -4,6 +4,28 @@ from accounts.models import User
 from decimal import Decimal
 import uuid
 
+class ModeReglement(models.TextChoices):
+    CHEQUE = 'CHEQUE', 'Chèque'
+    VIREMENT = 'VIREMENT', 'Virement'
+    ESPECES = 'ESPECES', 'Espèces'
+
+class StatutFacturation(models.TextChoices):
+    ACTIF = 'ACTIF', 'Actif'
+    SUSPENDU = 'SUSPENDU', 'Suspendu'
+    CLOS = 'CLOS', 'Clos'
+    EN_ATTENTE = 'EN_ATTENTE', 'En attente'
+
+class TypeAction(models.TextChoices):
+    CREATION = 'CREATION', 'Création du contrat'
+    MODIFICATION = 'MODIFICATION', 'Modification'
+    CHANGEMENT_STATUT = 'CHANGEMENT_STATUT', 'Changement de statut de facturation'
+    CHANGEMENT_COMMERCIAL = 'CHANGEMENT_COMMERCIAL', 'Changement de commercial'
+    CHANGEMENT_SERVICES = 'CHANGEMENT_SERVICES', 'Changement des services par défaut'
+    RESILIATION = 'RESILIATION', 'Résiliation'
+    MODIFICATION_RESILIATION = 'MODIFICATION_RESILIATION', 'Modification résiliation'
+    AJOUT_LIGNE = 'AJOUT_LIGNE', 'Ajout de ligne'
+    MODIFICATION_LIGNE = 'MODIFICATION_LIGNE', 'Modification services ligne'
+
 class CategorieClient(models.TextChoices):
     GRANDE_ENTREPRISE = 'GE', 'Grande Entreprise'
     PETITE_ENTREPRISE = 'PE', 'Petite Entreprise'
@@ -44,6 +66,27 @@ class TypeActionFacturation(models.TextChoices):
     PAIEMENT = 'PAIEMENT', 'Paiement'
     ANNULATION = 'ANNULATION', 'Annulation'
 
+class Commercial(models.Model):
+    """Représente un commercial Moov Africa"""
+    nom = models.CharField(max_length=100, verbose_name='Nom')
+    prenom = models.CharField(max_length=100, verbose_name='Prénom')
+    matricule = models.CharField(max_length=30, unique=True, verbose_name='Matricule / Code commercial')
+    telephone = models.CharField(max_length=20, blank=True, verbose_name='Téléphone')
+    email = models.EmailField(blank=True, verbose_name='Email')
+    est_actif = models.BooleanField(default=True, verbose_name='Actif')
+    date_creation = models.DateTimeField(auto_now_add=True, verbose_name='Date Création')
+    date_modification = models.DateTimeField(auto_now=True, verbose_name='Date Modification')
+
+    class Meta:
+        db_table = 'commerciaux'
+        verbose_name = 'Commercial'
+        verbose_name_plural = 'Commerciaux'
+        ordering = ['nom', 'prenom']
+
+    def __str__(self):
+        return f"{self.prenom} {self.nom} ({self.matricule})"
+
+
 class Company(models.Model):
     compte = models.CharField(max_length=20, unique=True, verbose_name='Compte')
     raison_sociale = models.CharField(max_length=200, verbose_name='Raison Sociale')
@@ -69,6 +112,36 @@ class Company(models.Model):
     internet_defaut = models.BooleanField(default=False)
     international_defaut = models.BooleanField(default=False)
     est_non_revenu_defaut = models.BooleanField(default=False)
+    commercial = models.ForeignKey(
+        'Commercial',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='contrats',
+        verbose_name='Commercial'
+    )
+    statut_factures = models.CharField(
+        max_length=20,
+        choices=StatutFacturation.choices,
+        default=StatutFacturation.EN_ATTENTE,
+        verbose_name='Statut de facturation'
+    )
+    email_facturation = models.EmailField(blank=True, verbose_name='Email de facturation')
+    adresse_ligne2 = models.TextField(blank=True, verbose_name='Adresse ligne 2')
+    date_fin = models.DateField(null=True, blank=True, verbose_name='Date de fin')
+    observation = models.TextField(blank=True, verbose_name='Observation')
+    type_revenu = models.CharField(max_length=50, blank=True, verbose_name='Type de revenu')
+    motif_exoneration = models.TextField(blank=True, verbose_name="Motif d'exonération")
+    mode_reglement = models.CharField(
+        max_length=20,
+        choices=ModeReglement.choices,
+        default=ModeReglement.VIREMENT,
+        verbose_name='Mode de règlement'
+    )
+    est_resilie = models.BooleanField(default=False, verbose_name='Résilié')
+    date_resiliation = models.DateField(null=True, blank=True, verbose_name='Date de résiliation')
+    motif_resiliation = models.TextField(blank=True, verbose_name='Motif de résiliation')
+    observation_resiliation = models.TextField(blank=True, verbose_name='Observation résiliation')
     payeur = models.ForeignKey(
         User, 
         on_delete=models.SET_NULL, 
@@ -139,6 +212,42 @@ class Line(models.Model):
     
     def __str__(self):
         return f"{self.msisdn} - {self.utilisateur or 'N/A'}"
+
+
+class AuditContrat(models.Model):
+    """Journalisation de toutes les actions sur un contrat"""
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name='audit_log',
+        verbose_name='Contrat'
+    )
+    utilisateur = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='audits_contrats',
+        verbose_name='Utilisateur'
+    )
+    type_action = models.CharField(
+        max_length=50,
+        choices=TypeAction.choices,
+        verbose_name="Type d'action"
+    )
+    description = models.TextField(verbose_name='Description')
+    anciennes_valeurs = models.JSONField(default=dict, blank=True, verbose_name='Anciennes valeurs')
+    nouvelles_valeurs = models.JSONField(default=dict, blank=True, verbose_name='Nouvelles valeurs')
+    date_action = models.DateTimeField(auto_now_add=True, verbose_name="Date de l'action")
+
+    class Meta:
+        db_table = 'audit_contrats'
+        verbose_name = 'Audit Contrat'
+        verbose_name_plural = 'Audits Contrats'
+        ordering = ['-date_action']
+
+    def __str__(self):
+        return f"{self.type_action} — {self.company} — {self.date_action.strftime('%d/%m/%Y %H:%M')}"
+
 
 # ==================== NOUVEAUX MODÈLES ====================
 

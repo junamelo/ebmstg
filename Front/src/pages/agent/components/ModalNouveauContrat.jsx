@@ -1,310 +1,403 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
+import api from '../../../services/api'
 
 export default function ModalNouveauContrat({ onClose, onCreate }) {
-  const [typePayeur, setTypePayeur] = useState('ENTREPRISE')
-  const [formData, setFormData] = useState({
-    typeContrat: 'Professionnel',
-    dureeEngagement: 12,
-    modeFacturation: 'Mensuel',
-    statut: 'ACTIF'
+  const [step, setStep] = useState(1) // 1 = Identité, 2 = Contrat, 3 = Services
+  const [commerciaux, setCommerciaux] = useState([])
+  const [tarifsNoLimit, setTarifsNoLimit] = useState([])
+  const [tarifsBlackBerry, setTarifsBlackBerry] = useState([])
+  const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState({})
+
+  const [form, setForm] = useState({
+    // Identité
+    typePayeur: 'ENTREPRISE',
+    raisonSociale: '',
+    nom: '',
+    prenom: '',
+    email: '',
+    telephone: '',
+    adresse: '',
+    adresse_ligne2: '',
+    email_facturation: '',
+    // Contrat
+    categorie: 'PE',
+    commercial: '',
+    mode_reglement: 'VIREMENT',
+    date_effet: '',
+    date_fin: '',
+    observation: '',
+    type_revenu: '',
+    est_exonere: false,
+    // Services
+    facture_detaillee_defaut: false,
+    option_nolimit_defaut: '',
+    option_blackberry_defaut: '',
+    est_incognito_defaut: false,
+    roaming_defaut: false,
+    internet_defaut: false,
+    international_defaut: false,
+    est_non_revenu_defaut: false,
   })
+
+  useEffect(() => {
+    // Empêche le scroll de la page derrière le modal
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    Promise.all([
+      api.get('/billing/commerciaux/', { params: { est_actif: true } }),
+      api.get('/billing/tarifs/', { params: { actif_only: true } })
+    ])
+      .then(([respCommerciaux, respTarifs]) => {
+        setCommerciaux(respCommerciaux.data.results || respCommerciaux.data || [])
+
+        const tarifs = respTarifs.data.results || respTarifs.data || []
+        const noLimit = tarifs
+          .filter(t => {
+            const texte = `${t.service_name || ''} ${t.nom_option || ''}`.toLowerCase()
+            return texte.includes('no limit') || texte.includes('nolimit')
+          })
+          .map(t => t.nom_option)
+          .filter(Boolean)
+        const blackberry = tarifs
+          .filter(t => {
+            const texte = `${t.service_name || ''} ${t.nom_option || ''}`.toLowerCase()
+            return texte.includes('blackberry') || texte.includes(' bb') || texte.startsWith('bb')
+          })
+          .map(t => t.nom_option)
+          .filter(Boolean)
+
+        setTarifsNoLimit([...new Set(noLimit)])
+        setTarifsBlackBerry([...new Set(blackberry)])
+      })
+      .catch(() => {})
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [])
+
+  const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+  const setCheck = (key) => (e) => set(key, e.target.checked)
+  const setVal = (key) => (e) => set(key, e.target.value)
+
+  const inputCls = (field) =>
+    `w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#002a7a] outline-none ${errors[field] ? 'border-red-400' : 'border-zinc-300'}`
+
+  const validerStep1 = () => {
+    const errs = {}
+    if (form.typePayeur === 'ENTREPRISE' && !form.raisonSociale.trim()) errs.raisonSociale = 'Obligatoire'
+    if (form.typePayeur === 'PARTICULIER' && !form.nom.trim()) errs.nom = 'Obligatoire'
+    if (form.typePayeur === 'PARTICULIER' && !form.prenom.trim()) errs.prenom = 'Obligatoire'
+    return errs
+  }
+
+  const validerStep2 = () => {
+    const errs = {}
+    if (!form.categorie) errs.categorie = 'Obligatoire'
+    if (!form.commercial) errs.commercial = 'Obligatoire'
+    if (!form.mode_reglement) errs.mode_reglement = 'Obligatoire'
+    if (form.date_effet && form.date_fin && form.date_fin < form.date_effet)
+      errs.date_fin = 'La date de fin doit être postérieure à la date d\'effet'
+    return errs
+  }
+
+  const handleNext = () => {
+    let errs = {}
+    if (step === 1) errs = validerStep1()
+    if (step === 2) errs = validerStep2()
+    if (Object.keys(errs).length) { setErrors(errs); return }
+    setErrors({})
+    setStep(s => s + 1)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      const payload = {
+        compte: genererNumeroContrat(),
+        raison_sociale: form.typePayeur === 'ENTREPRISE' ? form.raisonSociale : `${form.prenom} ${form.nom}`,
+        nom_commercial: form.typePayeur === 'ENTREPRISE' ? form.raisonSociale : `${form.prenom} ${form.nom}`,
+        categorie: form.categorie,
+        commercial: form.commercial || null,
+        mode_reglement: form.mode_reglement,
+        adresse: form.adresse,
+        adresse_ligne2: form.adresse_ligne2,
+        email_facturation: form.email_facturation || form.email,
+        date_effet: form.date_effet || null,
+        date_fin: form.date_fin || null,
+        observation: form.observation,
+        type_revenu: form.type_revenu,
+        est_exonere: form.est_exonere,
+        facture_detaillee_defaut: form.facture_detaillee_defaut,
+        option_nolimit_defaut: form.option_nolimit_defaut,
+        option_blackberry_defaut: form.option_blackberry_defaut,
+        est_incognito_defaut: form.est_incognito_defaut,
+        roaming_defaut: form.roaming_defaut,
+        internet_defaut: form.internet_defaut,
+        international_defaut: form.international_defaut,
+        est_non_revenu_defaut: form.est_non_revenu_defaut,
+      }
+      await onCreate(payload)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const genererNumeroContrat = () => {
     const annee = new Date().getFullYear().toString().slice(-2)
-    const sequence = Math.floor(Math.random() * 999999).toString().padStart(6, '0')
-    return `A${annee}${sequence}`
+    const seq = Math.floor(Math.random() * 999999).toString().padStart(6, '0')
+    return `A${annee}${seq}`
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    
-    const nouveauContrat = {
-      ...formData,
-      typePayeur,
-      numeroContrat: genererNumeroContrat(),
-      dateCreation: new Date().toISOString().split('T')[0],
-      lignes: [],
-      caMensuel: 0
-    }
-    
-    onCreate(nouveauContrat)
-  }
+  const CATEGORIES = [
+    { value: 'GE', label: 'Grande Entreprise' },
+    { value: 'PE', label: 'Petite Entreprise' },
+    { value: 'P', label: 'Particulier' },
+    { value: 'OI', label: 'Organisme International' },
+    { value: 'EP', label: 'Entreprise Publique' },
+    { value: 'A', label: 'Association' },
+  ]
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[1100] p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-      >
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col">
+
         {/* Header */}
-        <div className="sticky top-0 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 p-6 z-10">
-          <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-bold text-zinc-900 dark:text-white">Créer un Nouveau Contrat</h3>
-            <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
+        <div className="sticky top-0 bg-white border-b border-zinc-200 px-6 py-4 flex items-center justify-between rounded-t-xl z-10 flex-shrink-0">
+          <div>
+            <h3 className="text-lg font-bold text-zinc-900">Créer un nouveau contrat</h3>
+            <div className="flex items-center gap-2 mt-1.5">
+              {[1,2,3].map(s => (
+                <div key={s} className="flex items-center gap-1.5">
+                  <div className={`w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold ${step >= s ? 'bg-[#002a7a] text-white' : 'bg-zinc-100 text-zinc-400'}`}>{s}</div>
+                  <span className={`text-xs ${step === s ? 'text-zinc-700 font-medium' : 'text-zinc-400'}`}>
+                    {s === 1 ? 'Identité' : s === 2 ? 'Contrat' : 'Services'}
+                  </span>
+                  {s < 3 && <div className="w-6 h-px bg-zinc-200"/>}
+                </div>
+              ))}
+            </div>
           </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-100 text-zinc-400">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Type de payeur */}
-          <div>
-            <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Type de compte *</label>
-            <div className="grid grid-cols-2 gap-4">
-              <button type="button" onClick={() => setTypePayeur('ENTREPRISE')}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  typePayeur === 'ENTREPRISE'
-                    ? 'border-[#002a7a] bg-[#002a7a]/5'
-                    : 'border-zinc-300 dark:border-zinc-700 hover:border-zinc-400'
-                }`}>
-                <div className="text-2xl mb-2">🏢</div>
-                <p className="font-bold text-zinc-900 dark:text-white">Entreprise</p>
-                <p className="text-xs text-zinc-500">Plusieurs lignes</p>
-              </button>
-              <button type="button" onClick={() => setTypePayeur('PARTICULIER')}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  typePayeur === 'PARTICULIER'
-                    ? 'border-[#002a7a] bg-[#002a7a]/5'
-                    : 'border-zinc-300 dark:border-zinc-700 hover:border-zinc-400'
-                }`}>
-                <div className="text-2xl mb-2">👤</div>
-                <p className="font-bold text-zinc-900 dark:text-white">Particulier</p>
-                <p className="text-xs text-zinc-500">Une seule ligne</p>
-              </button>
-            </div>
-          </div>
+        <form onSubmit={handleSubmit} className="overflow-y-auto overscroll-contain flex-1 p-6 space-y-5">
 
-          {/* Formulaire Entreprise */}
-          {typePayeur === 'ENTREPRISE' && (
+          {/* STEP 1 — Identité */}
+          {step === 1 && (
             <>
               <div>
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Raison sociale *</label>
-                <input type="text" name="raisonSociale" required value={formData.raisonSociale || ''}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none"/>
+                <label className="block text-sm font-semibold text-zinc-700 mb-2">Type de compte *</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[{v:'ENTREPRISE',label:'Entreprise',icon:'🏢',desc:'Plusieurs lignes'},{v:'PARTICULIER',label:'Particulier',icon:'👤',desc:'Une seule ligne'}].map(t => (
+                    <button key={t.v} type="button" onClick={() => set('typePayeur', t.v)}
+                      className={`p-3 rounded-lg border-2 text-left transition-all ${form.typePayeur===t.v ? 'border-[#002a7a] bg-[#002a7a]/5' : 'border-zinc-200 hover:border-zinc-300'}`}>
+                      <div className="text-xl mb-1">{t.icon}</div>
+                      <p className="font-semibold text-sm text-zinc-900">{t.label}</p>
+                      <p className="text-xs text-zinc-500">{t.desc}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {form.typePayeur === 'ENTREPRISE' ? (
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Raison sociale *</label>
+                  <input className={inputCls('raisonSociale')} value={form.raisonSociale} onChange={setVal('raisonSociale')} placeholder="SOCIETE EXAMPLE SARL"/>
+                  {errors.raisonSociale && <p className="text-xs text-red-500 mt-0.5">{errors.raisonSociale}</p>}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1">Nom *</label>
+                    <input className={inputCls('nom')} value={form.nom} onChange={setVal('nom')}/>
+                    {errors.nom && <p className="text-xs text-red-500 mt-0.5">{errors.nom}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1">Prénom *</label>
+                    <input className={inputCls('prenom')} value={form.prenom} onChange={setVal('prenom')}/>
+                    {errors.prenom && <p className="text-xs text-red-500 mt-0.5">{errors.prenom}</p>}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Email *</label>
-                  <input type="email" name="email" required value={formData.email || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none"/>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Email</label>
+                  <input type="email" className={inputCls('email')} value={form.email} onChange={setVal('email')}/>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Téléphone *</label>
-                  <input type="tel" name="telephone" required value={formData.telephone || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none"/>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Téléphone</label>
+                  <input className={inputCls('telephone')} value={form.telephone} onChange={setVal('telephone')}/>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Adresse</label>
-                <input type="text" name="adresse" value={formData.adresse || ''}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none"/>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Adresse 1</label>
+                <input className={inputCls('adresse')} value={form.adresse} onChange={setVal('adresse')}/>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Adresse 2</label>
+                <input className={inputCls('adresse_ligne2')} value={form.adresse_ligne2} onChange={setVal('adresse_ligne2')}/>
               </div>
             </>
           )}
 
-          {/* Formulaire Particulier */}
-          {typePayeur === 'PARTICULIER' && (
+          {/* STEP 2 — Contrat */}
+          {step === 2 && (
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Nom *</label>
-                  <input type="text" name="nom" required value={formData.nom || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none"/>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Catégorie *</label>
+                  <select className={inputCls('categorie')} value={form.categorie} onChange={setVal('categorie')}>
+                    {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  </select>
+                  {errors.categorie && <p className="text-xs text-red-500 mt-0.5">{errors.categorie}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Prénom *</label>
-                  <input type="text" name="prenom" required value={formData.prenom || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none"/>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Commercial *</label>
+                  <select className={inputCls('commercial')} value={form.commercial} onChange={setVal('commercial')}>
+                    <option value="">-- Sélectionner un commercial --</option>
+                    {commerciaux.map(c => (
+                      <option key={c.id} value={c.id}>{c.prenom} {c.nom} ({c.matricule})</option>
+                    ))}
+                  </select>
+                  {errors.commercial && <p className="text-xs text-red-500 mt-0.5">{errors.commercial}</p>}
+                  {commerciaux.length === 0 && (
+                    <p className="text-xs text-amber-600 mt-0.5">Aucun commercial actif — créez-en un d&apos;abord</p>
+                  )}
                 </div>
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Mode de règlement *</label>
+                <select className={inputCls('mode_reglement')} value={form.mode_reglement} onChange={setVal('mode_reglement')}>
+                  <option value="CHEQUE">Chèque</option>
+                  <option value="VIREMENT">Virement</option>
+                  <option value="ESPECES">Espèces</option>
+                </select>
+                {errors.mode_reglement && <p className="text-xs text-red-500 mt-0.5">{errors.mode_reglement}</p>}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Email *</label>
-                  <input type="email" name="email" required value={formData.email || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none"/>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Date d&apos;effet</label>
+                  <input type="date" className={inputCls('date_effet')} value={form.date_effet} onChange={setVal('date_effet')}/>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Téléphone *</label>
-                  <input type="tel" name="telephone" required value={formData.telephone || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none"/>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Date de fin</label>
+                  <input type="date" className={inputCls('date_fin')} value={form.date_fin} onChange={setVal('date_fin')}/>
+                  {errors.date_fin && <p className="text-xs text-red-500 mt-0.5">{errors.date_fin}</p>}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Email de facturation</label>
+                <input type="email" className={inputCls('email_facturation')} value={form.email_facturation} onChange={setVal('email_facturation')} placeholder="Laissez vide pour utiliser l'email principal"/>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Type de revenu</label>
+                <input className={inputCls('type_revenu')} value={form.type_revenu} onChange={setVal('type_revenu')} placeholder="Ex: Corporate, Prépayé..."/>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Observation</label>
+                <textarea className={`${inputCls('observation')} resize-none`} rows={2} value={form.observation} onChange={setVal('observation')}/>
+              </div>
+
+              <div className="border border-zinc-200 rounded-lg p-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" checked={form.est_exonere} onChange={setCheck('est_exonere')}
+                    className="w-4 h-4 text-[#002a7a] rounded"/>
+                  <span className="text-sm font-medium text-zinc-700">Exonéré de TVA</span>
+                </label>
               </div>
             </>
           )}
 
-          {/* Configuration du contrat */}
-          <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6">
-            <h4 className="text-lg font-bold text-zinc-900 dark:text-white mb-4">Configuration du Contrat</h4>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Type de contrat *</label>
-                <select name="typeContrat" value={formData.typeContrat} onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none">
-                  <option value="Particulier">Particulier</option>
-                  <option value="Professionnel">Professionnel</option>
-                  <option value="Entreprise">Entreprise</option>
-                  <option value="Corporate">Corporate</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Durée engagement (mois)</label>
-                <select name="dureeEngagement" value={formData.dureeEngagement} onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none">
-                  <option value="0">Sans engagement</option>
-                  <option value="12">12 mois</option>
-                  <option value="24">24 mois</option>
-                  <option value="36">36 mois</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Mode de facturation</label>
-              <select name="modeFacturation" value={formData.modeFacturation} onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none">
-                <option value="Mensuel">Mensuel</option>
-                <option value="Trimestriel">Trimestriel</option>
-                <option value="Annuel">Annuel</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Services appliqués par défaut à toutes les lignes du contrat */}
-          <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6">
-            <h4 className="text-lg font-bold text-zinc-900 dark:text-white mb-3">Services appliqués par défaut à toutes les lignes du contrat</h4>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">Ces options seront automatiquement activées pour chaque nouvelle ligne ajoutée au contrat</p>
-            
-            <div className="space-y-4">
-              {/* Checkboxes pour services booléens */}
-              <div className="grid grid-cols-2 gap-4">
-                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="facture_detaillee_defaut"
-                    checked={formData.facture_detaillee_defaut || false}
-                    onChange={(e) => setFormData(prev => ({ ...prev, facture_detaillee_defaut: e.target.checked }))}
-                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
-                  />
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Facturation détaillée</span>
-                </label>
-
-                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="est_incognito_defaut"
-                    checked={formData.est_incognito_defaut || false}
-                    onChange={(e) => setFormData(prev => ({ ...prev, est_incognito_defaut: e.target.checked }))}
-                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
-                  />
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Incognito</span>
-                </label>
-
-                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="roaming_defaut"
-                    checked={formData.roaming_defaut || false}
-                    onChange={(e) => setFormData(prev => ({ ...prev, roaming_defaut: e.target.checked }))}
-                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
-                  />
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Roaming</span>
-                </label>
-
-                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="internet_defaut"
-                    checked={formData.internet_defaut || false}
-                    onChange={(e) => setFormData(prev => ({ ...prev, internet_defaut: e.target.checked }))}
-                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
-                  />
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Internet</span>
-                </label>
-
-                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="international_defaut"
-                    checked={formData.international_defaut || false}
-                    onChange={(e) => setFormData(prev => ({ ...prev, international_defaut: e.target.checked }))}
-                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
-                  />
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">International</span>
-                </label>
-
-                <label className="flex items-center gap-3 p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="est_non_revenu_defaut"
-                    checked={formData.est_non_revenu_defaut || false}
-                    onChange={(e) => setFormData(prev => ({ ...prev, est_non_revenu_defaut: e.target.checked }))}
-                    className="w-4 h-4 text-[#002a7a] border-zinc-300 rounded focus:ring-[#002a7a]"
-                  />
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Non Revenu</span>
-                </label>
+          {/* STEP 3 — Services par défaut */}
+          {step === 3 && (
+            <>
+              <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-200">
+                <p className="text-xs text-zinc-600">
+                  Ces services seront activés par défaut sur toutes les nouvelles lignes du contrat. Chaque ligne peut ensuite les modifier individuellement.
+                </p>
               </div>
 
-              {/* Champs texte pour No Limit et BlackBerry */}
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  {key:'facture_detaillee_defaut', label:'Facturation détaillée'},
+                  {key:'est_incognito_defaut', label:'Incognito'},
+                  {key:'roaming_defaut', label:'Roaming'},
+                  {key:'internet_defaut', label:'Internet'},
+                  {key:'international_defaut', label:'International'},
+                  {key:'est_non_revenu_defaut', label:'Non Revenu'},
+                ].map(({key,label}) => (
+                  <label key={key} className="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 hover:bg-white cursor-pointer">
+                    <input type="checkbox" checked={form[key]||false} onChange={setCheck(key)}
+                      className="w-4 h-4 text-[#002a7a] rounded"/>
+                    <span className="text-sm text-zinc-700">{label}</span>
+                  </label>
+                ))}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Option No Limit</label>
-                  <input
-                    type="text"
-                    name="option_nolimit_defaut"
-                    value={formData.option_nolimit_defaut || ''}
-                    onChange={handleChange}
-                    placeholder="Ex: No Limit 5000"
-                    className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none"
-                  />
-                  <p className="text-xs text-zinc-500 mt-1">Laissez vide si non applicable</p>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Option No Limit</label>
+                  <select className={inputCls('option_nolimit_defaut')} value={form.option_nolimit_defaut} onChange={setVal('option_nolimit_defaut')}>
+                    <option value="">-- Aucune option --</option>
+                    {tarifsNoLimit.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                  {tarifsNoLimit.length === 0 && (
+                    <p className="text-xs text-zinc-400 mt-1">Aucune option No Limit active disponible</p>
+                  )}
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Option BlackBerry</label>
-                  <input
-                    type="text"
-                    name="option_blackberry_defaut"
-                    value={formData.option_blackberry_defaut || ''}
-                    onChange={handleChange}
-                    placeholder="Ex: BlackBerry Pro"
-                    className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[#002a7a] outline-none"
-                  />
-                  <p className="text-xs text-zinc-500 mt-1">Laissez vide si non applicable</p>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Option BlackBerry</label>
+                  <select className={inputCls('option_blackberry_defaut')} value={form.option_blackberry_defaut} onChange={setVal('option_blackberry_defaut')}>
+                    <option value="">-- Aucune option --</option>
+                    {tarifsBlackBerry.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                  {tarifsBlackBerry.length === 0 && (
+                    <p className="text-xs text-zinc-400 mt-1">Aucune option BlackBerry active disponible</p>
+                  )}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">
-              Annuler
-            </button>
-            <button type="submit"
-              className="flex-1 px-4 py-2.5 bg-gradient-to-br from-[#002a7a] to-[#003d9e] text-white font-semibold rounded-lg hover:shadow-lg transition-all">
-              Créer le Contrat
-            </button>
-          </div>
+            </>
+          )}
         </form>
+
+        {/* Footer navigation */}
+        <div className="flex gap-3 px-6 py-4 border-t border-zinc-200 flex-shrink-0">
+          <button type="button" onClick={step === 1 ? onClose : () => setStep(s => s - 1)}
+            className="flex-1 px-4 py-2.5 text-sm font-semibold bg-zinc-100 text-zinc-700 rounded-lg hover:bg-zinc-200 transition-colors">
+            {step === 1 ? 'Annuler' : '← Retour'}
+          </button>
+          {step < 3 ? (
+            <button type="button" onClick={handleNext}
+              className="flex-1 px-4 py-2.5 text-sm font-semibold bg-[#002a7a] text-white rounded-lg hover:bg-[#003d9e] transition-colors">
+              Suivant →
+            </button>
+          ) : (
+            <button type="button" disabled={saving} onClick={handleSubmit}
+              className="flex-1 px-4 py-2.5 text-sm font-semibold bg-[#e05500] hover:bg-[#c44a00] text-white rounded-lg transition-colors disabled:opacity-60">
+              {saving ? 'Création...' : 'Créer le contrat'}
+            </button>
+          )}
+        </div>
       </motion.div>
     </div>
   )

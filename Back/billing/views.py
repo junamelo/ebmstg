@@ -9,7 +9,8 @@ from django.db.models import Q, Count, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
-from .models import Company, Line, Package, Service, TarifService
+from .models import Company, Line, Package, Service, TarifService, Commercial, AuditContrat
+from .serializers import CommercialSerializer, CommercialCreateSerializer, AuditContratSerializer
 from .serializers import (
     CompanySerializer, CompanyListSerializer, CompanyCreateSerializer,
     LineSerializer, LineListSerializer, LineCreateSerializer,
@@ -87,7 +88,13 @@ class CompanyViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         company = serializer.save()
-        
+        AuditContrat.objects.create(
+            company=company,
+            utilisateur=request.user,
+            type_action='CREATION',
+            description=f"Contrat {company.compte} créé pour {company.raison_sociale}",
+            nouvelles_valeurs={'compte': company.compte, 'raison_sociale': company.raison_sociale}
+        )
         # Retourner le détail complet
         output_serializer = CompanySerializer(company)
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
@@ -169,6 +176,79 @@ class CompanyViewSet(viewsets.ModelViewSet):
         serializer = LineListSerializer(lines, many=True)
         return Response(serializer.data)
 
+    def update(self, request, *args, **kwargs):
+        company = self.get_object()
+        anciennes_valeurs = {
+            'statut_factures': company.statut_factures,
+            'commercial': company.commercial_id,
+            'mode_reglement': company.mode_reglement,
+        }
+        response = super().update(request, *args, **kwargs)
+        company.refresh_from_db()
+        nouvelles_valeurs = {
+            'statut_factures': company.statut_factures,
+            'commercial': company.commercial_id,
+            'mode_reglement': company.mode_reglement,
+        }
+        AuditContrat.objects.create(
+            company=company,
+            utilisateur=request.user,
+            type_action='MODIFICATION',
+            description="Informations du contrat modifiées",
+            anciennes_valeurs=anciennes_valeurs,
+            nouvelles_valeurs=nouvelles_valeurs
+        )
+        return response
+
+    @action(detail=True, methods=['post'])
+    def resilier(self, request, pk=None):
+        """Résilier un contrat"""
+        company = self.get_object()
+        if company.est_resilie:
+            return Response({'error': 'Ce contrat est déjà résilié.'}, status=status.HTTP_400_BAD_REQUEST)
+        date_resiliation = request.data.get('date_resiliation')
+        motif_resiliation = request.data.get('motif_resiliation')
+        observation_resiliation = request.data.get('observation_resiliation', '')
+        if not date_resiliation:
+            return Response({'error': 'date_resiliation est obligatoire.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not motif_resiliation:
+            return Response({'error': 'motif_resiliation est obligatoire.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            import datetime
+            dr = datetime.date.fromisoformat(date_resiliation)
+        except Exception:
+            return Response({'error': 'Format de date invalide (YYYY-MM-DD).'}, status=status.HTTP_400_BAD_REQUEST)
+        if company.date_effet and dr < company.date_effet:
+            return Response({'error': "La date de résiliation ne peut pas être antérieure à la date d'effet."}, status=status.HTTP_400_BAD_REQUEST)
+        anciennes_valeurs = {'est_resilie': False, 'statut_factures': company.statut_factures}
+        company.est_resilie = True
+        company.date_resiliation = date_resiliation
+        company.motif_resiliation = motif_resiliation
+        company.observation_resiliation = observation_resiliation
+        company.statut_factures = 'CLOS'
+        company.save()
+        AuditContrat.objects.create(
+            company=company,
+            utilisateur=request.user,
+            type_action='RESILIATION',
+            description=f"Contrat résilié. Motif : {motif_resiliation}",
+            anciennes_valeurs=anciennes_valeurs,
+            nouvelles_valeurs={'est_resilie': True, 'date_resiliation': date_resiliation, 'motif_resiliation': motif_resiliation}
+        )
+        return Response(CompanySerializer(company).data)
+
+    @action(detail=True, methods=['get'])
+    def historique(self, request, pk=None):
+        """Historique des actions sur un contrat"""
+        company = self.get_object()
+        audits = company.audit_log.all()
+        from rest_framework.pagination import PageNumberPagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 20
+        result = paginator.paginate_queryset(audits, request)
+        serializer = AuditContratSerializer(result, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
 
 class LineViewSet(viewsets.ModelViewSet):
     """
@@ -219,7 +299,14 @@ class LineViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         line = serializer.save()
-        
+        # Journaliser dans l'audit du contrat
+        AuditContrat.objects.create(
+            company=line.company,
+            utilisateur=request.user,
+            type_action='AJOUT_LIGNE',
+            description=f"Ligne {line.msisdn} ajoutée",
+            nouvelles_valeurs={'msisdn': line.msisdn, 'cycle': line.cycle}
+        )
         output_serializer = LineSerializer(line)
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
     
@@ -515,6 +602,43 @@ class TarifServiceViewSet(viewsets.ModelViewSet):
             'tarif': TarifServiceSerializer(tarif).data
         })
 
+
+
+class CommercialViewSet(viewsets.ModelViewSet):
+    """ViewSet pour la gestion des commerciaux"""
+    permission_classes = [IsAuthenticated, IsAgentFacturation]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['est_actif']
+    search_fields = ['nom', 'prenom', 'matricule', 'telephone']
+    ordering_fields = ['nom', 'prenom', 'date_creation']
+    ordering = ['nom']
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return CommercialCreateSerializer
+        return CommercialSerializer
+
+    def get_queryset(self):
+        return Commercial.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        commercial = serializer.save()
+        return Response(CommercialSerializer(commercial).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'])
+    def toggle_actif(self, request, pk=None):
+        commercial = self.get_object()
+        # Empêcher la désactivation si lié à un contrat actif
+        if commercial.est_actif and commercial.contrats.filter(est_resilie=False).exists():
+            return Response(
+                {'error': 'Ce commercial est lié à des contrats actifs. Transférez les contrats avant de le désactiver.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        commercial.est_actif = not commercial.est_actif
+        commercial.save()
+        return Response(CommercialSerializer(commercial).data)
 
 
 # ==================== VIEWSETS PHASE 4 : FACTURATION ====================

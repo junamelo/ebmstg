@@ -24,6 +24,7 @@ const IconChevron     = ({ collapsed }) => (
 
 const IconAgents     = () => <i className="ti ti-user-check"       style={{ fontSize: 18 }} />
 const IconContrats   = () => <i className="ti ti-file-text"        style={{ fontSize: 18 }} />
+const IconCommerciaux = () => <i className="ti ti-briefcase"       style={{ fontSize: 18 }} />
 
 const menusEmploye = [
   { path: '/dashboard',             label: 'Tableau de bord',     icon: <IconDashboard /> },
@@ -56,6 +57,7 @@ const menusAdmin = [
 const menusAgentFacturation = [
   { path: '/agent/dashboard',                label: 'Dashboard',           icon: <IconDashboard /> },
   { path: '/agent/contrats',                 label: 'Gestion Contrats',    icon: <IconContrats /> },
+  { path: '/agent/commerciaux',              label: 'Commerciaux',         icon: <IconCommerciaux /> },
   { path: '/agent/comptes-clients',          label: 'Comptes Clients',     icon: <IconUsers /> },
   { path: '/agent/services',                 label: 'Gestion Services',    icon: <IconServices /> },
   { path: '/agent/forfaits',                 label: 'Gestion Forfaits',    icon: <IconForfaits /> },
@@ -69,6 +71,7 @@ const menusChefFacturation = [
   { path: '/chef/dashboard',                label: 'Dashboard',           icon: <IconDashboard /> },
   { path: '/chef/agents',                   label: 'Gestion Agents',      icon: <IconAgents /> },
   { path: '/chef/contrats',                 label: 'Gestion Contrats',    icon: <IconContrats /> },
+  { path: '/chef/commerciaux',              label: 'Commerciaux',         icon: <IconCommerciaux /> },
   { path: '/chef/comptes-clients',          label: 'Comptes Clients',     icon: <IconUsers /> },
   { path: '/chef/services',                 label: 'Gestion Services',    icon: <IconServices /> },
   { path: '/chef/forfaits',                 label: 'Gestion Forfaits',    icon: <IconForfaits /> },

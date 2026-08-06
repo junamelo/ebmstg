@@ -16,10 +16,13 @@ export default function DetailContrat() {
   const [servicesLigne, setServicesLigne] = useState({})
   const [employes, setEmployes] = useState([])
   const [message, setMessage] = useState(null)
+  const [auditLog, setAuditLog] = useState([])
+  const [auditChargement, setAuditChargement] = useState(false)
 
   useEffect(() => {
     chargerContrat()
     chargerEmployes()
+    chargerAudit()
   }, [id])
 
   const chargerEmployes = async () => {
@@ -97,13 +100,31 @@ export default function DetailContrat() {
             montantEstime: parseFloat(l.forfait) || 0
           }
         }),
-        historiqueFacturation: []
+        historiqueFacturation: [],
+        est_resilie: company.est_resilie || false,
+        date_resiliation: company.date_resiliation || null,
+        motif_resiliation: company.motif_resiliation || '',
+        statut_factures: company.statut_factures || '',
+        mode_reglement: company.mode_reglement || '',
+        commercial: company.commercial_info || null,
       })
     } catch (error) {
       console.error('Erreur chargement contrat:', error)
       setErreur('Impossible de charger les détails du contrat')
     } finally {
       setChargement(false)
+    }
+  }
+
+  const chargerAudit = async () => {
+    try {
+      setAuditChargement(true)
+      const r = await api.get(`/billing/companies/${id}/historique/`)
+      setAuditLog(r.data.results || r.data || [])
+    } catch {
+      setAuditLog([])
+    } finally {
+      setAuditChargement(false)
     }
   }
 
@@ -539,7 +560,7 @@ export default function DetailContrat() {
         className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
         <div className="border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex">
-            {['infos', 'lignes', 'historique'].map((onglet) => (
+            {['infos', 'lignes', 'historique_contrat'].map((onglet) => (
               <button key={onglet} onClick={() => setOngletActif(onglet)}
                 className={`flex-1 px-6 py-4 font-semibold transition-colors ${
                   ongletActif === onglet
@@ -548,7 +569,7 @@ export default function DetailContrat() {
                 }`}>
                 {onglet === 'infos' && 'Informations'}
                 {onglet === 'lignes' && `Lignes (${contrat.lignes.length})`}
-                {onglet === 'historique' && 'Historique'}
+                {onglet === 'historique_contrat' && 'Historique'}
               </button>
             ))}
           </div>
@@ -592,9 +613,28 @@ export default function DetailContrat() {
                         {new Date(contrat.dateCreation).toLocaleDateString('fr-FR')}
                       </p>
                     </div>
+                    {contrat.mode_reglement && (
+                      <div>
+                        <p className="text-xs text-zinc-500 mb-1">Mode de règlement</p>
+                        <p className="text-zinc-900 dark:text-white font-semibold">{contrat.mode_reglement}</p>
+                      </div>
+                    )}
+                    {contrat.commercial && (
+                      <div>
+                        <p className="text-xs text-zinc-500 mb-1">Commercial</p>
+                        <p className="text-zinc-900 dark:text-white font-semibold">{contrat.commercial.prenom} {contrat.commercial.nom}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+              {contrat.est_resilie && (
+                <div className="col-span-2 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm font-bold text-red-700 mb-2">Contrat résilié</p>
+                  <p className="text-xs text-red-600">Date : {contrat.date_resiliation ? new Date(contrat.date_resiliation).toLocaleDateString('fr-FR') : '—'}</p>
+                  <p className="text-xs text-red-600">Motif : {contrat.motif_resiliation}</p>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -682,28 +722,36 @@ export default function DetailContrat() {
             </motion.div>
           )}
 
-          {/* Onglet Historique */}
-          {ongletActif === 'historique' && (
+          {/* Onglet Historique Contrat */}
+          {ongletActif === 'historique_contrat' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <div className="space-y-3">
-                {contrat.historiqueFacturation.map((facture, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
-                    <div>
-                      <p className="font-semibold text-zinc-900 dark:text-white">{facture.mois}</p>
-                      <p className="text-sm text-zinc-500">Payée le {new Date(facture.datePaiement).toLocaleDateString('fr-FR')}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-zinc-900 dark:text-white">{facture.montant.toLocaleString()} F CFA</p>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+              {auditChargement ? (
+                <div className="py-8 flex justify-center">
+                  <div className="w-6 h-6 border-2 border-zinc-200 border-t-[#002a7a] rounded-full animate-spin"/>
+                </div>
+              ) : auditLog.length === 0 ? (
+                <p className="text-center text-zinc-400 text-sm py-8">Aucune action enregistrée</p>
+              ) : (
+                <div className="space-y-2">
+                  {auditLog.map((a) => (
+                    <div key={a.id} className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 border border-zinc-100">
+                      <div className="w-8 h-8 rounded-full bg-[#002a7a]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <svg className="w-4 h-4 text-[#002a7a]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
-                        {facture.statut}
-                      </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold text-zinc-700">{a.type_action}</span>
+                          <span className="text-xs text-zinc-400 flex-shrink-0">{new Date(a.date_action).toLocaleString('fr-FR')}</span>
+                        </div>
+                        <p className="text-xs text-zinc-600 mt-0.5">{a.description}</p>
+                        <p className="text-xs text-zinc-400 mt-0.5">Par : {a.utilisateur_nom}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
           )}
         </div>
