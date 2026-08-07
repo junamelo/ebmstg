@@ -7,6 +7,7 @@ from .models import (
     CategorieClient, CycleFacturation, TypeForfait, TypeService
 )
 from .models import Commercial, AuditContrat, ModeReglement, StatutFacturation
+from .models import Simulation as SimulationModel
 from accounts.models import User
 
 
@@ -215,7 +216,11 @@ class LineListSerializer(serializers.ModelSerializer):
         model = Line
         fields = [
             'id', 'company', 'company_name', 'msisdn', 'utilisateur',
-            'forfait', 'cycle', 'statut', 'date_creation'
+            'forfait', 'cycle', 'statut', 'date_creation',
+            # Services de la ligne
+            'facture_detaillee', 'option_nolimit', 'option_blackberry',
+            'est_incognito', 'est_roaming', 'est_internet',
+            'est_international', 'est_non_revenu'
         ]
 
 
@@ -436,9 +441,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
         model = Invoice
         fields = [
             'id', 'company', 'company_name', 'company_compte', 'line', 'line_msisdn', 'employe_info',
-            'numero_facture', 'periode_debut', 'periode_fin',
+            'numero_facture', 'numero_facture_pdf', 'periode_debut', 'periode_fin',
             'montant_ht', 'montant_tva', 'montant_ttc',
-            'statut', 'date_emission', 'date_echeance',
+            'statut', 'date_emission', 'date_emission_pdf', 'date_echeance',
             'fichier_pdf', 'commentaire', 'historique',
             'date_creation', 'date_modification'
         ]
@@ -464,14 +469,20 @@ class InvoiceListSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.raison_sociale', read_only=True)
     company_compte = serializers.CharField(source='company.compte', read_only=True)
     line_msisdn = serializers.CharField(source='line.msisdn', read_only=True)
+    # Le frontend utilise cet indicateur pour activer l'aperçu sécurisé sans
+    # exposer le chemin interne du fichier dans une liste de factures.
+    has_pdf = serializers.SerializerMethodField()
     
     class Meta:
         model = Invoice
         fields = [
             'id', 'company', 'company_name', 'company_compte', 'line', 'line_msisdn',
-            'numero_facture', 'periode_debut', 'periode_fin',
-            'montant_ttc', 'statut', 'date_emission', 'date_echeance'
+            'numero_facture', 'numero_facture_pdf', 'periode_debut', 'periode_fin',
+            'montant_ttc', 'statut', 'date_emission', 'date_emission_pdf', 'date_echeance', 'has_pdf'
         ]
+
+    def get_has_pdf(self, obj):
+        return bool(obj.fichier_pdf and obj.fichier_pdf.name)
 
 
 class InvoiceCreateSerializer(serializers.ModelSerializer):
@@ -730,3 +741,21 @@ class InvoiceStatsSerializer(serializers.Serializer):
     factures_par_statut = serializers.DictField()
     montant_total_ttc = serializers.DecimalField(max_digits=15, decimal_places=2)
     montant_par_statut = serializers.DictField()
+
+
+class SimulationSerializer(serializers.ModelSerializer):
+    """Serializer pour l'historique des simulations"""
+    class Meta:
+        model = SimulationModel
+        fields = [
+            'id', 'date_simulation', 'montant_estime',
+            'services_selectionnes', 'resultat_detaille'
+        ]
+        read_only_fields = ['id', 'date_simulation']
+
+
+class SimulationCreateSerializer(serializers.ModelSerializer):
+    """Serializer pour créer une simulation"""
+    class Meta:
+        model = SimulationModel
+        fields = ['montant_estime', 'services_selectionnes', 'resultat_detaille']

@@ -18,6 +18,12 @@ export default function DetailContrat() {
   const [message, setMessage] = useState(null)
   const [auditLog, setAuditLog] = useState([])
   const [auditChargement, setAuditChargement] = useState(false)
+  const [modalResiliation, setModalResiliation] = useState(false)
+  const [dataResiliation, setDataResiliation] = useState({
+    date_resiliation: '',
+    motif_resiliation: '',
+    observation_resiliation: ''
+  })
 
   useEffect(() => {
     chargerContrat()
@@ -104,6 +110,7 @@ export default function DetailContrat() {
         est_resilie: company.est_resilie || false,
         date_resiliation: company.date_resiliation || null,
         motif_resiliation: company.motif_resiliation || '',
+        observation_resiliation: company.observation_resiliation || '',
         statut_factures: company.statut_factures || '',
         mode_reglement: company.mode_reglement || '',
         commercial: company.commercial_info || null,
@@ -192,6 +199,26 @@ export default function DetailContrat() {
       chargerContrat()
     } catch (error) {
       const errorMsg = error.response?.data?.error || 'Erreur lors de la modification'
+      setMessage({ type: 'error', text: errorMsg })
+    }
+  }
+
+  const resilierContrat = async (e) => {
+    e.preventDefault()
+    
+    if (!window.confirm('Êtes-vous sûr de vouloir résilier ce contrat ? Cette action est irréversible.')) {
+      return
+    }
+    
+    try {
+      await api.post(`/billing/companies/${id}/resilier/`, dataResiliation)
+      setMessage({ type: 'success', text: 'Contrat résilié avec succès' })
+      setModalResiliation(false)
+      setDataResiliation({ date_resiliation: '', motif_resiliation: '', observation_resiliation: '' })
+      chargerContrat()
+      chargerAudit()
+    } catch (error) {
+      const errorMsg = error.response?.data?.error || 'Erreur lors de la résiliation'
       setMessage({ type: 'error', text: errorMsg })
     }
   }
@@ -465,6 +492,89 @@ export default function DetailContrat() {
         </div>
       )}
 
+      {/* Modal de résiliation */}
+      {modalResiliation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl p-6 max-w-lg w-full mx-4">
+            <h3 className="text-lg font-bold mb-2 text-red-700">Résilier le contrat</h3>
+            <p className="text-sm text-zinc-600 mb-4">
+              Contrat : <span className="font-semibold">{contrat.numeroContrat}</span>
+            </p>
+            
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-sm font-semibold text-red-700 mb-2">⚠️ Attention</p>
+              <p className="text-xs text-red-600">
+                La résiliation d'un contrat est une action irréversible. Le contrat sera marqué comme "CLOS" 
+                et ne pourra plus être facturé.
+              </p>
+            </div>
+
+            <form onSubmit={resilierContrat} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-2">
+                  Date de résiliation <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={dataResiliation.date_resiliation}
+                  onChange={(e) => setDataResiliation(prev => ({ ...prev, date_resiliation: e.target.value }))}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+                />
+                <p className="text-xs text-zinc-500 mt-1">Date effective de la résiliation</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-2">
+                  Motif de résiliation <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  required
+                  rows="3"
+                  value={dataResiliation.motif_resiliation}
+                  onChange={(e) => setDataResiliation(prev => ({ ...prev, motif_resiliation: e.target.value }))}
+                  placeholder="Ex: Fin de contrat client, Liquidation judiciaire, Déménagement..."
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+                />
+                <p className="text-xs text-zinc-500 mt-1">Raison de la résiliation (obligatoire)</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-2">
+                  Observations (optionnel)
+                </label>
+                <textarea
+                  rows="3"
+                  value={dataResiliation.observation_resiliation}
+                  onChange={(e) => setDataResiliation(prev => ({ ...prev, observation_resiliation: e.target.value }))}
+                  placeholder="Informations complémentaires..."
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-[#002a7a] outline-none"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold"
+                >
+                  Confirmer la résiliation
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModalResiliation(false)
+                    setDataResiliation({ date_resiliation: '', motif_resiliation: '', observation_resiliation: '' })
+                  }}
+                  className="flex-1 px-4 py-2 bg-zinc-200 rounded-lg hover:bg-zinc-300 font-semibold"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Header avec retour */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <button onClick={() => navigate('/agent/contrats')}
@@ -483,12 +593,32 @@ export default function DetailContrat() {
               <span className={`px-3 py-1 rounded-full text-sm font-bold ${getStatutStyle(contrat.statut)}`}>
                 {contrat.statut}
               </span>
+              {contrat.est_resilie && (
+                <span className="px-3 py-1 rounded-full text-sm font-bold bg-red-100 text-red-700">
+                  RÉSILIÉ
+                </span>
+              )}
             </div>
             <p className="text-zinc-600 dark:text-zinc-400 font-mono text-lg">{contrat.numeroContrat}</p>
           </div>
-          <button className="px-4 py-2.5 bg-gradient-to-br from-[#e05500] to-[#c2410c] text-white font-semibold rounded-lg hover:shadow-lg transition-all" onClick={() => setModalAjoutLigne(true)}>
-            + Nouvelle Ligne
-          </button>
+          <div className="flex gap-2">
+            {!contrat.est_resilie && (
+              <>
+                <button 
+                  className="px-4 py-2.5 bg-gradient-to-br from-[#e05500] to-[#c2410c] text-white font-semibold rounded-lg hover:shadow-lg transition-all" 
+                  onClick={() => setModalAjoutLigne(true)}
+                >
+                  + Nouvelle Ligne
+                </button>
+                <button 
+                  className="px-4 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-all" 
+                  onClick={() => setModalResiliation(true)}
+                >
+                  Résilier le contrat
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </motion.div>
 
@@ -629,10 +759,45 @@ export default function DetailContrat() {
                 </div>
               </div>
               {contrat.est_resilie && (
-                <div className="col-span-2 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm font-bold text-red-700 mb-2">Contrat résilié</p>
-                  <p className="text-xs text-red-600">Date : {contrat.date_resiliation ? new Date(contrat.date_resiliation).toLocaleDateString('fr-FR') : '—'}</p>
-                  <p className="text-xs text-red-600">Motif : {contrat.motif_resiliation}</p>
+                <div className="col-span-2 mt-4">
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-red-700 mb-2">Contrat résilié</p>
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-xs text-red-600 font-semibold">Date de résiliation</p>
+                            <p className="text-sm text-red-700">
+                              {contrat.date_resiliation ? new Date(contrat.date_resiliation).toLocaleDateString('fr-FR', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                              }) : 'Non spécifiée'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-red-600 font-semibold">Motif de résiliation</p>
+                            <p className="text-sm text-red-700">{contrat.motif_resiliation || 'Aucun motif spécifié'}</p>
+                          </div>
+                          {contrat.observation_resiliation && (
+                            <div>
+                              <p className="text-xs text-red-600 font-semibold">Observations</p>
+                              <p className="text-sm text-red-700">{contrat.observation_resiliation}</p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-xs text-red-600 font-semibold">Statut de facturation</p>
+                            <p className="text-sm text-red-700 font-bold">{contrat.statut_factures || 'CLOS'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </motion.div>

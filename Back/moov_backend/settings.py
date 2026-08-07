@@ -16,6 +16,15 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Charge le fichier local .env s'il existe. Il reste ignoré par Git ; les
+# variables système conservent la priorité en déploiement.
+ENV_FILE = BASE_DIR.parent / '.env'
+if ENV_FILE.exists():
+    for env_line in ENV_FILE.read_text(encoding='utf-8').splitlines():
+        if '=' in env_line and not env_line.lstrip().startswith('#'):
+            env_key, env_value = env_line.split('=', 1)
+            os.environ.setdefault(env_key.strip(), env_value.strip())
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -164,6 +173,19 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5173',
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+# Notifications : restent inactives tant que les variables correspondantes ne
+# sont pas définies dans l'environnement. Aucun secret ne doit être versionné.
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('SMTP_HOST', '')
+EMAIL_PORT = int(os.environ.get('SMTP_PORT', '587'))
+EMAIL_HOST_USER = os.environ.get('SMTP_USERNAME', '')
+EMAIL_HOST_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
+EMAIL_USE_TLS = os.environ.get('SMTP_USE_TLS', 'True').lower() == 'true'
+DEFAULT_FROM_EMAIL = os.environ.get('SMTP_FROM_EMAIL', '')
+VONAGE_API_KEY = os.environ.get('VONAGE_API_KEY', '')
+VONAGE_API_SECRET = os.environ.get('VONAGE_API_SECRET', '')
+VONAGE_SMS_FROM = os.environ.get('VONAGE_SMS_FROM', '')
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'

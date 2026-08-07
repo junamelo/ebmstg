@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getTarifsActifs, simulerFacturation } from '../../services/simulationService'
+import { getTarifsActifs, sauvegarderSimulation } from '../../services/simulationService'
 import { getServices } from '../../services/servicesService'
 import { calculerMontantData, calculerMontantVoixMinutes, calculerMontantSms } from '../../services/tarifsService'
 import ImageWithFallback from '../../components/common/ImageWithFallback'
@@ -21,6 +21,8 @@ export default function Simulation() {
   const [chargement, setChargement]   = useState(false)
   const [chargementInit, setChargementInit] = useState(true)
   const [erreur, setErreur]           = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState(null)
 
   useEffect(() => {
     console.log('[Simulation] Chargement initial...')
@@ -110,9 +112,9 @@ export default function Simulation() {
       return
     }
     setChargement(true)
+    setSaveMessage(null)
     try {
-      // Simulation avec uniquement les services
-      setResultat({
+      const resultat = {
         montantAppels: 0,
         montantSms: 0,
         montantData: 0,
@@ -120,7 +122,24 @@ export default function Simulation() {
         montantTotal: services_montant,
         servicesChoisis: [...optionsChoisies],
         typeClient: 'HYB'
-      })
+      }
+      setResultat(resultat)
+
+      // Sauvegarder en base
+      setSaving(true)
+      try {
+        await sauvegarderSimulation({
+          montantTotal: services_montant,
+          servicesChoisis: optionsChoisies,
+          consommationPrevue: null,
+          typeClient: 'HYB',
+        })
+        setSaveMessage({ type: 'success', text: 'Simulation enregistrée dans votre historique.' })
+      } catch (saveErr) {
+        setSaveMessage({ type: 'error', text: 'Simulation calculée mais non enregistrée (erreur réseau).' })
+      } finally {
+        setSaving(false)
+      }
     } catch {
       setErreur('Erreur lors de la simulation. Réessayez.')
     } finally {
@@ -144,22 +163,40 @@ export default function Simulation() {
     }
 
     setChargement(true)
+    setSaveMessage(null)
     try {
-      // Calcul selon les PALIERS de tarification
       const montantAppels = calculerMontantVoixMinutes(minutes)
       const montantSms = calculerMontantSms(sms)
       const montantData = calculerMontantData(dataGo)
+      const montantTotal = montantAppels + montantSms + montantData + services_montant
 
-      setResultat({
+      const resultat = {
         montantAppels,
         montantSms,
         montantData,
         montantServices: services_montant,
-        montantTotal: montantAppels + montantSms + montantData + services_montant,
+        montantTotal,
         servicesChoisis: [...optionsChoisies],
         consommationPrevue: { minutes, sms, dataGo },
         typeClient: 'OP'
-      })
+      }
+      setResultat(resultat)
+
+      // Sauvegarder en base
+      setSaving(true)
+      try {
+        await sauvegarderSimulation({
+          montantTotal,
+          servicesChoisis: optionsChoisies,
+          consommationPrevue: { minutes, sms, dataGo },
+          typeClient: 'OP',
+        })
+        setSaveMessage({ type: 'success', text: 'Simulation enregistrée dans votre historique.' })
+      } catch (saveErr) {
+        setSaveMessage({ type: 'error', text: 'Simulation calculée mais non enregistrée (erreur réseau).' })
+      } finally {
+        setSaving(false)
+      }
     } catch {
       setErreur('Erreur lors de la simulation. Réessayez.')
     } finally {
@@ -625,7 +662,22 @@ export default function Simulation() {
                 <span>Montant total estimé</span>
                 <span className="resultat-montant">{resultat.montantTotal?.toLocaleString('fr-FR')} FCFA</span>
               </div>
-              
+
+              {saveMessage && (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  background: saveMessage.type === 'success' ? '#d1fae5' : '#fee2e2',
+                  color: saveMessage.type === 'success' ? '#065f46' : '#991b1b',
+                  borderLeft: `4px solid ${saveMessage.type === 'success' ? '#10b981' : '#ef4444'}`,
+                }}>
+                  {saveMessage.type === 'success' ? '✅' : '⚠️'} {saveMessage.text}
+                </div>
+              )}
+
               <p className="resultat-note">
                 {resultat.typeClient === 'HYB' 
                   ? "Cette simulation est basée sur votre consommation réelle passée, plus les services optionnels sélectionnés."

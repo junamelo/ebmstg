@@ -66,7 +66,8 @@ export default function DashboardPayeur() {
           <div className="hero-card__role">Espace Entreprise</div>
           <h1 className="hero-card__greeting">Bonjour, {user?.prenom} 👋</h1>
           <p className="hero-card__sub">
-            <strong>{user?.raisonSociale}</strong> · Contrat {user?.numeroContrat}
+            <strong>{stats.raisonSociale || user?.email}</strong>
+            {stats.numeroContrat && <> · Contrat {stats.numeroContrat}</>}
           </p>
           <div className="hero-card__badges">
             <span className="hero-card__badge hero-card__badge--success">
@@ -92,7 +93,7 @@ export default function DashboardPayeur() {
         <div className="info-grid">
           <div className="info-item">
             <span className="info-label">Numéro de contrat</span>
-            <span className="info-value">{user?.numeroContrat}</span>
+            <span className="info-value">{stats.numeroContrat || '—'}</span>
           </div>
           <div className="info-item">
             <span className="info-label">Lignes actives</span>
@@ -100,7 +101,7 @@ export default function DashboardPayeur() {
           </div>
           <div className="info-item">
             <span className="info-label">Catégorie</span>
-            <span className="info-value">{stats.categorieClient || 'Non définie'}</span>
+            <span className="info-value">{stats.categorieClient || '—'}</span>
           </div>
         </div>
       </div>
@@ -127,7 +128,7 @@ export default function DashboardPayeur() {
       <div className="card">
         <div className="card-header flex-between">
           <h2 className="card-title">Consommation des lignes</h2>
-          <Link to="/factures" className="btn btn-outline btn-sm">Voir les factures sommaires</Link>
+          <Link to="/lignes" className="btn btn-outline btn-sm">Voir mes lignes</Link>
         </div>
         <div className="table-container">
           <table>

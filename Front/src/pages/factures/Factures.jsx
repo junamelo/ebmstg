@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { getFactures, getFacturePdfUrl, telechargerFacture } from '../../services/factureService'
-import PdfViewer from '../../components/common/PdfViewer'
+import { getFactures, telechargerFacture, ouvrirApercuFacture } from '../../services/factureService'
 import './Factures.css'
 
 // ── Constantes ───────────────────────────────────────────────
@@ -83,7 +82,7 @@ function GrilleDossiers({ items }) {
 }
 
 // ── Card facture ─────────────────────────────────────────────
-function FactureCard({ facture, onVoir }) {
+function FactureCard({ facture }) {
   const isPaid = facture.statut === 'PAYEE'
   const isLate = facture.statut === 'EN_RETARD'
   const initiales = (facture.ligneOuFlotte || facture.numero).slice(0, 2).toUpperCase()
@@ -137,7 +136,7 @@ function FactureCard({ facture, onVoir }) {
         </div>
       </div>
       <div className="facture-card__actions">
-        <button className="facture-card__btn-view" onClick={() => onVoir(facture)}>
+        <button className="facture-card__btn-view" onClick={() => ouvrirApercuFacture(facture.id, facture.numero)}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
           </svg>
@@ -172,7 +171,6 @@ export default function Factures() {
   const { isPayeur } = useAuth()
   const [toutesFactures, setToutesFactures] = useState([])
   const [chargement, setChargement] = useState(true)
-  const [factureSelectionnee, setFactureSelectionnee] = useState(null)
   const nav = useExplorateur()
   
   // Pagination
@@ -338,7 +336,7 @@ export default function Factures() {
             <>
               <div className="factures-grid">
                 {facturesPaginees.map(f => (
-                  <FactureCard key={f.id} facture={f} onVoir={setFactureSelectionnee} />
+                  <FactureCard key={f.id} facture={f} />
                 ))}
               </div>
               
@@ -423,18 +421,6 @@ export default function Factures() {
         </>
       )}
 
-      {/* PDF Viewer */}
-      {factureSelectionnee && (
-        <PdfViewer
-          url={factureSelectionnee.pdfUrl || getFacturePdfUrl(factureSelectionnee.id)}
-          numeroFacture={factureSelectionnee.numero}
-          onClose={() => setFactureSelectionnee(null)}
-          onTelecharger={() => {
-            telechargerFacture(factureSelectionnee.id, factureSelectionnee.numero)
-            setFactureSelectionnee(null)
-          }}
-        />
-      )}
     </div>
   )
 }

@@ -28,7 +28,7 @@ class PDFProcessor:
     # empêchait le rapprochement des lignes 79xxxxxx.
     MSISDN_PATTERN = r'\b([79][0-9]{7})\b'
     COMPTE_PATTERN = r'\b(A[0-9]{7}|C26[A-Z0-9]{6,10})\b'  # Compte Moov (format A + 7 chiffres OU C26...)
-    NUMERO_FACTURE_PATTERN = r'\b(A[0-9]{11,}|FAC-[A-Z0-9\-]+)\b'  # Numéro facture (format A202606... ou FAC-...)
+    NUMERO_FACTURE_PATTERN = r'\b((?:A[0-9]{11,}|FAC-[A-Z0-9\-]+|[A-Z]{3,}[0-9]{8,}))\b'
     
     # Limites de sécurité
     MAX_PAGES = 1000  # Limite de pages par PDF
@@ -154,6 +154,12 @@ class PDFProcessor:
         facture_match = re.search(cls.NUMERO_FACTURE_PATTERN, text)
         if facture_match:
             identifiers['numero_facture'] = facture_match.group(1)
+
+        dates = re.findall(r'\b(\d{2}/\d{2}/\d{4})\b', text)
+        if len(dates) >= 3:
+            # Dans la mise en page Moov : début période, fin période, édition,
+            # puis échéance.
+            identifiers['date_emission_pdf'] = dates[2]
         
         return identifiers
     
@@ -625,6 +631,14 @@ class PDFMatcher:
                         ).first()
                         if line:
                             invoice.line = line
+
+                    if identifiers.get('numero_facture'):
+                        invoice.numero_facture_pdf = identifiers['numero_facture']
+                    if identifiers.get('date_emission_pdf'):
+                        from datetime import datetime
+                        invoice.date_emission_pdf = datetime.strptime(
+                            identifiers['date_emission_pdf'], '%d/%m/%Y'
+                        ).date()
 
                     if invoice.statut == 'EN_COURS':
                         invoice.statut = 'VALIDEE'

@@ -9,7 +9,7 @@ from django.db.models import Q, Count, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
-from .models import Company, Line, Package, Service, TarifService, Commercial, AuditContrat
+from .models import Company, Line, Package, Service, TarifService, Commercial, AuditContrat, Simulation
 from .serializers import CommercialSerializer, CommercialCreateSerializer, AuditContratSerializer
 from .serializers import (
     CompanySerializer, CompanyListSerializer, CompanyCreateSerializer,
@@ -24,7 +24,8 @@ from .serializers import (
     HistoriqueFacturationSerializer, PublicationSerializer,
     PublicationListSerializer, PublicationCreateSerializer,
     PublishInvoicesSerializer, UploadPDFSerializer, BulkPDFUploadSerializer,
-    InvoiceStatsSerializer
+    InvoiceStatsSerializer,
+    SimulationSerializer, SimulationCreateSerializer
 )
 from accounts.permissions import (
     IsAgentFacturation, CanManageUser, CanManageTarifs, CanManageServices,
@@ -744,6 +745,76 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         return super().destroy(request, *args, **kwargs)
+
+    @action(detail=True, methods=['get'], url_path='pdf-preview')
+    def preview_pdf(self, request, pk=None):
+        """Retourne le PDF encodé pour contourner les intercepteurs de téléchargements."""
+        import base64
+        import os
+
+        invoice = self.get_object()
+        if not invoice.fichier_pdf or not invoice.fichier_pdf.name:
+            return Response({'error': 'Aucun PDF associé à cette facture'}, status=status.HTTP_404_NOT_FOUND)
+        if not os.path.exists(invoice.fichier_pdf.path):
+            return Response({'error': 'Le fichier PDF est introuvable sur le serveur'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            with invoice.fichier_pdf.open('rb') as pdf_file:
+                contenu = base64.b64encode(pdf_file.read()).decode('ascii')
+            return Response({
+                'filename': f'{invoice.numero_facture}.pdf',
+                'content_base64': contenu,
+            })
+        except OSError:
+            return Response({'error': 'Erreur lors de la lecture du fichier PDF'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @extend_schema(
+        summary="Télécharger le PDF d'une facture",
+        description="Téléchargement sécurisé du PDF de la facture. Vérifie les droits d'accès.",
+        responses={
+            200: {'description': 'PDF de la facture', 'content': {'application/pdf': {}}},
+            403: {'description': 'Accès interdit'},
+            404: {'description': 'Facture ou PDF non trouvé'}
+        }
+    )
+    @action(detail=True, methods=['get'], url_path='pdf')
+    def download_pdf(self, request, pk=None):
+        """
+        Endpoint sécurisé pour télécharger le PDF d'une facture.
+        Vérifie que l'utilisateur a le droit d'accéder à cette facture.
+        """
+        from django.http import FileResponse, Http404
+        import os
+        
+        invoice = self.get_object()  # Utilise get_queryset() donc déjà filtré par rôle
+        
+        # Vérifier que le PDF existe
+        if not invoice.fichier_pdf or not invoice.fichier_pdf.name:
+            return Response(
+                {'error': 'Aucun PDF associé à cette facture'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Vérifier que le fichier existe physiquement
+        if not os.path.exists(invoice.fichier_pdf.path):
+            return Response(
+                {'error': 'Le fichier PDF est introuvable sur le serveur'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Retourner le PDF avec le bon Content-Type
+        try:
+            response = FileResponse(
+                invoice.fichier_pdf.open('rb'),
+                content_type='application/pdf'
+            )
+            response['Content-Disposition'] = f'inline; filename="{invoice.numero_facture}.pdf"'
+            return response
+        except Exception as e:
+            return Response(
+                {'error': f'Erreur lors de la lecture du fichier : {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @extend_schema(
         summary="Générer des factures en masse",
@@ -1073,6 +1144,9 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         from decimal import Decimal
         
         invoice_ids = request.data.get('invoice_ids', [])
+        notification_channels = request.data.get('notification_channels', [])
+        if not isinstance(notification_channels, list) or any(channel not in ['EMAIL', 'SMS'] for channel in notification_channels):
+            return Response({'error': 'Canaux de notification invalides'}, status=status.HTTP_400_BAD_REQUEST)
         
         if not invoice_ids:
             return Response(
@@ -1193,13 +1267,25 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 publication.montant_total += montant_total
                 publication.save()
         
+        notifications = []
+        if notification_channels:
+            from .services.notification_service import notifier_facture
+            for facture in factures:
+                notifications.extend(notifier_facture(facture, notification_channels))
+
         return Response({
             'message': f'{len(factures_publiees_ids)} facture(s) publiée(s) avec succès',
             'factures_publiees': len(factures_publiees_ids),
             'factures_publiees_ids': factures_publiees_ids,
             'montant_total': float(montant_total),
             'publication_id': str(publication.id),
-            'publication_created': created
+            'publication_created': created,
+            'notifications': {
+                'demandee': bool(notification_channels),
+                'envoyees': sum(item.statut == 'ENVOYEE' for item in notifications),
+                'non_configurees': sum(item.statut == 'NON_CONFIGUREE' for item in notifications),
+                'echecs': sum(item.statut == 'ECHEC' for item in notifications),
+            }
         }, status=status.HTTP_200_OK)
     
     @extend_schema(
@@ -1457,3 +1543,23 @@ class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
         }
         
         return Response(stats)
+
+
+class SimulationViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les simulations de facturation (Employé + Payeur)"""
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'post', 'head', 'options']  # Pas de PUT/PATCH/DELETE
+    ordering = ['-date_simulation']
+
+    def get_queryset(self):
+        return Simulation.objects.filter(
+            utilisateur=self.request.user
+        ).order_by('-date_simulation')
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return SimulationCreateSerializer
+        return SimulationSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(utilisateur=self.request.user)

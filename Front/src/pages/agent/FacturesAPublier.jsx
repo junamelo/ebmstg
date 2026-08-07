@@ -14,6 +14,7 @@ export default function FacturesAPublier() {
   const [pageCourante, setPageCourante] = useState(1)
   const ITEMS_PAR_PAGE = 10
   const [notifMessage, setNotifMessage] = useState(null)
+  const [notificationChannels, setNotificationChannels] = useState([])
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -72,12 +73,13 @@ export default function FacturesAPublier() {
     try {
       setPublishing(true)
       const response = await api.post('/billing/invoices/publier_masse/', {
-        invoice_ids: selection
+        invoice_ids: selection,
+        notification_channels: notificationChannels
       })
       
       setMessage({
         type: 'success',
-        texte: `✅ ${response.data.factures_publiees} facture(s) publiée(s) avec succès !`
+        texte: `✅ ${response.data.factures_publiees} facture(s) publiée(s) avec succès !${response.data.notifications?.envoyees ? ` ${response.data.notifications.envoyees} notification(s) envoyée(s).` : ''}`
       })
       
       // Recharger la liste
@@ -114,6 +116,12 @@ export default function FacturesAPublier() {
     }
     setNotifMessage(`📧 Notification (mail/SMS) prévue pour ${selection.length} facture(s) — fonctionnalité à implémenter.`)
     setTimeout(() => setNotifMessage(null), 4000)
+  }
+
+  const toggleNotificationChannel = (channel) => {
+    setNotificationChannels(current => current.includes(channel)
+      ? current.filter(item => item !== channel)
+      : [...current, channel])
   }
 
   return (
@@ -203,6 +211,11 @@ export default function FacturesAPublier() {
           </label>
 
           <div className="actions-buttons">
+            <div className="notification-choice" title="Les notifications seront envoyées après la publication">
+              <span>Notifier après publication :</span>
+              <label><input type="checkbox" checked={notificationChannels.includes('EMAIL')} onChange={() => toggleNotificationChannel('EMAIL')} /> E-mail</label>
+              <label><input type="checkbox" checked={notificationChannels.includes('SMS')} onChange={() => toggleNotificationChannel('SMS')} /> SMS</label>
+            </div>
             <button
               className="btn-secondary btn-notif"
               onClick={notifierSelection}

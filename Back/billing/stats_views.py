@@ -374,10 +374,12 @@ def stats_payeur(request):
     # Répartition par ligne
     mes_lignes = Line.objects.filter(company__in=mes_companies)
     
+    # Agrégation correcte : chaque ligne ne montre que SES propres factures
+    # Les factures globales (line=null) ne sont pas incluses ici
     repartition_lignes = list(
         mes_lignes
         .annotate(
-            montant_facture=Sum('company__invoices__montant_ttc')
+            montant_facture=Sum('invoices__montant_ttc')
         )
         .values(
             'id', 'msisdn', 'utilisateur', 'cycle',
@@ -418,15 +420,65 @@ def stats_payeur(request):
         .values_list('statut', 'count')
     )
     
+    # Infos sur la première entreprise (cas le plus fréquent : 1 payeur = 1 company)
+    premiere_company = mes_companies.first()
+    contrat_info = None
+    if premiere_company:
+        CATEGORIES_LABELS = {
+            'GE': 'Grande Entreprise',
+            'PE': 'Petite Entreprise',
+            'P': 'Particulier',
+            'OI': 'Organisme International',
+            'EP': 'Entreprise Publique',
+            'A': 'Association',
+            'NR': 'Non Revenu',
+        }
+        contrat_info = {
+            'compte': premiere_company.compte,
+            'raison_sociale': premiere_company.raison_sociale,
+            'categorie': CATEGORIES_LABELS.get(premiere_company.categorie, premiere_company.categorie),
+            'nombre_entreprises': mes_companies.count(),
+        }
+
+    nombre_lignes_actives = mes_lignes.filter(statut='ACTIF').count()
+    
+    # Factures globales (non liées à une ligne spécifique)
+    # Restent au niveau du contrat uniquement, ne sont pas réparties sur les lignes
+    factures_globales = mes_factures.filter(line__isnull=True)
+    montant_factures_globales = factures_globales.aggregate(
+        total=Sum('montant_ttc')
+    )['total'] or Decimal('0')
+    nombre_factures_globales = factures_globales.count()
+    
+    # Dernières simulations de cet utilisateur
+    dernieres_simulations = Simulation.objects.filter(
+        utilisateur=payeur
+    ).order_by('-date_simulation')[:3]
+    
+    simulations_data = [
+        {
+            'id': str(sim.id),
+            'date_simulation': sim.date_simulation.isoformat(),
+            'montant_estime': float(sim.montant_estime),
+            'services_selectionnes': sim.services_selectionnes,
+            'resultat_detaille': sim.resultat_detaille
+        }
+        for sim in dernieres_simulations
+    ]
+
     return Response({
         'statistiques': {
             'nombre_entreprises': mes_companies.count(),
             'nombre_lignes': mes_lignes.count(),
+            'nombre_lignes_actives': nombre_lignes_actives,
             'total_factures': total_factures,
             'montant_total': float(montant_total),
             'montant_paye': float(montant_paye),
             'montant_en_attente': float(montant_en_attente),
+            'nombre_factures_globales': nombre_factures_globales,
+            'montant_factures_globales': float(montant_factures_globales),
         },
+        'contrat': contrat_info,
         'factures_par_statut': factures_par_statut,
         'evolution_mensuelle': [
             {
@@ -446,6 +498,7 @@ def stats_payeur(request):
                 'montant_total', 'nombre_lignes'
             )
         ),
+        'dernieres_simulations': simulations_data,
     })
 
 
@@ -539,13 +592,16 @@ def stats_employe(request):
         ],
         'simulations': {
             'total': mes_simulations.count(),
-            'dernieres': list(
-                mes_simulations
+            'dernieres': [
+                {
+                    'id': str(sim['id']),
+                    'date_simulation': sim['date_simulation'].strftime('%d/%m/%Y %H:%M') if sim['date_simulation'] else '',
+                    'montant_estime': float(sim['montant_estime'] or 0),
+                    'services_selectionnes': sim['services_selectionnes'],
+                }
+                for sim in mes_simulations
                 .order_by('-date_simulation')[:5]
-                .values(
-                    'id', 'date_simulation', 'montant_estime',
-                    'services_selectionnes'
-                )
-            )
+                .values('id', 'date_simulation', 'montant_estime', 'services_selectionnes')
+            ]
         },
     })

@@ -364,6 +364,7 @@ class Invoice(models.Model):
         verbose_name='Ligne concernée'
     )
     numero_facture = models.CharField(max_length=50, unique=True, verbose_name='Numéro de facture')
+    numero_facture_pdf = models.CharField(max_length=100, blank=True, default='', verbose_name='Numéro facture PDF')
     periode_debut = models.DateField(verbose_name='Début de période')
     periode_fin = models.DateField(verbose_name='Fin de période')
     montant_ht = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name='Montant HT (FCFA)')
@@ -376,6 +377,7 @@ class Invoice(models.Model):
         verbose_name='Statut'
     )
     date_emission = models.DateTimeField(auto_now_add=True, verbose_name='Date d\'émission')
+    date_emission_pdf = models.DateField(null=True, blank=True, verbose_name='Date édition PDF')
     date_echeance = models.DateField(verbose_name='Date d\'échéance')
     fichier_pdf = models.FileField(
         upload_to='factures/',
@@ -395,6 +397,30 @@ class Invoice(models.Model):
     
     def __str__(self):
         return f"{self.numero_facture} - {self.company.raison_sociale}"
+
+
+class NotificationFacture(models.Model):
+    """Trace les notifications de disponibilité envoyées pour une facture."""
+    class Canal(models.TextChoices):
+        EMAIL = 'EMAIL', 'E-mail'
+        SMS = 'SMS', 'SMS'
+
+    class Statut(models.TextChoices):
+        ENVOYEE = 'ENVOYEE', 'Envoyée'
+        ECHEC = 'ECHEC', 'Échec'
+        NON_CONFIGUREE = 'NON_CONFIGUREE', 'Service non configuré'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='notifications')
+    canal = models.CharField(max_length=10, choices=Canal.choices)
+    destinataire = models.CharField(max_length=254)
+    statut = models.CharField(max_length=20, choices=Statut.choices)
+    detail = models.TextField(blank=True)
+    date_envoi = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'notifications_factures'
+        ordering = ['-date_envoi']
 
 
 class HistoriqueFacturation(models.Model):

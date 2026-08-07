@@ -146,11 +146,24 @@ export const getStatsPayeur = async () => {
   const response = await api.get('/billing/stats/payeur/')
   const data = response.data
   const stats = data.statistiques || {}
+  const contrat = data.contrat || null
   return {
     ...data,
-    nombreLignesActives: stats.nombre_lignes || 0,
+    // Infos du contrat (vraies données)
+    numeroContrat: contrat?.compte || null,
+    raisonSociale: contrat?.raison_sociale || null,
+    categorieClient: contrat?.categorie || null,
+    nombreEntreprises: contrat?.nombre_entreprises || 0,
+    // Lignes
+    nombreLignesActives: stats.nombre_lignes_actives || 0,
+    nombreLignesTotal: stats.nombre_lignes || 0,
+    // Tableau des lignes pour le dashboard (avec montant réel)
     lignesDetail: (data.lignes_a_surveiller || []).map(ligne => ({
-      ...ligne, montant: ligne.montant_facture || 0, forfait: '-', statut: 'ACTIF'
+      msisdn: ligne.msisdn,
+      utilisateur: ligne.utilisateur || '—',
+      forfait: ligne.cycle || '—',
+      montant: ligne.montant_facture || 0,
+      statut: 'ACTIF',
     })),
     lignesASurveiller: [],
     dernieresSimulations: [],
