@@ -36,6 +36,14 @@ class IsPayeur(permissions.BasePermission):
         return request.user and request.user.is_authenticated and request.user.role == 'PAYEUR'
 
 
+class IsCommercial(permissions.BasePermission):
+    """
+    Permission pour les commerciaux
+    """
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.role == 'COMMERCIAL'
+
+
 class IsEmploye(permissions.BasePermission):
     """
     Permission pour les employés
@@ -199,9 +207,9 @@ class CanManageInvoices(permissions.BasePermission):
         if not request.user or not request.user.is_authenticated:
             return False
         
-        # Lecture : Admin, Chef, Agent, Payeur (ses factures)
+        # Lecture : Admin, Chef, Agent, Payeur/Employé/Commercial (leurs données)
         if request.method in permissions.SAFE_METHODS:
-            return request.user.role in ['SUPER_ADMIN', 'CHEF_FACTURATION', 'AGENT_FACTURATION', 'PAYEUR', 'EMPLOYE']
+            return request.user.role in ['SUPER_ADMIN', 'CHEF_FACTURATION', 'AGENT_FACTURATION', 'PAYEUR', 'EMPLOYE', 'COMMERCIAL']
         
         # Écriture : Admin, Chef, Agent uniquement
         return request.user.role in ['SUPER_ADMIN', 'CHEF_FACTURATION', 'AGENT_FACTURATION']

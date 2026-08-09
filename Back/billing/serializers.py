@@ -2,39 +2,213 @@
 Serializers pour l'application billing
 """
 from rest_framework import serializers
+from django.db import transaction
 from .models import (
     Company, Line, Package, Service, TarifService,
     CategorieClient, CycleFacturation, TypeForfait, TypeService
 )
-from .models import Commercial, AuditContrat, ModeReglement, StatutFacturation
+from .models import Commercial, ContractRequest, AuditContrat, ModeReglement, StatutFacturation
 from .models import Simulation as SimulationModel
 from accounts.models import User
+
+MOOV_PREFIXES = ('78', '79', '96', '97', '98', '99')
+
+
+def normalize_phone(value):
+    return ''.join(ch for ch in str(value or '') if ch.isdigit())
+
+
+def validate_moov_phone(value, field_label='numéro'):
+    numero = normalize_phone(value)
+    if len(numero) != 8 or not numero.startswith(MOOV_PREFIXES):
+        raise serializers.ValidationError(
+            f"{field_label.capitalize()} invalide. Format attendu : 8 chiffres avec préfixe Moov ({', '.join(MOOV_PREFIXES)})."
+        )
+    return numero
 
 
 class CommercialSerializer(serializers.ModelSerializer):
     nombre_contrats = serializers.SerializerMethodField()
+    identifiant_connexion = serializers.SerializerMethodField()
 
     class Meta:
         model = Commercial
         fields = [
-            'id', 'nom', 'prenom', 'matricule', 'telephone', 'email',
+            'id', 'user', 'nom', 'prenom', 'matricule', 'telephone', 'email',
+            'identifiant_connexion',
             'est_actif', 'nombre_contrats', 'date_creation', 'date_modification'
         ]
-        read_only_fields = ['id', 'date_creation', 'date_modification']
+        read_only_fields = ['id', 'user', 'date_creation', 'date_modification', 'identifiant_connexion']
 
     def get_nombre_contrats(self, obj):
         return obj.contrats.count()
 
-
-class CommercialCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Commercial
-        fields = ['nom', 'prenom', 'matricule', 'telephone', 'email']
+    def get_identifiant_connexion(self, obj):
+        return obj.user.username if obj.user else None
 
     def validate_matricule(self, value):
-        if Commercial.objects.filter(matricule=value).exists():
+        matricule = (value or '').strip().upper()
+        if len(matricule) > 6:
+            raise serializers.ValidationError("Le matricule commercial ne doit pas dépasser 6 caractères.")
+        qs = Commercial.objects.filter(matricule=matricule)
+        if self.instance:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
             raise serializers.ValidationError("Ce matricule est déjà utilisé.")
+        return matricule
+
+    def validate_telephone(self, value):
+        return validate_moov_phone(value, 'numéro de téléphone')
+
+    def update(self, instance, validated_data):
+        ancien_telephone = normalize_phone(instance.telephone)
+        nouveau_telephone = validate_moov_phone(validated_data.get('telephone', instance.telephone), 'numéro de téléphone')
+        email = validated_data.get('email', instance.email)
+
+        if instance.user:
+            if nouveau_telephone and nouveau_telephone != ancien_telephone:
+                if User.objects.filter(username=nouveau_telephone).exclude(id=instance.user.id).exists():
+                    raise serializers.ValidationError({'telephone': "Ce numéro est déjà utilisé comme identifiant de connexion."})
+                instance.user.username = nouveau_telephone
+
+            instance.user.first_name = validated_data.get('prenom', instance.prenom)
+            instance.user.last_name = validated_data.get('nom', instance.nom)
+            instance.user.telephone = nouveau_telephone or instance.user.telephone
+            if email:
+                instance.user.email = email
+            instance.user.save()
+
+        return super().update(instance, validated_data)
+
+
+class CommercialCreateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=6)
+
+    class Meta:
+        model = Commercial
+        fields = ['nom', 'prenom', 'matricule', 'telephone', 'email', 'password']
+
+    def validate_matricule(self, value):
+        matricule = (value or '').strip().upper()
+        if len(matricule) > 6:
+            raise serializers.ValidationError("Le matricule commercial ne doit pas dépasser 6 caractères.")
+        if Commercial.objects.filter(matricule=matricule).exists():
+            raise serializers.ValidationError("Ce matricule est déjà utilisé.")
+        return matricule
+
+    def validate_telephone(self, value):
+        if not (value or '').strip():
+            raise serializers.ValidationError("Le numéro de téléphone est obligatoire pour créer le compte de connexion.")
+        telephone = validate_moov_phone(value, 'numéro de téléphone')
+        if User.objects.filter(username=telephone).exists():
+            raise serializers.ValidationError("Ce numéro est déjà utilisé comme identifiant de connexion.")
+        return telephone
+
+    def validate_email(self, value):
+        if value and User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Cet email est déjà utilisé.")
         return value
+
+    @transaction.atomic
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        telephone = validated_data.get('telephone', '').strip()
+        nom = validated_data.get('nom', '')
+        prenom = validated_data.get('prenom', '')
+        email = validated_data.get('email', '')
+
+        user = User.objects.create(
+            username=telephone,
+            email=email or '',
+            first_name=prenom,
+            last_name=nom,
+            telephone=telephone,
+            role='COMMERCIAL',
+            status='ACTIF',
+            est_actif=True,
+        )
+        user.set_password(password)
+        user.save()
+
+        commercial = Commercial.objects.create(user=user, **validated_data)
+        return commercial
+
+
+class ContractRequestSerializer(serializers.ModelSerializer):
+    commercial_nom = serializers.SerializerMethodField()
+    submitted_by_name = serializers.SerializerMethodField()
+    decision_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ContractRequest
+        fields = [
+            'id', 'commercial', 'commercial_nom', 'submitted_by', 'submitted_by_name',
+            'compte_propose', 'raison_sociale', 'payload', 'statut', 'decision_by',
+            'decision_by_name', 'decision_comment', 'company', 'date_soumission', 'date_decision'
+        ]
+        read_only_fields = fields
+
+    def get_commercial_nom(self, obj):
+        return f'{obj.commercial.prenom} {obj.commercial.nom}'
+
+    def get_submitted_by_name(self, obj):
+        return f'{obj.submitted_by.first_name} {obj.submitted_by.last_name}'.strip() or obj.submitted_by.username
+
+    def get_decision_by_name(self, obj):
+        if not obj.decision_by:
+            return None
+        return f'{obj.decision_by.first_name} {obj.decision_by.last_name}'.strip() or obj.decision_by.username
+
+
+class ContractRequestCreateSerializer(serializers.Serializer):
+    payeur = serializers.DictField()
+    contrat = serializers.DictField()
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        if user.role != 'COMMERCIAL' or not hasattr(user, 'profil_commercial'):
+            raise serializers.ValidationError('Seul un commercial disposant d’un profil peut soumettre une demande.')
+        contrat = attrs['contrat']
+        payeur = attrs['payeur']
+        compte = str(contrat.get('compte', '')).strip().upper()
+        if not compte:
+            raise serializers.ValidationError({'contrat': {'compte': 'Le code contrat est obligatoire.'}})
+        if Company.objects.filter(compte=compte).exists() or ContractRequest.objects.filter(compte_propose=compte, statut='PENDING').exists():
+            raise serializers.ValidationError({'contrat': {'compte': 'Ce code est déjà utilisé ou en attente de validation.'}})
+        telephone = validate_moov_phone(payeur.get('telephone'), 'numéro de téléphone')
+        if User.objects.filter(username=telephone).exists():
+            raise serializers.ValidationError({'payeur': {'telephone': 'Ce numéro est déjà utilisé.'}})
+        username = str(payeur.get('username') or telephone).strip()
+        if User.objects.filter(username=username).exists():
+            raise serializers.ValidationError({'payeur': {'username': 'Cet identifiant est déjà utilisé.'}})
+        email = str(payeur.get('email') or '').strip()
+        if email and User.objects.filter(email=email).exists():
+            raise serializers.ValidationError({'payeur': {'email': 'Cet e-mail est déjà utilisé.'}})
+        if not payeur.get('password'):
+            raise serializers.ValidationError({'payeur': {'password': 'Le mot de passe est obligatoire.'}})
+        attrs['compte'] = compte
+        attrs['telephone'] = telephone
+        return attrs
+
+    def create(self, validated_data):
+        from django.contrib.auth.hashers import make_password
+
+        user = self.context['request'].user
+        payeur = validated_data['payeur'].copy()
+        contrat = validated_data['contrat'].copy()
+        raw_password = payeur.pop('password')
+        payeur['telephone'] = validated_data['telephone']
+        contrat['compte'] = validated_data['compte']
+        # Le commercial est imposé côté serveur, jamais reçu du navigateur.
+        contrat.pop('commercial', None)
+        return ContractRequest.objects.create(
+            commercial=user.profil_commercial,
+            submitted_by=user,
+            compte_propose=validated_data['compte'],
+            raison_sociale=contrat.get('raison_sociale', ''),
+            payload={'payeur': payeur, 'contrat': contrat},
+            password_payeur_hash=make_password(raw_password),
+        )
 
 
 class AuditContratSerializer(serializers.ModelSerializer):
@@ -207,6 +381,18 @@ class LineSerializer(serializers.ModelSerializer):
             }
         return None
 
+    def validate_msisdn(self, value):
+        msisdn = validate_moov_phone(value, 'numéro de ligne')
+        qs = Line.objects.filter(msisdn=msisdn)
+        if self.instance:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            existing = qs.select_related('company').first()
+            raise serializers.ValidationError(
+                f"Ce numéro existe déjà (contrat {existing.company.compte}, statut {existing.statut})."
+            )
+        return msisdn
+
 
 class LineListSerializer(serializers.ModelSerializer):
     """Serializer simplifié pour la liste des lignes"""
@@ -254,6 +440,7 @@ class CompanySerializer(serializers.ModelSerializer):
                 'id': obj.payeur.id,
                 'nom': f"{obj.payeur.first_name} {obj.payeur.last_name}",
                 'email': obj.payeur.email,
+                'telephone': obj.payeur.telephone,
                 'username': obj.payeur.username
             }
         return None
@@ -334,13 +521,18 @@ class CompanyCreateSerializer(serializers.ModelSerializer):
     
     def validate_compte(self, value):
         """Valider le numéro de compte"""
-        if Company.objects.filter(compte=value).exists():
+        compte = (value or '').strip().upper()
+        if not compte:
+            raise serializers.ValidationError("Le numéro de contrat est obligatoire")
+        if Company.objects.filter(compte=compte).exists():
             raise serializers.ValidationError("Ce numéro de compte existe déjà")
-        return value
+        return compte
     
     def validate_payeur(self, value):
-        """Valider que le payeur a le bon rôle"""
-        if value and value.role != 'PAYEUR':
+        """Valider que le payeur est obligatoire et a le bon rôle"""
+        if not value:
+            raise serializers.ValidationError("Le payeur est obligatoire pour créer un contrat.")
+        if value.role != 'PAYEUR':
             raise serializers.ValidationError("L'utilisateur doit avoir le rôle PAYEUR")
         return value
 
@@ -378,10 +570,14 @@ class LineCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate_msisdn(self, value):
-        """Valider l'unicité du MSISDN"""
-        if Line.objects.filter(msisdn=value).exists():
-            raise serializers.ValidationError("Ce numéro de ligne existe déjà")
-        return value
+        """Valider format Moov + unicité globale du MSISDN"""
+        msisdn = validate_moov_phone(value, 'numéro de ligne')
+        existing = Line.objects.filter(msisdn=msisdn).select_related('company').first()
+        if existing:
+            raise serializers.ValidationError(
+                f"Ce numéro existe déjà (contrat {existing.company.compte}, statut {existing.statut})."
+            )
+        return msisdn
     
     def validate_employe(self, value):
         """Valider que l'employé a le bon rôle"""

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import api from '../../../services/api'
 
-export default function ModalNouveauContrat({ onClose, onCreate }) {
+export default function ModalNouveauContrat({ onClose, onCreate, commercialMode = false }) {
   const [step, setStep] = useState(1) // 1 = Identité, 2 = Contrat, 3 = Services
   const [commerciaux, setCommerciaux] = useState([])
   const [tarifsNoLimit, setTarifsNoLimit] = useState([])
@@ -11,17 +11,19 @@ export default function ModalNouveauContrat({ onClose, onCreate }) {
   const [errors, setErrors] = useState({})
 
   const [form, setForm] = useState({
-    // Identité
+    // Identité + compte payeur
     typePayeur: 'ENTREPRISE',
     raisonSociale: '',
     nom: '',
     prenom: '',
     email: '',
     telephone: '',
+    motDePassePayeur: '',
     adresse: '',
     adresse_ligne2: '',
     email_facturation: '',
     // Contrat
+    numeroContrat: '',
     categorie: 'PE',
     commercial: '',
     mode_reglement: 'VIREMENT',
@@ -47,7 +49,7 @@ export default function ModalNouveauContrat({ onClose, onCreate }) {
     document.body.style.overflow = 'hidden'
 
     Promise.all([
-      api.get('/billing/commerciaux/', { params: { est_actif: true } }),
+      commercialMode ? Promise.resolve({ data: [] }) : api.get('/billing/commerciaux/', { params: { est_actif: true } }),
       api.get('/billing/tarifs/', { params: { actif_only: true } })
     ])
       .then(([respCommerciaux, respTarifs]) => {
@@ -86,18 +88,27 @@ export default function ModalNouveauContrat({ onClose, onCreate }) {
   const inputCls = (field) =>
     `w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#002a7a] outline-none ${errors[field] ? 'border-red-400' : 'border-zinc-300'}`
 
+  const validerNumeroMoov = (value) => {
+    const numero = String(value || '').replace(/\D/g, '')
+    return /^(78|79|96|97|98|99)\d{6}$/.test(numero)
+  }
+
   const validerStep1 = () => {
     const errs = {}
     if (form.typePayeur === 'ENTREPRISE' && !form.raisonSociale.trim()) errs.raisonSociale = 'Obligatoire'
     if (form.typePayeur === 'PARTICULIER' && !form.nom.trim()) errs.nom = 'Obligatoire'
     if (form.typePayeur === 'PARTICULIER' && !form.prenom.trim()) errs.prenom = 'Obligatoire'
+    if (!form.telephone.trim()) errs.telephone = 'Obligatoire'
+    else if (!validerNumeroMoov(form.telephone)) errs.telephone = 'Numéro Moov invalide (8 chiffres, préfixe 78/79/96/97/98/99)'
+    if (!form.motDePassePayeur.trim()) errs.motDePassePayeur = 'Mot de passe payeur obligatoire'
     return errs
   }
 
   const validerStep2 = () => {
     const errs = {}
+    if (!form.numeroContrat.trim()) errs.numeroContrat = 'Numéro de contrat obligatoire'
     if (!form.categorie) errs.categorie = 'Obligatoire'
-    if (!form.commercial) errs.commercial = 'Obligatoire'
+    if (!commercialMode && !form.commercial) errs.commercial = 'Obligatoire'
     if (!form.mode_reglement) errs.mode_reglement = 'Obligatoire'
     if (form.date_effet && form.date_fin && form.date_fin < form.date_effet)
       errs.date_fin = 'La date de fin doit être postérieure à la date d\'effet'
@@ -117,41 +128,54 @@ export default function ModalNouveauContrat({ onClose, onCreate }) {
     e.preventDefault()
     setSaving(true)
     try {
+      const identitePayeur = form.typePayeur === 'ENTREPRISE'
+        ? { prenom: 'Compte', nom: form.raisonSociale }
+        : { prenom: form.prenom, nom: form.nom }
+
       const payload = {
-        compte: genererNumeroContrat(),
-        raison_sociale: form.typePayeur === 'ENTREPRISE' ? form.raisonSociale : `${form.prenom} ${form.nom}`,
-        nom_commercial: form.typePayeur === 'ENTREPRISE' ? form.raisonSociale : `${form.prenom} ${form.nom}`,
-        categorie: form.categorie,
-        commercial: form.commercial || null,
-        mode_reglement: form.mode_reglement,
-        adresse: form.adresse,
-        adresse_ligne2: form.adresse_ligne2,
-        email_facturation: form.email_facturation || form.email,
-        date_effet: form.date_effet || null,
-        date_fin: form.date_fin || null,
-        observation: form.observation,
-        type_revenu: form.type_revenu,
-        est_exonere: form.est_exonere,
-        facture_detaillee_defaut: form.facture_detaillee_defaut,
-        option_nolimit_defaut: form.option_nolimit_defaut,
-        option_blackberry_defaut: form.option_blackberry_defaut,
-        est_incognito_defaut: form.est_incognito_defaut,
-        roaming_defaut: form.roaming_defaut,
-        internet_defaut: form.internet_defaut,
-        international_defaut: form.international_defaut,
-        est_non_revenu_defaut: form.est_non_revenu_defaut,
+        payeur: {
+          username: form.numeroContrat.trim().toUpperCase(),
+          email: form.email || `${form.numeroContrat.trim().toLowerCase()}@moov.tg`,
+          password: form.motDePassePayeur,
+          first_name: identitePayeur.prenom,
+          last_name: identitePayeur.nom,
+          role: 'PAYEUR',
+          telephone: String(form.telephone || '').replace(/\D/g, ''),
+        },
+        contrat: {
+          compte: form.numeroContrat.trim().toUpperCase(),
+          raison_sociale: form.typePayeur === 'ENTREPRISE' ? form.raisonSociale : `${form.prenom} ${form.nom}`,
+          nom_commercial: form.typePayeur === 'ENTREPRISE' ? form.raisonSociale : `${form.prenom} ${form.nom}`,
+          categorie: form.categorie,
+          commercial: commercialMode ? null : (form.commercial || null),
+          mode_reglement: form.mode_reglement,
+          adresse: form.adresse,
+          adresse_ligne2: form.adresse_ligne2,
+          email_facturation: form.email_facturation || form.email,
+          date_effet: form.date_effet || null,
+          date_fin: form.date_fin || null,
+          observation: form.observation,
+          type_revenu: form.type_revenu,
+          est_exonere: form.est_exonere,
+          facture_detaillee_defaut: form.facture_detaillee_defaut,
+          option_nolimit_defaut: form.option_nolimit_defaut,
+          option_blackberry_defaut: form.option_blackberry_defaut,
+          est_incognito_defaut: form.est_incognito_defaut,
+          roaming_defaut: form.roaming_defaut,
+          internet_defaut: form.internet_defaut,
+          international_defaut: form.international_defaut,
+          est_non_revenu_defaut: form.est_non_revenu_defaut,
+        }
       }
       await onCreate(payload)
+    } catch (error) {
+      setErrors(current => ({ ...current, submit: error?.message || 'Impossible d’enregistrer le contrat.' }))
     } finally {
       setSaving(false)
     }
   }
 
-  const genererNumeroContrat = () => {
-    const annee = new Date().getFullYear().toString().slice(-2)
-    const seq = Math.floor(Math.random() * 999999).toString().padStart(6, '0')
-    return `A${annee}${seq}`
-  }
+
 
   const CATEGORIES = [
     { value: 'GE', label: 'Grande Entreprise' },
@@ -189,6 +213,8 @@ export default function ModalNouveauContrat({ onClose, onCreate }) {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
+
+        {errors.submit && <p className="mx-6 mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errors.submit}</p>}
 
         <form onSubmit={handleSubmit} className="overflow-y-auto overscroll-contain flex-1 p-6 space-y-5">
 
@@ -232,13 +258,26 @@ export default function ModalNouveauContrat({ onClose, onCreate }) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Email</label>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Email payeur</label>
                   <input type="email" className={inputCls('email')} value={form.email} onChange={setVal('email')}/>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Téléphone</label>
-                  <input className={inputCls('telephone')} value={form.telephone} onChange={setVal('telephone')}/>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Téléphone payeur *</label>
+                  <input
+                    className={inputCls('telephone')}
+                    value={form.telephone}
+                    onChange={setVal('telephone')}
+                    placeholder="79XXXXXX"
+                    inputMode="numeric"
+                    maxLength={8}
+                  />
+                  {errors.telephone && <p className="text-xs text-red-500 mt-0.5">{errors.telephone}</p>}
                 </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Mot de passe payeur *</label>
+                <input type="password" className={inputCls('motDePassePayeur')} value={form.motDePassePayeur} onChange={setVal('motDePassePayeur')} />
+                {errors.motDePassePayeur && <p className="text-xs text-red-500 mt-0.5">{errors.motDePassePayeur}</p>}
               </div>
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 mb-1">Adresse 1</label>
@@ -256,26 +295,37 @@ export default function ModalNouveauContrat({ onClose, onCreate }) {
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Numéro de contrat *</label>
+                  <input className={inputCls('numeroContrat')} value={form.numeroContrat} onChange={setVal('numeroContrat')} placeholder="A26000001" />
+                  {errors.numeroContrat && <p className="text-xs text-red-500 mt-0.5">{errors.numeroContrat}</p>}
+                </div>
+                <div>
                   <label className="block text-xs font-semibold text-zinc-700 mb-1">Catégorie *</label>
                   <select className={inputCls('categorie')} value={form.categorie} onChange={setVal('categorie')}>
                     {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                   </select>
                   {errors.categorie && <p className="text-xs text-red-500 mt-0.5">{errors.categorie}</p>}
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Commercial *</label>
-                  <select className={inputCls('commercial')} value={form.commercial} onChange={setVal('commercial')}>
-                    <option value="">-- Sélectionner un commercial --</option>
-                    {commerciaux.map(c => (
-                      <option key={c.id} value={c.id}>{c.prenom} {c.nom} ({c.matricule})</option>
-                    ))}
-                  </select>
-                  {errors.commercial && <p className="text-xs text-red-500 mt-0.5">{errors.commercial}</p>}
-                  {commerciaux.length === 0 && (
-                    <p className="text-xs text-amber-600 mt-0.5">Aucun commercial actif — créez-en un d&apos;abord</p>
-                  )}
-                </div>
               </div>
+              {commercialMode ? (
+                <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+                  Cette demande sera rattachée à votre profil commercial et devra être validée par un agent de facturation.
+                </div>
+              ) : (
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Commercial *</label>
+                <select className={inputCls('commercial')} value={form.commercial} onChange={setVal('commercial')}>
+                  <option value="">-- Sélectionner un commercial --</option>
+                  {commerciaux.map(c => (
+                    <option key={c.id} value={c.id}>{c.prenom} {c.nom} ({c.matricule})</option>
+                  ))}
+                </select>
+                {errors.commercial && <p className="text-xs text-red-500 mt-0.5">{errors.commercial}</p>}
+                {commerciaux.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-0.5">Aucun commercial actif — créez-en un d&apos;abord</p>
+                )}
+              </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 mb-1">Mode de règlement *</label>

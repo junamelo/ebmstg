@@ -29,6 +29,7 @@ import GestionComptesClients from './pages/agent/GestionComptesClients'
 import GestionContrats from './pages/agent/GestionContrats'
 import DetailContrat from './pages/agent/DetailContrat'
 import GestionCommerciaux from './pages/agent/GestionCommerciaux'
+import CommercialDashboard from './pages/commercial/CommercialDashboard'
 
 export default function App() {
   return (
@@ -102,6 +103,20 @@ export default function App() {
             <Route path="forfaits" element={<GestionForfaits />} />
             <Route path="services" element={<GestionServices />} />
             <Route path="commerciaux" element={<GestionCommerciaux />} />
+            <Route path="profil" element={<MonProfil />} />
+          </Route>
+
+          {/* Routes protégées — Commercial */}
+          <Route
+            path="/commercial"
+            element={
+              <ProtectedRoute role="COMMERCIAL">
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/commercial/dashboard" replace />} />
+            <Route path="dashboard" element={<CommercialDashboard />} />
             <Route path="profil" element={<MonProfil />} />
           </Route>
 

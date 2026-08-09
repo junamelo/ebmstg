@@ -41,6 +41,8 @@ export default function Login() {
         navigate('/agent/dashboard')
       } else if (data.user.role === 'CHEF_FACTURATION') {
         navigate('/chef/dashboard')
+      } else if (data.user.role === 'COMMERCIAL') {
+        navigate('/commercial/dashboard')
       } else {
         navigate('/dashboard')
       }

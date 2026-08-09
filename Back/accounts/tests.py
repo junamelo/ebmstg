@@ -209,7 +209,7 @@ class UserManagementTests(APITestCase):
             'first_name': 'New',
             'last_name': 'User',
             'role': 'AGENT_FACTURATION',
-            'telephone': '90123456'
+            'telephone': '79012345'
         }
         response = self.client.post(url, data, format='json')
         
@@ -231,7 +231,7 @@ class UserManagementTests(APITestCase):
             'first_name': 'New',
             'last_name': 'Agent',
             'role': 'AGENT_FACTURATION',
-            'telephone': '90123456'
+            'telephone': '79012346'
         }
         response = self.client.post(url, data, format='json')
         
@@ -248,7 +248,7 @@ class UserManagementTests(APITestCase):
             'first_name': 'New',
             'last_name': 'Admin',
             'role': 'SUPER_ADMIN',
-            'telephone': '90123456'
+            'telephone': '79012347'
         }
         response = self.client.post(url, data, format='json')
         

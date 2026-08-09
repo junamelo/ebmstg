@@ -39,6 +39,7 @@ export function AuthProvider({ children }) {
   const isEmploye = () => user?.role === 'EMPLOYE'
   const isAgentFacturation = () => user?.role === 'AGENT_FACTURATION'
   const isChefFacturation = () => user?.role === 'CHEF_FACTURATION'
+  const isCommercial = () => user?.role === 'COMMERCIAL'
   
   // Helpers pour type de payeur
   const isPayeurEntreprise = () => user?.role === 'PAYEUR' && user?.typePayeur === 'ENTREPRISE'
@@ -62,6 +63,7 @@ export function AuthProvider({ children }) {
       isEmploye,
       isAgentFacturation,
       isChefFacturation,
+      isCommercial,
       isPayeurEntreprise,
       isPayeurParticulier,
       canCreateAgents,

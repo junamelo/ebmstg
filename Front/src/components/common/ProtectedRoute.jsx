@@ -3,10 +3,10 @@ import { useAuth } from '../../contexts/AuthContext'
 
 /**
  * Protège une route — redirige vers /login si non connecté
- * @param {string} role - rôle requis ('SUPER_ADMIN' | 'PAYEUR' | 'EMPLOYE' | 'AGENT_FACTURATION' | 'CHEF_FACTURATION' | null pour tout rôle)
+ * @param {string} role - rôle requis ('SUPER_ADMIN' | 'PAYEUR' | 'EMPLOYE' | 'AGENT_FACTURATION' | 'CHEF_FACTURATION' | 'COMMERCIAL' | null pour tout rôle)
  */
 export default function ProtectedRoute({ children, role = null }) {
-  const { user, loading, isAdmin, isPayeur, isEmploye, isAgentFacturation, isChefFacturation } = useAuth()
+  const { user, loading, isAdmin, isPayeur, isEmploye, isAgentFacturation, isChefFacturation, isCommercial } = useAuth()
 
   if (loading) {
     return (
@@ -35,6 +35,10 @@ export default function ProtectedRoute({ children, role = null }) {
   }
 
   if (role === 'PAYEUR' && !isPayeur() && !isAdmin()) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  if (role === 'COMMERCIAL' && !isCommercial() && !isAdmin()) {
     return <Navigate to="/dashboard" replace />
   }
 

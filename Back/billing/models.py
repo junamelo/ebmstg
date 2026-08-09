@@ -68,6 +68,14 @@ class TypeActionFacturation(models.TextChoices):
 
 class Commercial(models.Model):
     """Représente un commercial Moov Africa"""
+    user = models.OneToOneField(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='profil_commercial',
+        verbose_name='Compte utilisateur commercial'
+    )
     nom = models.CharField(max_length=100, verbose_name='Nom')
     prenom = models.CharField(max_length=100, verbose_name='Prénom')
     matricule = models.CharField(max_length=30, unique=True, verbose_name='Matricule / Code commercial')
@@ -161,6 +169,32 @@ class Company(models.Model):
     
     def __str__(self):
         return f"{self.compte} - {self.raison_sociale}"
+
+
+class ContractRequest(models.Model):
+    """Demande soumise par un commercial avant création effective du contrat."""
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'En attente de validation'
+        APPROVED = 'APPROVED', 'Approuvée'
+        REJECTED = 'REJECTED', 'Rejetée'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    commercial = models.ForeignKey(Commercial, on_delete=models.PROTECT, related_name='demandes_contrat')
+    submitted_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='demandes_contrat_soumises')
+    compte_propose = models.CharField(max_length=20)
+    raison_sociale = models.CharField(max_length=200)
+    payload = models.JSONField(default=dict)
+    password_payeur_hash = models.CharField(max_length=128)
+    statut = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDING)
+    decision_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='demandes_contrat_decidees')
+    decision_comment = models.TextField(blank=True)
+    company = models.OneToOneField(Company, null=True, blank=True, on_delete=models.SET_NULL, related_name='demande_origine')
+    date_soumission = models.DateTimeField(auto_now_add=True)
+    date_decision = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'contract_requests'
+        ordering = ['-date_soumission']
 
 class Line(models.Model):
     company = models.ForeignKey(

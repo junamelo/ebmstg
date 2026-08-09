@@ -1,6 +1,24 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
+from django.db.models import Q
 from .models import User, StatusHistory
+
+MOOV_PREFIXES = ('78', '79', '96', '97', '98', '99')
+
+
+def normalize_phone(value):
+    return ''.join(ch for ch in str(value or '') if ch.isdigit())
+
+
+def validate_moov_phone(value, required=False):
+    numero = normalize_phone(value)
+    if not numero and not required:
+        return ''
+    if len(numero) != 8 or not numero.startswith(MOOV_PREFIXES):
+        raise serializers.ValidationError(
+            f"Numéro invalide. Format attendu : 8 chiffres avec préfixe Moov ({', '.join(MOOV_PREFIXES)})."
+        )
+    return numero
 
 class UserSerializer(serializers.ModelSerializer):
     created_by_name = serializers.SerializerMethodField()
@@ -16,6 +34,9 @@ class UserSerializer(serializers.ModelSerializer):
             'date_creation', 'date_modification', 'last_login', 'last_login_ip'
         ]
         read_only_fields = ['id', 'date_creation', 'date_modification', 'last_login']
+
+    def validate_telephone(self, value):
+        return validate_moov_phone(value, required=False)
     
     def get_created_by_name(self, obj):
         if obj.created_by:
@@ -125,6 +146,9 @@ class CreateUserSerializer(serializers.ModelSerializer):
             'force_password_change', 'send_email'
         ]
     
+    def validate_telephone(self, value):
+        return validate_moov_phone(value, required=False)
+
     def validate_role(self, value):
         """Valider que le créateur peut créer ce rôle"""
         request = self.context.get('request')
@@ -137,12 +161,12 @@ class CreateUserSerializer(serializers.ModelSerializer):
         if creator.role == 'SUPER_ADMIN':
             return value
         
-        # Chef peut créer seulement des agents
-        if creator.role == 'CHEF_FACTURATION' and value == 'AGENT_FACTURATION':
+        # Chef peut créer des agents, commerciaux, payeurs et employés
+        if creator.role == 'CHEF_FACTURATION' and value in ['AGENT_FACTURATION', 'COMMERCIAL', 'PAYEUR', 'EMPLOYE']:
             return value
         
-        # Agent peut créer des payeurs et employés
-        if creator.role == 'AGENT_FACTURATION' and value in ['PAYEUR', 'EMPLOYE']:
+        # Agent peut créer des payeurs, employés et commerciaux
+        if creator.role == 'AGENT_FACTURATION' and value in ['PAYEUR', 'EMPLOYE', 'COMMERCIAL']:
             return value
         
         raise serializers.ValidationError(
@@ -163,6 +187,31 @@ class CreateUserSerializer(serializers.ModelSerializer):
             user.created_by = request.user
         
         user.save()
+
+        # Lier/initialiser le profil commercial si rôle COMMERCIAL
+        if user.role == 'COMMERCIAL':
+            from billing.models import Commercial
+
+            profil = Commercial.objects.filter(user=user).first()
+            if not profil:
+                profil = Commercial.objects.filter(user__isnull=True).filter(
+                    Q(matricule=user.username) | Q(email=user.email)
+                ).first()
+
+            if profil:
+                profil.user = user
+                if not profil.telephone and user.telephone:
+                    profil.telephone = user.telephone
+                profil.save()
+            else:
+                Commercial.objects.create(
+                    user=user,
+                    nom=user.last_name or user.username,
+                    prenom=user.first_name or 'Commercial',
+                    matricule=user.username,
+                    telephone=user.telephone or '',
+                    email=user.email or ''
+                )
         
         # TODO: Gérer force_password_change (ajouter champ au modèle si nécessaire)
         # TODO: Envoyer email si send_email=True

@@ -6,7 +6,7 @@ import logoMoov from '../../assets/logo-moov.png'
 import './Navbar.css'
 
 export default function Navbar() {
-  const { user, logout, isAdmin, isPayeur, isAgentFacturation, isChefFacturation } = useAuth()
+  const { user, logout, isAdmin, isPayeur, isAgentFacturation, isChefFacturation, isCommercial } = useAuth()
   const navigate = useNavigate()
   const [menuOuvert, setMenuOuvert] = useState(false)
 
@@ -24,6 +24,7 @@ export default function Navbar() {
     if (isAdmin()) return '/admin/dashboard'
     if (isChefFacturation()) return '/chef/dashboard'
     if (isAgentFacturation()) return '/agent/dashboard'
+    if (isCommercial()) return '/commercial/dashboard'
     return '/dashboard'
   }
 
@@ -31,19 +32,24 @@ export default function Navbar() {
     if (isAdmin()) return '/admin/profil'
     if (isChefFacturation()) return '/chef/profil'
     if (isAgentFacturation()) return '/agent/profil'
+    if (isCommercial()) return '/commercial/profil'
     return '/profil'
   }
 
   const getRoleLabel = () => {
     if (isAdmin()) return 'Super Administrateur'
+    if (isChefFacturation()) return 'Chef Facturation'
     if (isAgentFacturation()) return 'Agent Facturation'
+    if (isCommercial()) return 'Commercial'
     if (isPayeur()) return 'Compte Entreprise'
     return 'Employé'
   }
 
   const getRoleBadgeClass = () => {
     if (isAdmin()) return 'badge-admin'
+    if (isChefFacturation()) return 'badge-agent'
     if (isAgentFacturation()) return 'badge-agent'
+    if (isCommercial()) return 'badge-agent'
     if (isPayeur()) return 'badge-payeur'
     return 'badge-employe'
   }

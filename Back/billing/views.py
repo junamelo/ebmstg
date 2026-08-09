@@ -9,8 +9,8 @@ from django.db.models import Q, Count, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
-from .models import Company, Line, Package, Service, TarifService, Commercial, AuditContrat, Simulation
-from .serializers import CommercialSerializer, CommercialCreateSerializer, AuditContratSerializer
+from .models import Company, Line, Package, Service, TarifService, Commercial, ContractRequest, AuditContrat, Simulation
+from .serializers import CommercialSerializer, CommercialCreateSerializer, ContractRequestSerializer, ContractRequestCreateSerializer, AuditContratSerializer
 from .serializers import (
     CompanySerializer, CompanyListSerializer, CompanyCreateSerializer,
     LineSerializer, LineListSerializer, LineCreateSerializer,
@@ -31,6 +31,7 @@ from accounts.permissions import (
     IsAgentFacturation, CanManageUser, CanManageTarifs, CanManageServices,
     CanPublishInvoices, CanUploadPDF, CanValidateInvoices, CanGenerateInvoices
 )
+from accounts.models import User
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -74,6 +75,12 @@ class CompanyViewSet(viewsets.ModelViewSet):
         # Payeur voit seulement ses entreprises
         if user.role == 'PAYEUR':
             return Company.objects.filter(payeur=user).prefetch_related('lines')
+
+        # Commercial voit uniquement les contrats qu'il a prospectés
+        if user.role == 'COMMERCIAL':
+            return Company.objects.filter(
+                commercial__user=user
+            ).select_related('commercial', 'payeur').prefetch_related('lines')
         
         # Employé ne voit rien (API contrats pas pour lui)
         return Company.objects.none()
@@ -640,6 +647,109 @@ class CommercialViewSet(viewsets.ModelViewSet):
         commercial.est_actif = not commercial.est_actif
         commercial.save()
         return Response(CommercialSerializer(commercial).data)
+
+
+class ContractRequestViewSet(viewsets.ModelViewSet):
+    """Soumission commerciale puis validation opérationnelle d'un contrat."""
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'post', 'head', 'options']
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'COMMERCIAL':
+            return ContractRequest.objects.filter(submitted_by=user).select_related('commercial', 'decision_by', 'company')
+        if user.role in ['SUPER_ADMIN', 'CHEF_FACTURATION', 'AGENT_FACTURATION']:
+            return ContractRequest.objects.all().select_related('commercial', 'submitted_by', 'decision_by', 'company')
+        return ContractRequest.objects.none()
+
+    def get_serializer_class(self):
+        return ContractRequestCreateSerializer if self.action == 'create' else ContractRequestSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        demande = serializer.save()
+        return Response(ContractRequestSerializer(demande).data, status=status.HTTP_201_CREATED)
+
+    def _can_decide(self, request):
+        return request.user.role in ['SUPER_ADMIN', 'CHEF_FACTURATION', 'AGENT_FACTURATION']
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        if not self._can_decide(request):
+            return Response({'error': 'Seuls les agents habilités peuvent valider une demande.'}, status=status.HTTP_403_FORBIDDEN)
+        demande = self.get_object()
+        if demande.statut != ContractRequest.Status.PENDING:
+            return Response({'error': 'Cette demande a déjà été traitée.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from django.db import transaction
+        from django.utils import timezone
+
+        try:
+            with transaction.atomic():
+                payeur_data = demande.payload.get('payeur', {})
+                contrat_data = demande.payload.get('contrat', {})
+                username = str(payeur_data.get('username') or payeur_data.get('telephone')).strip()
+                if User.objects.filter(username=username).exists():
+                    raise ValueError('L’identifiant du payeur est déjà utilisé.')
+                email = str(payeur_data.get('email') or '').strip()
+                if email and User.objects.filter(email=email).exists():
+                    raise ValueError('L’e-mail du payeur est déjà utilisé.')
+
+                payeur = User(
+                    username=username,
+                    email=email,
+                    first_name=payeur_data.get('first_name', ''),
+                    last_name=payeur_data.get('last_name', ''),
+                    telephone=payeur_data.get('telephone', ''),
+                    role='PAYEUR', status='ACTIF', est_actif=True,
+                    created_by=request.user,
+                )
+                payeur.password = demande.password_payeur_hash
+                payeur.save()
+
+                allowed = {field.name for field in Company._meta.fields} - {
+                    'id', 'payeur', 'commercial', 'date_creation', 'date_modification'
+                }
+                company_data = {key: value for key, value in contrat_data.items() if key in allowed}
+                company_data['compte'] = demande.compte_propose
+                company_data['payeur'] = payeur
+                company_data['commercial'] = demande.commercial
+                company_data['statut_factures'] = 'EN_ATTENTE'
+                company = Company.objects.create(**company_data)
+
+                demande.statut = ContractRequest.Status.APPROVED
+                demande.company = company
+                demande.decision_by = request.user
+                demande.decision_comment = request.data.get('commentaire', '')
+                demande.date_decision = timezone.now()
+                demande.save()
+                AuditContrat.objects.create(
+                    company=company, utilisateur=request.user, type_action='CREATION',
+                    description=f'Contrat créé après validation de la demande commerciale {demande.id}',
+                    nouvelles_valeurs={'compte': company.compte, 'commercial': demande.commercial.matricule},
+                )
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(ContractRequestSerializer(demande).data)
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        if not self._can_decide(request):
+            return Response({'error': 'Seuls les agents habilités peuvent rejeter une demande.'}, status=status.HTTP_403_FORBIDDEN)
+        demande = self.get_object()
+        commentaire = str(request.data.get('commentaire', '')).strip()
+        if demande.statut != ContractRequest.Status.PENDING:
+            return Response({'error': 'Cette demande a déjà été traitée.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not commentaire:
+            return Response({'error': 'Un motif de rejet est obligatoire.'}, status=status.HTTP_400_BAD_REQUEST)
+        from django.utils import timezone
+        demande.statut = ContractRequest.Status.REJECTED
+        demande.decision_by = request.user
+        demande.decision_comment = commentaire
+        demande.date_decision = timezone.now()
+        demande.save()
+        return Response(ContractRequestSerializer(demande).data)
 
 
 # ==================== VIEWSETS PHASE 4 : FACTURATION ====================

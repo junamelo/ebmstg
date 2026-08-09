@@ -6,7 +6,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     CompanyViewSet, LineViewSet,
     PackageViewSet, ServiceViewSet, TarifServiceViewSet,
-    InvoiceViewSet, PublicationViewSet, CommercialViewSet,
+    InvoiceViewSet, PublicationViewSet, CommercialViewSet, ContractRequestViewSet,
     SimulationViewSet
 )
 from .stats_views import (
@@ -28,6 +28,7 @@ router.register(r'invoices', InvoiceViewSet, basename='invoice')
 router.register(r'publications', PublicationViewSet, basename='publication')
 # Phase 6 : Commerciaux
 router.register(r'commerciaux', CommercialViewSet, basename='commercial')
+router.register(r'contract-requests', ContractRequestViewSet, basename='contract-request')
 # Phase 7 : Simulations
 router.register(r'simulations', SimulationViewSet, basename='simulation')
 
@@ -41,4 +42,3 @@ urlpatterns = [
     path('stats/payeur/', stats_payeur, name='stats-payeur'),
     path('stats/employe/', stats_employe, name='stats-employe'),
 ]
-

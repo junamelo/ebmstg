@@ -43,6 +43,11 @@ const menusPayeur = [
   { path: '/profil',                label: 'Mon profil',          icon: <IconProfil /> },
 ]
 
+const menusCommercial = [
+  { path: '/commercial/dashboard',  label: 'Mes contrats',        icon: <IconContrats /> },
+  { path: '/commercial/profil',     label: 'Mon profil',          icon: <IconProfil /> },
+]
+
 const menusAdmin = [
   { path: '/admin/dashboard', label: 'Tableau de bord', icon: <IconDashboard /> },
   { path: '/admin/comptes',   label: 'Gestion comptes', icon: <IconComptes /> },
@@ -82,7 +87,7 @@ const menusChefFacturation = [
 ]
 
 export default function Sidebar() {
-  const { isAdmin, isPayeur, isAgentFacturation, isChefFacturation } = useAuth()
+  const { isAdmin, isPayeur, isAgentFacturation, isChefFacturation, isCommercial } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
 
   const menus = isAdmin()
@@ -91,6 +96,8 @@ export default function Sidebar() {
     ? menusChefFacturation
     : isAgentFacturation()
     ? menusAgentFacturation
+    : isCommercial()
+    ? menusCommercial
     : isPayeur()
     ? menusPayeur
     : menusEmploye
@@ -99,8 +106,9 @@ export default function Sidebar() {
   const roleText = isAdmin() ? 'Administration'
     : isChefFacturation() ? 'Chef Facturation'
     : isAgentFacturation() ? 'Agent Facturation'
+    : isCommercial() ? 'Espace Commercial'
     : isPayeur() ? 'Espace Entreprise'
-    : 'Espace Employé'
+    : 'Espace Client'
 
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>

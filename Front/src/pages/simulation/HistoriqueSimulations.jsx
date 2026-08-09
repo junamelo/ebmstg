@@ -9,10 +9,16 @@ export default function HistoriqueSimulations() {
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState(null)
   const [dateRange, setDateRange] = useState({ start: null, end: null })
+  const [pageCourante, setPageCourante] = useState(1)
+  const ITEMS_PAR_PAGE = 10
 
   useEffect(() => {
     chargerHistorique()
   }, [])
+
+  useEffect(() => {
+    setPageCourante(1)
+  }, [dateRange, simulations.length])
 
   const chargerHistorique = async () => {
     try {
@@ -54,6 +60,9 @@ export default function HistoriqueSimulations() {
         return simDate >= dateRange.start && simDate <= dateRange.end
       })
     : simulations
+
+  const nbPages = Math.max(1, Math.ceil(simulationsFiltrees.length / ITEMS_PAR_PAGE))
+  const pageData = simulationsFiltrees.slice((pageCourante - 1) * ITEMS_PAR_PAGE, pageCourante * ITEMS_PAR_PAGE)
 
   if (chargement) {
     return (
@@ -132,7 +141,7 @@ export default function HistoriqueSimulations() {
                 </tr>
               </thead>
               <tbody>
-                {simulationsFiltrees.map((sim, idx) => {
+                {pageData.map((sim, idx) => {
                   const services = sim.services_selectionnes || []
                   const typeClient = sim.resultat_detaille?.typeClient || '—'
                   return (
@@ -146,7 +155,7 @@ export default function HistoriqueSimulations() {
                             <line x1="3" y1="10" x2="21" y2="10"/>
                           </svg>
                           <span style={{ fontSize: '13px' }}>{formatDate(sim.date_simulation)}</span>
-                          {idx === 0 && (
+                          {((pageCourante - 1) * ITEMS_PAR_PAGE + idx) === 0 && (
                             <span className="badge badge-info" style={{ fontSize: '11px' }}>Récente</span>
                           )}
                         </div>
@@ -177,6 +186,18 @@ export default function HistoriqueSimulations() {
               </tbody>
             </table>
           </div>
+          {simulationsFiltrees.length > ITEMS_PAR_PAGE && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '1px solid #eee' }}>
+              <span style={{ fontSize: '13px', color: '#6b7280' }}>
+                {(pageCourante - 1) * ITEMS_PAR_PAGE + 1}–{Math.min(pageCourante * ITEMS_PAR_PAGE, simulationsFiltrees.length)} sur {simulationsFiltrees.length}
+              </span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button className="btn btn-outline btn-sm" disabled={pageCourante === 1} onClick={() => setPageCourante(p => p - 1)}>← Préc.</button>
+                <button className="btn btn-outline btn-sm" disabled>{pageCourante}/{nbPages}</button>
+                <button className="btn btn-outline btn-sm" disabled={pageCourante === nbPages} onClick={() => setPageCourante(p => p + 1)}>Suiv. →</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

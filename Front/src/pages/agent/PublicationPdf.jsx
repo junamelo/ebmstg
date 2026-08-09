@@ -14,6 +14,7 @@ export default function PublicationPdf() {
   const [message, setMessage] = useState(null)
   const [historique, setHistorique] = useState([])
   const [dragOver, setDragOver] = useState(false)
+  const [rapportTraitement, setRapportTraitement] = useState(null)
   const fileInputRef = useRef()
 
   useEffect(() => { 
@@ -72,6 +73,15 @@ export default function PublicationPdf() {
         type: 'success', 
         texte: `✅ Traitement terminé ! ${nbFichiers} PDF créés, ${nbMatches} factures mises à jour${nbAlreadyProcessed > 0 ? `, ${nbAlreadyProcessed} déjà traitées` : ''}${nbErrors > 0 ? `, ${nbErrors} erreurs` : ''}.` 
       })
+
+      setRapportTraitement({
+        ok: true,
+        summary: summary,
+        matching: matching,
+        warnings: resultat.warnings || [],
+        split_errors: resultat.split_errors || [],
+        errors_per_page: resultat.errors_per_page || []
+      })
       
       setFichier(null)
       chargerHistorique()
@@ -91,6 +101,13 @@ export default function PublicationPdf() {
         || error.message
         || "Erreur lors de l'upload"
       setMessage({ type: 'danger', texte: `❌ ${errorMsg}` })
+      setRapportTraitement({
+        ok: false,
+        warnings: error.response?.data?.warnings || [],
+        split_errors: error.response?.data?.split_errors || [],
+        errors_per_page: error.response?.data?.errors_per_page || [],
+        error: errorMsg
+      })
     } finally {
       setUploading(false)
       setProgression(0)
@@ -110,6 +127,33 @@ export default function PublicationPdf() {
         </div>
 
         {message && <div className={`alert alert-${message.type}`}>{message.texte}</div>}
+
+        {rapportTraitement?.ok && (
+          <div className="alert" style={{ background: '#dcfce7', border: '1px solid #86efac', color: '#166534' }}>
+            <strong>🟢 Découpage réussi.</strong>
+            <span style={{ marginLeft: 8 }}>
+              {rapportTraitement.summary?.files_created || 0} fichiers générés, {rapportTraitement.matching?.successfully_matched || 0} factures mises à jour.
+            </span>
+          </div>
+        )}
+
+        {!rapportTraitement?.ok && rapportTraitement && (
+          <div className="alert" style={{ background: '#fff7ed', border: '1px solid #fdba74', color: '#9a3412' }}>
+            <strong>⚠️ Problème pendant le découpage/matching.</strong>
+            <p style={{ marginTop: 6 }}>{rapportTraitement.error || 'Certaines factures n\'ont pas pu être traitées automatiquement.'}</p>
+          </div>
+        )}
+
+        {(rapportTraitement?.warnings?.length > 0 || rapportTraitement?.split_errors?.length > 0 || rapportTraitement?.errors_per_page?.length > 0) && (
+          <div className="alert" style={{ background: '#fefce8', border: '1px solid #fde047', color: '#713f12' }}>
+            <strong>⚠️ Détails des avertissements</strong>
+            <ul style={{ marginTop: 8, paddingLeft: 18 }}>
+              {rapportTraitement.warnings?.slice(0, 5).map((w, i) => <li key={`w-${i}`}>{String(w)}</li>)}
+              {rapportTraitement.split_errors?.slice(0, 5).map((w, i) => <li key={`s-${i}`}>{String(w)}</li>)}
+              {rapportTraitement.errors_per_page?.slice(0, 5).map((w, i) => <li key={`p-${i}`}>{typeof w === 'string' ? w : JSON.stringify(w)}</li>)}
+            </ul>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="filtres-grid" style={{ marginBottom: 20 }}>

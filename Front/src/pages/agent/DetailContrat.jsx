@@ -19,6 +19,8 @@ export default function DetailContrat() {
   const [auditLog, setAuditLog] = useState([])
   const [auditChargement, setAuditChargement] = useState(false)
   const [modalResiliation, setModalResiliation] = useState(false)
+  const [msisdnSaisi, setMsisdnSaisi] = useState('')
+  const [ligneExistante, setLigneExistante] = useState(null)
   const [dataResiliation, setDataResiliation] = useState({
     date_resiliation: '',
     motif_resiliation: '',
@@ -61,7 +63,7 @@ export default function DetailContrat() {
         typePayeur: 'ENTREPRISE',
         raisonSociale: company.raison_sociale || company.nom_commercial,
         email: company.payeur_info?.email || '',
-        telephone: '',
+        telephone: company.payeur_info?.telephone || '',
         adresse: company.adresse || '',
         dateCreation: company.date_creation,
         statut: company.statut || 'ACTIF',
@@ -158,6 +160,22 @@ export default function DetailContrat() {
     }
   }
 
+  const rechercherNumeroExistant = async (numero) => {
+    const n = String(numero || '').replace(/\D/g, '')
+    if (n.length !== 8) {
+      setLigneExistante(null)
+      return
+    }
+    try {
+      const response = await api.get('/billing/lines/', { params: { search: n } })
+      const lines = response.data.results || response.data || []
+      const existe = lines.find(l => String(l.msisdn || '').replace(/\D/g, '') === n)
+      setLigneExistante(existe || null)
+    } catch {
+      setLigneExistante(null)
+    }
+  }
+
   const ajouterLigne = async (e) => {
     e.preventDefault()
     const formData = new FormData(e.target)
@@ -175,6 +193,8 @@ export default function DetailContrat() {
       })
       setMessage({ type: 'success', text: 'Ligne ajoutée avec succès' })
       setModalAjoutLigne(false)
+      setMsisdnSaisi('')
+      setLigneExistante(null)
       chargerContrat()
       e.target.reset()
     } catch (error) {
@@ -315,11 +335,22 @@ export default function DetailContrat() {
                 <input
                   name="msisdn"
                   required
-                  pattern="[0-9]{8}"
-                  placeholder="99123456"
+                  value={msisdnSaisi}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 8)
+                    setMsisdnSaisi(value)
+                    rechercherNumeroExistant(value)
+                  }}
+                  pattern="(78|79|96|97|98|99)[0-9]{6}"
+                  placeholder="79XXXXXX"
                   className="w-full px-3 py-2 border rounded-lg"
                 />
-                <p className="text-xs text-zinc-500 mt-1">8 chiffres sans espaces</p>
+                <p className="text-xs text-zinc-500 mt-1">8 chiffres, préfixe Moov: 78, 79, 96, 97, 98, 99</p>
+                {ligneExistante && (
+                  <div className="mt-2 text-xs rounded-md border border-amber-300 bg-amber-50 text-amber-800 px-2 py-1">
+                    Ce numéro existe déjà ({ligneExistante.msisdn}) — contrat: {ligneExistante.company_name || 'N/A'} ; statut: {ligneExistante.statut || 'N/A'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Utilisateur</label>
@@ -356,7 +387,7 @@ export default function DetailContrat() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setModalAjoutLigne(false)}
+                  onClick={() => { setModalAjoutLigne(false); setMsisdnSaisi(''); setLigneExistante(null) }}
                   className="flex-1 px-4 py-2 bg-zinc-200 rounded-lg hover:bg-zinc-300"
                 >
                   Annuler
@@ -606,7 +637,7 @@ export default function DetailContrat() {
               <>
                 <button 
                   className="px-4 py-2.5 bg-gradient-to-br from-[#e05500] to-[#c2410c] text-white font-semibold rounded-lg hover:shadow-lg transition-all" 
-                  onClick={() => setModalAjoutLigne(true)}
+                  onClick={() => { setMsisdnSaisi(''); setLigneExistante(null); setModalAjoutLigne(true) }}
                 >
                   + Nouvelle Ligne
                 </button>

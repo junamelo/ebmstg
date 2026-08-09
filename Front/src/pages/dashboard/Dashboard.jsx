@@ -4,10 +4,11 @@ import DashboardPayeur from './DashboardPayeur'
 import AgentDashboard from '../agent/AgentDashboard'
 
 export default function Dashboard() {
-  const { isPayeur, isAgentFacturation, isChefFacturation } = useAuth()
+  const { isPayeur, isAgentFacturation, isChefFacturation, isCommercial } = useAuth()
 
   // Chaque rôle a son propre dashboard
   if (isChefFacturation()) return <AgentDashboard />
   if (isAgentFacturation()) return <AgentDashboard />
+  if (isCommercial()) return <DashboardEmploye />
   return isPayeur() ? <DashboardPayeur /> : <DashboardEmploye />
 }

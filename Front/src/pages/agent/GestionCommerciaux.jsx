@@ -13,7 +13,7 @@ export default function GestionCommerciaux() {
 
   const [modalOuvert, setModalOuvert] = useState(false)
   const [commercialEnEdition, setCommercialEnEdition] = useState(null)
-  const [form, setForm] = useState({ nom: '', prenom: '', matricule: '', telephone: '', email: '' })
+  const [form, setForm] = useState({ nom: '', prenom: '', matricule: '', telephone: '', email: '', password: '' })
   const [errorsForm, setErrorsForm] = useState({})
   const [saving, setSaving] = useState(false)
 
@@ -39,14 +39,14 @@ export default function GestionCommerciaux() {
 
   const ouvrirCreation = () => {
     setCommercialEnEdition(null)
-    setForm({ nom: '', prenom: '', matricule: '', telephone: '', email: '' })
+    setForm({ nom: '', prenom: '', matricule: '', telephone: '', email: '', password: '' })
     setErrorsForm({})
     setModalOuvert(true)
   }
 
   const ouvrirEdition = (c) => {
     setCommercialEnEdition(c)
-    setForm({ nom: c.nom, prenom: c.prenom, matricule: c.matricule, telephone: c.telephone || '', email: c.email || '' })
+    setForm({ nom: c.nom, prenom: c.prenom, matricule: c.matricule, telephone: c.telephone || '', email: c.email || '', password: '' })
     setErrorsForm({})
     setModalOuvert(true)
   }
@@ -57,11 +57,17 @@ export default function GestionCommerciaux() {
     setErrorsForm({})
   }
 
+  const validerNumeroMoov = (value) => /^(78|79|96|97|98|99)\d{6}$/.test(String(value || '').replace(/\D/g, ''))
+
   const valider = () => {
     const errs = {}
     if (!form.nom.trim()) errs.nom = 'Obligatoire'
     if (!form.prenom.trim()) errs.prenom = 'Obligatoire'
     if (!form.matricule.trim()) errs.matricule = 'Obligatoire'
+    else if (form.matricule.trim().length > 6) errs.matricule = '6 caractères maximum'
+    if (!form.telephone.trim()) errs.telephone = 'Obligatoire (sera le login)'
+    else if (!validerNumeroMoov(form.telephone)) errs.telephone = 'Numéro Moov invalide (8 chiffres, préfixe 78/79/96/97/98/99)'
+    if (!commercialEnEdition && !form.password.trim()) errs.password = 'Mot de passe obligatoire'
     return errs
   }
 
@@ -72,7 +78,14 @@ export default function GestionCommerciaux() {
     setSaving(true)
     try {
       if (commercialEnEdition) {
-        await api.patch(`/billing/commerciaux/${commercialEnEdition.id}/`, form)
+        const payload = {
+          nom: form.nom,
+          prenom: form.prenom,
+          matricule: form.matricule,
+          telephone: form.telephone,
+          email: form.email,
+        }
+        await api.patch(`/billing/commerciaux/${commercialEnEdition.id}/`, payload)
         showMsg('success', 'Commercial modifié')
       } else {
         await api.post('/billing/commerciaux/', form)
@@ -85,6 +98,8 @@ export default function GestionCommerciaux() {
       const errsBack = {}
       if (data.matricule) errsBack.matricule = data.matricule[0]
       if (data.email) errsBack.email = data.email[0]
+      if (data.telephone) errsBack.telephone = data.telephone[0]
+      if (data.password) errsBack.password = data.password[0]
       if (Object.keys(errsBack).length) setErrorsForm(errsBack)
       else showMsg('error', data.error || data.detail || 'Erreur lors de l\'enregistrement')
     } finally {
@@ -266,14 +281,16 @@ export default function GestionCommerciaux() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-zinc-700 mb-1">Matricule *</label>
-                  <input className={inputCls('matricule')} value={form.matricule} onChange={e=>setForm(f=>({...f,matricule:e.target.value}))} placeholder="COM001" disabled={!!commercialEnEdition}/>
+                  <input className={inputCls('matricule')} value={form.matricule} onChange={e=>setForm(f=>({...f,matricule:e.target.value.toUpperCase()}))} placeholder="COM001" maxLength={6} disabled={!!commercialEnEdition}/>
                   {errorsForm.matricule && <p className="text-xs text-red-500 mt-0.5">{errorsForm.matricule}</p>}
                   {commercialEnEdition && <p className="text-xs text-zinc-400 mt-0.5">Le matricule ne peut pas être modifié</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-700 mb-1">Téléphone</label>
-                    <input className={inputCls('telephone')} value={form.telephone} onChange={e=>setForm(f=>({...f,telephone:e.target.value}))} placeholder="90000001"/>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1">Téléphone / Login *</label>
+                    <input className={inputCls('telephone')} value={form.telephone} onChange={e=>setForm(f=>({...f,telephone:e.target.value}))} placeholder="79000001" inputMode="numeric" maxLength={8}/>
+                    {errorsForm.telephone && <p className="text-xs text-red-500 mt-0.5">{errorsForm.telephone}</p>}
+                    <p className="text-[11px] text-zinc-500 mt-1">Le commercial se connectera avec ce numéro + son mot de passe.</p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-zinc-700 mb-1">Email</label>
@@ -281,6 +298,13 @@ export default function GestionCommerciaux() {
                     {errorsForm.email && <p className="text-xs text-red-500 mt-0.5">{errorsForm.email}</p>}
                   </div>
                 </div>
+                {!commercialEnEdition && (
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1">Mot de passe initial *</label>
+                    <input type="password" className={inputCls('password')} value={form.password} onChange={e=>setForm(f=>({...f,password:e.target.value}))} placeholder="••••••••"/>
+                    {errorsForm.password && <p className="text-xs text-red-500 mt-0.5">{errorsForm.password}</p>}
+                  </div>
+                )}
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={fermerModal}
                     className="flex-1 px-4 py-2 text-sm font-semibold bg-zinc-100 text-zinc-700 rounded-lg hover:bg-zinc-200 transition-colors">

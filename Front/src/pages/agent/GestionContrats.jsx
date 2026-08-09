@@ -18,6 +18,8 @@ export default function GestionContrats() {
   const [filtreStatutFact, setFiltreStatutFact] = useState('tous')
   const [filtreResilie, setFiltreResilie] = useState('non_resilie')
   const [pageCourante, setPageCourante] = useState(1)
+  const [demandes, setDemandes] = useState([])
+  const [traitementDemande, setTraitementDemande] = useState(null)
   const ITEMS_PAR_PAGE = 6
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export default function GestionContrats() {
               typePayeur: 'ENTREPRISE',
               raisonSociale: company.raison_sociale || company.nom_commercial,
               email: company.payeur_info?.email || '',
-              telephone: '',
+              telephone: company.payeur_info?.telephone || '',
               dateCreation: company.date_creation,
               statut: company.statut || 'ACTIF',
               typeContrat: company.categorie || '',
@@ -73,7 +75,7 @@ export default function GestionContrats() {
               typePayeur: 'ENTREPRISE',
               raisonSociale: company.raison_sociale || company.nom_commercial,
               email: company.payeur_info?.email || '',
-              telephone: '',
+              telephone: company.payeur_info?.telephone || '',
               dateCreation: company.date_creation,
               statut: company.statut || 'ACTIF',
               typeContrat: company.categorie || '',
@@ -88,6 +90,13 @@ export default function GestionContrats() {
       )
       
       setContrats(contratsAvecLignes)
+      try {
+        const demandesResponse = await api.get('/billing/contract-requests/')
+        const demandesData = demandesResponse.data.results || demandesResponse.data || []
+        setDemandes(Array.isArray(demandesData) ? demandesData : [])
+      } catch (demandesError) {
+        console.error('Erreur chargement demandes de contrats:', demandesError)
+      }
     } catch (error) {
       console.error('Erreur chargement contrats:', error)
       setErreur('Impossible de charger les contrats')
@@ -115,19 +124,50 @@ export default function GestionContrats() {
 
   const handleCreerContrat = async (payload) => {
     try {
-      await api.post('/billing/companies/', payload)
-      setMessage({ type: 'success', text: 'Contrat créé avec succès' })
+      // 1) Créer le compte payeur
+      const payeurResp = await api.post('/auth/users/', payload.payeur)
+      const payeurId = payeurResp.data?.id
+
+      // 2) Créer le contrat lié à ce payeur
+      await api.post('/billing/companies/', {
+        ...payload.contrat,
+        payeur: payeurId,
+      })
+
+      setMessage({ type: 'success', text: 'Payeur et contrat créés avec succès' })
       setModalOuvert(false)
       chargerContrats()
     } catch (error) {
       const data = error.response?.data || {}
-      const msg = data.compte?.[0] || data.error || data.detail || 'Erreur lors de la création'
+      const msg = data.compte?.[0] || data.username?.[0] || data.telephone?.[0] || data.payeur?.[0] || data.error || data.detail || 'Erreur lors de la création'
       setMessage({ type: 'error', text: msg })
     }
   }
 
   const handleVoirDetails = (contratId) => {
     navigate(`/agent/contrats/${contratId}`)
+  }
+
+  const traiterDemande = async (demande, action) => {
+    let commentaire = ''
+    if (action === 'reject') {
+      commentaire = window.prompt('Indiquez le motif du rejet :') || ''
+      if (!commentaire.trim()) return
+    } else if (!window.confirm(`Valider la demande ${demande.compte_propose} et créer le contrat ?`)) {
+      return
+    }
+
+    try {
+      setTraitementDemande(demande.id)
+      await api.post(`/billing/contract-requests/${demande.id}/${action}/`, { commentaire })
+      setMessage({ type: 'success', text: action === 'approve' ? 'Demande validée : le contrat et le payeur ont été créés.' : 'Demande rejetée.' })
+      await chargerContrats()
+    } catch (error) {
+      const data = error.response?.data || {}
+      setMessage({ type: 'error', text: data.error || data.detail || 'Impossible de traiter cette demande.' })
+    } finally {
+      setTraitementDemande(null)
+    }
   }
 
   const totalLignes = contrats.reduce((sum, c) => sum + c.lignes.length, 0)
@@ -173,6 +213,41 @@ export default function GestionContrats() {
           + Nouveau Contrat
         </button>
       </motion.div>
+
+      {demandes.filter(d => d.statut === 'PENDING').length > 0 && (
+        <section className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+          <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="font-bold text-amber-950">Demandes de contrats à valider</h2>
+              <p className="text-sm text-amber-800">Un contrat et son compte payeur ne sont créés qu'après votre validation.</p>
+            </div>
+            <span className="w-fit rounded-full bg-amber-200 px-2.5 py-1 text-xs font-semibold text-amber-900">
+              {demandes.filter(d => d.statut === 'PENDING').length} en attente
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px] text-sm">
+              <thead className="text-left text-amber-900">
+                <tr><th className="p-2">Code contrat</th><th className="p-2">Client</th><th className="p-2">Commercial</th><th className="p-2">Soumise le</th><th className="p-2 text-right">Décision</th></tr>
+              </thead>
+              <tbody>
+                {demandes.filter(d => d.statut === 'PENDING').map(demande => (
+                  <tr key={demande.id} className="border-t border-amber-200">
+                    <td className="p-2 font-semibold">{demande.compte_propose}</td>
+                    <td className="p-2">{demande.raison_sociale || '—'}</td>
+                    <td className="p-2">{demande.commercial_nom}</td>
+                    <td className="p-2">{demande.date_soumission ? new Date(demande.date_soumission).toLocaleDateString('fr-FR') : '—'}</td>
+                    <td className="p-2 text-right space-x-2">
+                      <button disabled={traitementDemande === demande.id} onClick={() => traiterDemande(demande, 'reject')} className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-red-700 disabled:opacity-50">Rejeter</button>
+                      <button disabled={traitementDemande === demande.id} onClick={() => traiterDemande(demande, 'approve')} className="rounded-md bg-[#002a7a] px-3 py-1.5 font-medium text-white disabled:opacity-50">Valider</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

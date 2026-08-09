@@ -156,6 +156,8 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }) {
                       type="tel"
                       name="telephone"
                       value={form.telephone}
+                      inputMode="numeric"
+                      maxLength={8}
                       onChange={handleChange}
                       className="w-full px-4 py-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] focus:border-transparent outline-none transition-all"
                       placeholder="+228 90 XX XX XX"

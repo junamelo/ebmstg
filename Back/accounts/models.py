@@ -7,6 +7,7 @@ class User(AbstractUser):
         ('SUPER_ADMIN', 'Super Admin'),
         ('CHEF_FACTURATION', 'Chef Facturation'),  # Nouveau rôle
         ('AGENT_FACTURATION', 'Agent Facturation'),
+        ('COMMERCIAL', 'Commercial'),
         ('PAYEUR', 'Payeur'),
         ('EMPLOYE', 'Employé'),
     ]
@@ -21,7 +22,7 @@ class User(AbstractUser):
     
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='EMPLOYE')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIF')
-    telephone = models.CharField(max_length=15, blank=True, null=True)
+    telephone = models.CharField(max_length=8, blank=True, null=True)
     est_actif = models.BooleanField(default=True)
     
     # Permissions personnalisées (JSON)
@@ -151,6 +152,10 @@ ROLE_PERMISSIONS = {
         'reports.view_all',
     ],
     
+    'COMMERCIAL': [
+        'billing.view_own',
+    ],
+
     'PAYEUR': [
         'billing.view_own',
         'billing.export_own',

@@ -10,6 +10,7 @@ const ROLE_CONFIG = {
   SUPER_ADMIN:       { label: 'Super Admin',      bg: '#fee2e2', color: '#b91c1c' },
   CHEF_FACTURATION:  { label: 'Chef Facturation', bg: '#fed7aa', color: '#c2410c' },
   AGENT_FACTURATION: { label: 'Agent',             bg: '#ede9fe', color: '#6d28d9' },
+  COMMERCIAL:        { label: 'Commercial',        bg: '#e0f2fe', color: '#0369a1' },
   PAYEUR:            { label: 'Payeur',            bg: '#dbeafe', color: '#1d4ed8' },
   EMPLOYE:           { label: 'Employé',           bg: '#dcfce7', color: '#15803d' },
 }
@@ -22,6 +23,7 @@ function getInitiales(prenom, nom) {
 const ROLES_OPTIONS = [
   { value: 'EMPLOYE',           label: 'Employé' },
   { value: 'PAYEUR',            label: 'Payeur (Entreprise)' },
+  { value: 'COMMERCIAL',        label: 'Commercial' },
   { value: 'AGENT_FACTURATION', label: 'Agent Facturation' },
   { value: 'CHEF_FACTURATION',  label: 'Chef Facturation' },
   { value: 'SUPER_ADMIN',       label: 'Super Administrateur' },
