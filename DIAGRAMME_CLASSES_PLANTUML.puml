@@ -1,0 +1,343 @@
+@startuml Diagramme de Classes - Portail Facturation Moov Africa
+
+!define ENTITY class
+skinparam classAttributeIconSize 0
+skinparam backgroundColor white
+skinparam shadowing false
+
+' Configuration des couleurs par package
+skinparam package {
+  BackgroundColor<<utilisateurs>> #FFE4B5
+  BackgroundColor<<contrats>> #FFD700
+  BackgroundColor<<facturation>> #FFA500
+  BackgroundColor<<catalogue>> #FF8C00
+  BorderColor Black
+  FontStyle bold
+}
+
+skinparam class {
+  BackgroundColor #FFFACD
+  BorderColor #8B4513
+  ArrowColor #654321
+  FontSize 11
+}
+
+' ========================================
+' PACKAGE GESTION UTILISATEURS
+' ========================================
+package "Gestion Utilisateurs" <<utilisateurs>> {
+  
+  class User {
+    - id: String
+    - email: String
+    - first_name: String
+    - last_name: String
+    - role: RoleChoices
+    - status: StatusChoices
+    - telephone: String
+    __
+    + has_permission(permission: String): Boolean
+  }
+  
+  class StatusHistory {
+    - id: String
+    - old_status: String
+    - new_status: String
+    - changed_at: Date
+  }
+  
+  enum RoleChoices {
+    SUPER_ADMIN
+    CHEF_FACTURATION
+    AGENT_FACTURATION
+    PAYEUR
+    EMPLOYE
+  }
+  
+  enum StatusChoices {
+    ACTIF
+    INACTIF
+    SUSPENDU
+    BLOQUE
+    EN_ATTENTE
+  }
+}
+
+' ========================================
+' PACKAGE GESTION CONTRATS
+' ========================================
+package "Gestion Contrats" <<contrats>> {
+  
+  class Commercial {
+    - id: String
+    - nom: String
+    - prenom: String
+    - matricule: String {unique}
+  }
+  
+  class Company {
+    - id: String
+    - compte: String {unique}
+    - raison_sociale: String
+    - categorie: CategorieClient
+    - statut_factures: StatutFacturation
+    - mode_reglement: ModeReglement
+    - est_resilie: Boolean
+    __
+    + resilier(): void
+  }
+  
+  class Line {
+    - id: String
+    - msisdn: String {unique}
+    - utilisateur: String
+    - forfait: Real
+    - cycle: CycleFacturation
+    - statut: String
+  }
+  
+  class AuditContrat {
+    - id: String
+    - type_action: TypeAction
+    - date_action: Date
+  }
+  
+  enum CategorieClient {
+    GE - Grande Entreprise
+    PE - Petite Entreprise
+    P - Particulier
+    OI - Organisme International
+    EP - Entreprise Publique
+    A - Association
+    NR - Non Revenu
+  }
+  
+  enum StatutFacturation {
+    ACTIF
+    SUSPENDU
+    CLOS
+    EN_ATTENTE
+  }
+  
+  enum ModeReglement {
+    CHEQUE
+    VIREMENT
+    ESPECES
+  }
+  
+  enum CycleFacturation {
+    HYB - Hybride
+    OP - Opérationnel
+  }
+  
+  enum TypeAction {
+    CREATION
+    MODIFICATION
+    RESILIATION
+    CHANGEMENT_STATUT
+    AJOUT_LIGNE
+  }
+}
+
+' ========================================
+' PACKAGE GESTION FACTURATION
+' ========================================
+package "Gestion Facturation" <<facturation>> {
+  
+  class Invoice {
+    - id: String
+    - numero_facture: String {unique}
+    - periode_debut: Date
+    - periode_fin: Date
+    - montant_ttc: Real
+    - statut: StatutFacture
+    - fichier_pdf: String
+    __
+    + publier(): void
+    + annuler(): void
+  }
+  
+  class NotificationFacture {
+    - id: String
+    - canal: Canal
+    - destinataire: String
+    - statut: Statut
+  }
+  
+  class HistoriqueFacturation {
+    - id: String
+    - type_action: TypeActionFacturation
+    - ancien_statut: String
+    - nouveau_statut: String
+  }
+  
+  class Publication {
+    - id: String
+    - cycle_facturation: String
+    - periode_debut: Date
+    - periode_fin: Date
+    - nombre_lignes_traitees: Integer
+    - montant_total: Real
+  }
+  
+  enum StatutFacture {
+    BROUILLON
+    EN_COURS
+    VALIDEE
+    PUBLIEE
+    PAYEE
+    ANNULEE
+  }
+  
+  enum Canal {
+    EMAIL
+    SMS
+  }
+  
+  enum Statut {
+    ENVOYEE
+    ECHEC
+    NON_CONFIGUREE
+  }
+  
+  enum TypeActionFacturation {
+    CREATION
+    MODIFICATION
+    VALIDATION
+    PUBLICATION
+    PAIEMENT
+    ANNULATION
+  }
+}
+
+' ========================================
+' PACKAGE CATALOGUE PRODUITS
+' ========================================
+package "Catalogue Produits" <<catalogue>> {
+  
+  class Package {
+    - id: String
+    - nom: String
+    - code: String {unique}
+    - type_forfait: TypeForfait
+    - prix_mensuel: Real
+  }
+  
+  class Service {
+    - id: String
+    - nom: String
+    - code: String {unique}
+    - type_service: TypeService
+  }
+  
+  class TarifService {
+    - id: String
+    - nom_option: String
+    - prix: Real
+  }
+  
+  class Cycle {
+    - id: String
+    - date_debut: Date
+    - date_fin: Date
+  }
+  
+  enum TypeForfait {
+    DATA
+    VOIX
+    SMS
+    MIXTE
+  }
+  
+  enum TypeService {
+    PASS
+    OPTION
+    PROMO
+  }
+}
+
+' ========================================
+' RELATIONS ENTRE CLASSES
+' ========================================
+
+' === Utilisateurs ===
+User "1" *-- "0..*" StatusHistory : historique >
+User "0..1" o-- "0..*" User : created_by >
+User "0..1" o-- "0..*" User : status_changed_by >
+User -- RoleChoices
+User -- StatusChoices
+
+' === Contrats ===
+Commercial "0..1" o-- "0..*" Company : gère >
+User "0..1" o-- "0..*" Company : payeur >
+Company "1" *-- "0..*" Line : possède >
+Line "0..1" o-- "1" User : employé >
+Company "1" *-- "0..*" AuditContrat : trace >
+User "1" -- "0..*" AuditContrat : effectue >
+Company -- CategorieClient
+Company -- StatutFacturation
+Company -- ModeReglement
+Line -- CycleFacturation
+AuditContrat -- TypeAction
+
+' === Facturation ===
+Company "1" o-- "0..*" Invoice : reçoit >
+Line "0..1" o-- "0..*" Invoice : concerne >
+Invoice "1" *-- "0..*" NotificationFacture : génère >
+Invoice "1" *-- "0..*" HistoriqueFacturation : historise >
+User "1" -- "0..*" HistoriqueFacturation : effectue >
+User "1" -- "0..*" Publication : publie >
+Invoice -- StatutFacture
+NotificationFacture -- Canal
+NotificationFacture -- Statut
+HistoriqueFacturation -- TypeActionFacturation
+
+' === Catalogue ===
+Service "1" *-- "0..*" TarifService : a >
+Line "1" o-- "0..*" Cycle : utilise >
+Service "1" o-- "0..*" Cycle : dans >
+Package -- TypeForfait
+Service -- TypeService
+
+' ========================================
+' NOTES ET LÉGENDES
+' ========================================
+
+note top of User
+  **Utilisateurs du système**
+  Rôles : Admin, Chef, Agent, Payeur, Employé
+  Hiérarchie des permissions
+end note
+
+note top of Company
+  **Contrats entreprises**
+  Un contrat = plusieurs lignes téléphoniques
+  Possibilité de résiliation
+end note
+
+note top of Invoice
+  **Factures clients**
+  Globales (GLO) ou Individuelles (SOM)
+  Workflow : Brouillon → Publiée → Payée
+end note
+
+note bottom of Cycle
+  **Affectation temporaire**
+  Lie un service à une ligne
+  pendant une période donnée
+end note
+
+legend right
+  **Légende des relations**
+  ──── : Association
+  ◆──── : Composition (contient)
+  ◇──── : Agrégation (utilise)
+  
+  **Cardinalités**
+  1 : Un
+  0..1 : Zéro ou un
+  0..* : Zéro ou plusieurs
+  1..* : Un ou plusieurs
+endlegend
+
+@enduml

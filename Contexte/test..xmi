@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI
+    xmi:version="2.1"
+    xmlns:xmi="http://schema.omg.org/spec/XMI/2.1"
+    xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML">
+
+    <uml:Model
+        xmi:id="model_portail_facturation"
+        name="Portail de Facturation Moov Africa">
+
+        <!-- ================================================= -->
+        <!-- SYSTEME / FRONTIERE DU SYSTEME                   -->
+        <!-- ================================================= -->
+
+        <packagedElement
+            xmi:type="uml:Package"
+            xmi:id="package_portail"
+            name="Portail de Facturation Moov Africa">
+
+            <!-- ================================================= -->
+            <!-- ACTEURS                                            -->
+            <!-- ================================================= -->
+
+            <packagedElement
+                xmi:type="uml:Actor"
+                xmi:id="actor_admin"
+                name="Super Admin"/>
+
+            <packagedElement
+                xmi:type="uml:Actor"
+                xmi:id="actor_chef"
+                name="Chef Facturation"/>
+
+            <packagedElement
+                xmi:type="uml:Actor"
+                xmi:id="actor_agent"
+                name="Agent Facturation"/>
+
+            <packagedElement
+                xmi:type="uml:Actor"
+                xmi:id="actor_payeur"
+                name="Payeur"/>
+
+            <packagedElement
+                xmi:type="uml:Actor"
+                xmi:id="actor_employe"
+                name="Employé"/>
+
+            <packagedElement
+                xmi:type="uml:Actor"
+                xmi:id="actor_email"
+                name="Système Email"/>
+
+            <packagedElement
+                xmi:type="uml:Actor"
+                xmi:id="actor_sms"
+                name="Système SMS"/>
+
+
+            <!-- ================================================= -->
+            <!-- CAS D'UTILISATION                                  -->
+            <!-- ================================================= -->
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC1"
+                name="Créer utilisateur"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC2"
+                name="Modifier statut utilisateur"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC3"
+                name="Réinitialiser mot de passe"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC4"
+                name="Créer contrat"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC5"
+                name="Modifier contrat"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC6"
+                name="Résilier contrat"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC7"
+                name="Ajouter ligne téléphonique"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC8"
+                name="Modifier services ligne"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC9"
+                name="Affecter employé à ligne"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC10"
+                name="Publier factures PDF"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC11"
+                name="Annuler facture"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC12"
+                name="Consulter factures"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC13"
+                name="Télécharger PDF"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC14"
+                name="Exporter données"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC15"
+                name="Gérer forfaits"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC16"
+                name="Gérer services"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC17"
+                name="Consulter statistiques"/>
+
+            <packagedElement
+                xmi:type="uml:UseCase"
+                xmi:id="UC18"
+                name="Consulter audit"/>
+
+
+            <!-- ================================================= -->
+            <!-- HERITAGE DES ACTEURS                               -->
+            <!-- ================================================= -->
+
+            <packagedElement
+                xmi:type="uml:Generalization"
+                xmi:id="gen_chef_admin"
+                specific="actor_chef"
+                general="actor_admin"/>
+
+            <packagedElement
+                xmi:type="uml:Generalization"
+                xmi:id="gen_agent_chef"
+                specific="actor_agent"
+                general="actor_chef"/>
+
+
+            <!-- ================================================= -->
+            <!-- ASSOCIATIONS ACTEURS -> CAS D'UTILISATION          -->
+            <!-- ================================================= -->
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_admin_uc1">
+                <memberEnd xmi:idref="assoc_admin_uc1_end1"/>
+                <memberEnd xmi:idref="assoc_admin_uc1_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_admin_uc1_end1"
+                    type="actor_admin"
+                    association="assoc_admin_uc1"/>
+                <ownedEnd
+                    xmi:id="assoc_admin_uc1_end2"
+                    type="UC1"
+                    association="assoc_admin_uc1"/>
+            </packagedElement>
+
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_admin_uc2">
+                <memberEnd xmi:idref="assoc_admin_uc2_end1"/>
+                <memberEnd xmi:idref="assoc_admin_uc2_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_admin_uc2_end1"
+                    type="actor_admin"
+                    association="assoc_admin_uc2"/>
+                <ownedEnd
+                    xmi:id="assoc_admin_uc2_end2"
+                    type="UC2"
+                    association="assoc_admin_uc2"/>
+            </packagedElement>
+
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_admin_uc3">
+                <memberEnd xmi:idref="assoc_admin_uc3_end1"/>
+                <memberEnd xmi:idref="assoc_admin_uc3_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_admin_uc3_end1"
+                    type="actor_admin"
+                    association="assoc_admin_uc3"/>
+                <ownedEnd
+                    xmi:id="assoc_admin_uc3_end2"
+                    type="UC3"
+                    association="assoc_admin_uc3"/>
+            </packagedElement>
+
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_admin_uc18">
+                <memberEnd xmi:idref="assoc_admin_uc18_end1"/>
+                <memberEnd xmi:idref="assoc_admin_uc18_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_admin_uc18_end1"
+                    type="actor_admin"
+                    association="assoc_admin_uc18"/>
+                <ownedEnd
+                    xmi:id="assoc_admin_uc18_end2"
+                    type="UC18"
+                    association="assoc_admin_uc18"/>
+            </packagedElement>
+
+
+            <!-- CHEF FACTURATION -->
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_chef_uc6">
+                <memberEnd xmi:idref="assoc_chef_uc6_end1"/>
+                <memberEnd xmi:idref="assoc_chef_uc6_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_chef_uc6_end1"
+                    type="actor_chef"
+                    association="assoc_chef_uc6"/>
+                <ownedEnd
+                    xmi:id="assoc_chef_uc6_end2"
+                    type="UC6"
+                    association="assoc_chef_uc6"/>
+            </packagedElement>
+
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_chef_uc11">
+                <memberEnd xmi:idref="assoc_chef_uc11_end1"/>
+                <memberEnd xmi:idref="assoc_chef_uc11_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_chef_uc11_end1"
+                    type="actor_chef"
+                    association="assoc_chef_uc11"/>
+                <ownedEnd
+                    xmi:id="assoc_chef_uc11_end2"
+                    type="UC11"
+                    association="assoc_chef_uc11"/>
+            </packagedElement>
+
+
+            <!-- AGENT FACTURATION -->
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_agent_uc4">
+                <memberEnd xmi:idref="assoc_agent_uc4_end1"/>
+                <memberEnd xmi:idref="assoc_agent_uc4_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc4_end1"
+                    type="actor_agent"
+                    association="assoc_agent_uc4"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc4_end2"
+                    type="UC4"
+                    association="assoc_agent_uc4"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_agent_uc5">
+                <memberEnd xmi:idref="assoc_agent_uc5_end1"/>
+                <memberEnd xmi:idref="assoc_agent_uc5_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc5_end1"
+                    type="actor_agent"
+                    association="assoc_agent_uc5"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc5_end2"
+                    type="UC5"
+                    association="assoc_agent_uc5"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_agent_uc7">
+                <memberEnd xmi:idref="assoc_agent_uc7_end1"/>
+                <memberEnd xmi:idref="assoc_agent_uc7_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc7_end1"
+                    type="actor_agent"
+                    association="assoc_agent_uc7"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc7_end2"
+                    type="UC7"
+                    association="assoc_agent_uc7"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_agent_uc8">
+                <memberEnd xmi:idref="assoc_agent_uc8_end1"/>
+                <memberEnd xmi:idref="assoc_agent_uc8_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc8_end1"
+                    type="actor_agent"
+                    association="assoc_agent_uc8"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc8_end2"
+                    type="UC8"
+                    association="assoc_agent_uc8"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_agent_uc9">
+                <memberEnd xmi:idref="assoc_agent_uc9_end1"/>
+                <memberEnd xmi:idref="assoc_agent_uc9_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc9_end1"
+                    type="actor_agent"
+                    association="assoc_agent_uc9"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc9_end2"
+                    type="UC9"
+                    association="assoc_agent_uc9"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_agent_uc10">
+                <memberEnd xmi:idref="assoc_agent_uc10_end1"/>
+                <memberEnd xmi:idref="assoc_agent_uc10_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc10_end1"
+                    type="actor_agent"
+                    association="assoc_agent_uc10"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc10_end2"
+                    type="UC10"
+                    association="assoc_agent_uc10"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_agent_uc12">
+                <memberEnd xmi:idref="assoc_agent_uc12_end1"/>
+                <memberEnd xmi:idref="assoc_agent_uc12_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc12_end1"
+                    type="actor_agent"
+                    association="assoc_agent_uc12"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc12_end2"
+                    type="UC12"
+                    association="assoc_agent_uc12"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_agent_uc14">
+                <memberEnd xmi:idref="assoc_agent_uc14_end1"/>
+                <memberEnd xmi:idref="assoc_agent_uc14_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc14_end1"
+                    type="actor_agent"
+                    association="assoc_agent_uc14"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc14_end2"
+                    type="UC14"
+                    association="assoc_agent_uc14"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_agent_uc15">
+                <memberEnd xmi:idref="assoc_agent_uc15_end1"/>
+                <memberEnd xmi:idref="assoc_agent_uc15_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc15_end1"
+                    type="actor_agent"
+                    association="assoc_agent_uc15"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc15_end2"
+                    type="UC15"
+                    association="assoc_agent_uc15"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_agent_uc16">
+                <memberEnd xmi:idref="assoc_agent_uc16_end1"/>
+                <memberEnd xmi:idref="assoc_agent_uc16_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc16_end1"
+                    type="actor_agent"
+                    association="assoc_agent_uc16"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc16_end2"
+                    type="UC16"
+                    association="assoc_agent_uc16"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_agent_uc17">
+                <memberEnd xmi:idref="assoc_agent_uc17_end1"/>
+                <memberEnd xmi:idref="assoc_agent_uc17_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc17_end1"
+                    type="actor_agent"
+                    association="assoc_agent_uc17"/>
+                <ownedEnd
+                    xmi:id="assoc_agent_uc17_end2"
+                    type="UC17"
+                    association="assoc_agent_uc17"/>
+            </packagedElement>
+
+
+            <!-- PAYEUR -->
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_payeur_uc12">
+                <memberEnd xmi:idref="assoc_payeur_uc12_end1"/>
+                <memberEnd xmi:idref="assoc_payeur_uc12_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_payeur_uc12_end1"
+                    type="actor_payeur"
+                    association="assoc_payeur_uc12"/>
+                <ownedEnd
+                    xmi:id="assoc_payeur_uc12_end2"
+                    type="UC12"
+                    association="assoc_payeur_uc12"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_payeur_uc13">
+                <memberEnd xmi:idref="assoc_payeur_uc13_end1"/>
+                <memberEnd xmi:idref="assoc_payeur_uc13_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_payeur_uc13_end1"
+                    type="actor_payeur"
+                    association="assoc_payeur_uc13"/>
+                <ownedEnd
+                    xmi:id="assoc_payeur_uc13_end2"
+                    type="UC13"
+                    association="assoc_payeur_uc13"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_payeur_uc14">
+                <memberEnd xmi:idref="assoc_payeur_uc14_end1"/>
+                <memberEnd xmi:idref="assoc_payeur_uc14_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_payeur_uc14_end1"
+                    type="actor_payeur"
+                    association="assoc_payeur_uc14"/>
+                <ownedEnd
+                    xmi:id="assoc_payeur_uc14_end2"
+                    type="UC14"
+                    association="assoc_payeur_uc14"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_payeur_uc17">
+                <memberEnd xmi:idref="assoc_payeur_uc17_end1"/>
+                <memberEnd xmi:idref="assoc_payeur_uc17_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_payeur_uc17_end1"
+                    type="actor_payeur"
+                    association="assoc_payeur_uc17"/>
+                <ownedEnd
+                    xmi:id="assoc_payeur_uc17_end2"
+                    type="UC17"
+                    association="assoc_payeur_uc17"/>
+            </packagedElement>
+
+
+            <!-- EMPLOYE -->
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_employe_uc12">
+                <memberEnd xmi:idref="assoc_employe_uc12_end1"/>
+                <memberEnd xmi:idref="assoc_employe_uc12_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_employe_uc12_end1"
+                    type="actor_employe"
+                    association="assoc_employe_uc12"/>
+                <ownedEnd
+                    xmi:id="assoc_employe_uc12_end2"
+                    type="UC12"
+                    association="assoc_employe_uc12"/>
+            </packagedElement>
+
+            <packagedElement
+                xmi:type="uml:Association"
+                xmi:id="assoc_employe_uc13">
+                <memberEnd xmi:idref="assoc_employe_uc13_end1"/>
+                <memberEnd xmi:idref="assoc_employe_uc13_end2"/>
+                <ownedEnd
+                    xmi:id="assoc_employe_uc13_end1"
+                    type="actor_employe"
+                    association="assoc_employe_uc13"/>
+                <ownedEnd
+                    xmi:id="assoc_employe_uc13_end2"
+                    type="UC13"
+                    association="assoc_employe_uc13"/>
+            </packagedElement>
+
+
+            <!-- ================================================= -->
+            <!-- RELATION UC12 -> UC13                              -->
+            <!-- ================================================= -->
+
+            <packagedElement
+                xmi:type="uml:Dependency"
+                xmi:id="dependency_uc12_uc13"
+                client="UC12"
+                supplier="UC13"/>
+
+        </packagedElement>
+
+    </uml:Model>
+
+</xmi:XMI>
