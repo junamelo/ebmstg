@@ -3,8 +3,11 @@ Tests pour l'application accounts - Phase 1
 """
 from django.test import TestCase
 from django.urls import reverse
+from django.conf import settings
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
+import pyotp
+import time
 from .models import User, StatusHistory
 
 
@@ -103,11 +106,24 @@ class AuthenticationTests(APITestCase):
     def test_change_password_success(self):
         """Test changement de mot de passe réussi"""
         self.client.force_authenticate(user=self.agent)
+        setup_response = self.client.post(
+            reverse('two-factor-setup'),
+            {'password': 'Agent@123'},
+            format='json',
+        )
+        self.assertEqual(setup_response.status_code, status.HTTP_200_OK)
+        confirmation_response = self.client.post(
+            reverse('two-factor-confirm'),
+            {'code': pyotp.TOTP(setup_response.data['manual_key']).at(time.time() + settings.TOTP_TIME_OFFSET_SECONDS)},
+            format='json',
+        )
+        self.assertEqual(confirmation_response.status_code, status.HTTP_200_OK)
         url = reverse('change-password')
         data = {
             'old_password': 'Agent@123',
             'new_password': 'NewAgent@456',
-            'new_password_confirm': 'NewAgent@456'
+            'new_password_confirm': 'NewAgent@456',
+            'two_factor_code': pyotp.TOTP(setup_response.data['manual_key']).at(time.time() + settings.TOTP_TIME_OFFSET_SECONDS),
         }
         response = self.client.post(url, data, format='json')
         
@@ -117,6 +133,26 @@ class AuthenticationTests(APITestCase):
         # Vérifier que le nouveau mot de passe fonctionne
         self.agent.refresh_from_db()
         self.assertTrue(self.agent.check_password('NewAgent@456'))
+
+    def test_change_password_works_without_optional_two_factor(self):
+        self.client.force_authenticate(user=self.agent)
+        response = self.client.post(reverse('change-password'), {
+            'old_password': 'Agent@123',
+            'new_password': 'NewAgent@456',
+            'new_password_confirm': 'NewAgent@456',
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.agent.refresh_from_db()
+        self.assertTrue(self.agent.check_password('NewAgent@456'))
+
+    def test_two_factor_setup_reuses_pending_qr_secret(self):
+        """Un second affichage du QR ne doit pas invalider celui déjà scanné."""
+        self.client.force_authenticate(user=self.agent)
+        first = self.client.post(reverse('two-factor-setup'), {'password': 'Agent@123'}, format='json')
+        second = self.client.post(reverse('two-factor-setup'), {'password': 'Agent@123'}, format='json')
+        self.assertEqual(first.status_code, status.HTTP_200_OK)
+        self.assertEqual(second.status_code, status.HTTP_200_OK)
+        self.assertEqual(first.data['manual_key'], second.data['manual_key'])
     
     def test_change_password_wrong_old(self):
         """Test changement avec mauvais ancien mot de passe"""

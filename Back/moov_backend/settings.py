@@ -125,7 +125,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Fuseau horaire de l'application et des affichages métier (UTC+1 actuellement).
+# Les dates restent stockées en UTC grâce à USE_TZ=True.
+TIME_ZONE = 'Africa/Casablanca'
+
+# Décalage appliqué aux vérifications TOTP pour correspondre aux appareils
+# configurés en UTC+1. Modifiable sans code via la variable d'environnement.
+TOTP_TIME_OFFSET_SECONDS = int(os.environ.get('TOTP_TIME_OFFSET_SECONDS', '3600'))
 
 USE_I18N = True
 

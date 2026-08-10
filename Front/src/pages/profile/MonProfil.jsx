@@ -1,16 +1,30 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { useAuth } from '../../contexts/AuthContext'
+import api from '../../services/api'
 
 export default function MonProfil() {
   const { user, isAdmin, isChefFacturation, isAgentFacturation, isPayeur, isEmploye } = useAuth()
   const [passwordData, setPasswordData] = useState({
     ancienMdp: '',
     nouveauMdp: '',
-    confirmationMdp: ''
+    confirmationMdp: '',
+    twoFactorCode: ''
   })
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
+  const [twoFactorStep, setTwoFactorStep] = useState('idle')
+  const [twoFactorPassword, setTwoFactorPassword] = useState('')
+  const [twoFactorCode, setTwoFactorCode] = useState('')
+  const [twoFactorSetup, setTwoFactorSetup] = useState(null)
+  const [loadingTwoFactor, setLoadingTwoFactor] = useState(false)
+
+  useEffect(() => {
+    api.get('/auth/two-factor/status/')
+      .then(response => setTwoFactorEnabled(Boolean(response.data.enabled)))
+      .catch(() => setMessage({ type: 'error', text: 'Impossible de vérifier le statut de sécurité du compte.' }))
+  }, [])
 
   const handlePasswordChange = (e) => {
     setPasswordData({ ...passwordData, [e.target.name]: e.target.value })
@@ -22,19 +36,57 @@ export default function MonProfil() {
       setMessage({ type: 'error', text: 'Les mots de passe ne correspondent pas.' })
       return
     }
-    if (passwordData.nouveauMdp.length < 6) {
-      setMessage({ type: 'error', text: 'Le mot de passe doit contenir au moins 6 caractères.' })
+    if (passwordData.nouveauMdp.length < 8) {
+      setMessage({ type: 'error', text: 'Le mot de passe doit contenir au moins 8 caractères.' })
       return
     }
     try {
-      // Simuler un changement de mot de passe
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const response = await api.post('/auth/change-password/', {
+        old_password: passwordData.ancienMdp,
+        new_password: passwordData.nouveauMdp,
+        new_password_confirm: passwordData.confirmationMdp,
+        two_factor_code: passwordData.twoFactorCode,
+      })
+      if (response.data.access) localStorage.setItem('token', response.data.access)
       setMessage({ type: 'success', text: 'Mot de passe modifié avec succès !' })
-      setPasswordData({ ancienMdp: '', nouveauMdp: '', confirmationMdp: '' })
+      setPasswordData({ ancienMdp: '', nouveauMdp: '', confirmationMdp: '', twoFactorCode: '' })
       setShowPasswordForm(false)
       setTimeout(() => setMessage({ type: '', text: '' }), 3000)
     } catch (error) {
-      setMessage({ type: 'error', text: 'Erreur lors du changement de mot de passe.' })
+      setMessage({ type: 'error', text: error.response?.data?.error || Object.values(error.response?.data || {}).flat().join(' ') || 'Erreur lors du changement de mot de passe.' })
+    }
+  }
+
+  const demarrerTwoFactor = async (event) => {
+    event.preventDefault()
+    try {
+      setLoadingTwoFactor(true)
+      const response = await api.post('/auth/two-factor/setup/', { password: twoFactorPassword })
+      setTwoFactorSetup(response.data)
+      setTwoFactorCode('')
+      setTwoFactorStep('confirm')
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Impossible de démarrer la configuration.' })
+    } finally {
+      setLoadingTwoFactor(false)
+    }
+  }
+
+  const confirmerTwoFactor = async (event) => {
+    event.preventDefault()
+    try {
+      setLoadingTwoFactor(true)
+      const response = await api.post('/auth/two-factor/confirm/', { code: twoFactorCode })
+      setTwoFactorEnabled(true)
+      setTwoFactorStep('idle')
+      setTwoFactorSetup(null)
+      setTwoFactorPassword('')
+      setTwoFactorCode('')
+      setMessage({ type: 'success', text: response.data.message })
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Code invalide.' })
+    } finally {
+      setLoadingTwoFactor(false)
     }
   }
 
@@ -259,7 +311,43 @@ export default function MonProfil() {
                   Changer le mot de passe
                 </button>
               )}
+              {!twoFactorEnabled && twoFactorStep === 'idle' && (
+                <button onClick={() => setTwoFactorStep('password')} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-[#002a7a] text-white hover:bg-[#003d9e]">
+                  Activer Google Authenticator
+                </button>
+              )}
             </div>
+
+            {twoFactorStep === 'password' && (
+              <form onSubmit={demarrerTwoFactor} className="mb-5 space-y-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                <div>
+                  <h4 className="font-semibold text-blue-950">Configurer Google Authenticator</h4>
+                  <p className="mt-1 text-sm text-blue-800">Saisissez votre mot de passe actuel pour recevoir un QR code personnel.</p>
+                </div>
+                <label className="block text-sm font-medium text-zinc-700">Mot de passe actuel *
+                  <input type="password" required value={twoFactorPassword} onChange={e => setTwoFactorPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5" />
+                </label>
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => { setTwoFactorStep('idle'); setTwoFactorPassword('') }} className="rounded-lg bg-zinc-200 px-4 py-2 text-sm font-medium">Annuler</button>
+                  <button disabled={loadingTwoFactor} className="rounded-lg bg-[#002a7a] px-4 py-2 text-sm font-medium text-white disabled:opacity-60">{loadingTwoFactor ? 'Préparation…' : 'Afficher le QR code'}</button>
+                </div>
+              </form>
+            )}
+
+            {twoFactorStep === 'confirm' && twoFactorSetup && (
+              <form onSubmit={confirmerTwoFactor} className="mb-5 space-y-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                <div>
+                  <h4 className="font-semibold text-emerald-950">1. Scannez ce QR code</h4>
+                  <p className="mt-1 text-sm text-emerald-800">Dans Google Authenticator, appuyez sur « + », puis « Scanner un code QR ».</p>
+                </div>
+                <img src={twoFactorSetup.qr_code} alt="QR code Google Authenticator" className="mx-auto h-48 w-48 rounded-lg border border-white bg-white p-2" />
+                <p className="break-all rounded bg-white p-2 text-xs text-zinc-600"><span className="font-semibold">Clé manuelle :</span> {twoFactorSetup.manual_key}</p>
+                <label className="block text-sm font-medium text-zinc-700">2. Code à 6 chiffres affiché par l’application *
+                  <input required inputMode="numeric" pattern="[0-9]{6}" maxLength="6" value={twoFactorCode} onChange={e => setTwoFactorCode(e.target.value.replace(/\D/g, ''))} className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 font-mono tracking-[0.35em]" />
+                </label>
+                <button disabled={loadingTwoFactor} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-60">{loadingTwoFactor ? 'Vérification…' : 'Confirmer et activer'}</button>
+              </form>
+            )}
 
             {showPasswordForm ? (
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
@@ -288,7 +376,7 @@ export default function MonProfil() {
                     required
                     className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] focus:border-transparent outline-none transition-all"
                   />
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Minimum 6 caractères</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Minimum 8 caractères</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
@@ -303,6 +391,23 @@ export default function MonProfil() {
                     className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-[#002a7a] focus:border-transparent outline-none transition-all"
                   />
                 </div>
+                {twoFactorEnabled && <div>
+                  <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                    Code Google Authenticator <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]{6}"
+                    maxLength="6"
+                    name="twoFactorCode"
+                    value={passwordData.twoFactorCode}
+                    onChange={(e) => setPasswordData({ ...passwordData, twoFactorCode: e.target.value.replace(/\D/g, '') })}
+                    required
+                    className="w-full px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg font-mono tracking-[0.35em] focus:ring-2 focus:ring-[#002a7a] focus:border-transparent outline-none transition-all"
+                  />
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Ouvrez Google Authenticator et saisissez le code actuel à 6 chiffres.</p>
+                </div>}
                 <div className="flex items-center gap-3 pt-2">
                   <button
                     type="submit"
@@ -322,7 +427,7 @@ export default function MonProfil() {
                     type="button"
                     onClick={() => {
                       setShowPasswordForm(false)
-                      setPasswordData({ ancienMdp: '', nouveauMdp: '', confirmationMdp: '' })
+                      setPasswordData({ ancienMdp: '', nouveauMdp: '', confirmationMdp: '', twoFactorCode: '' })
                     }}
                     className="px-6 py-2.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-all duration-150"
                   >
@@ -336,8 +441,8 @@ export default function MonProfil() {
                   <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
                 </svg>
                 <div>
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">Compte sécurisé</p>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">Votre mot de passe est protégé</p>
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">{twoFactorEnabled ? 'Google Authenticator activé' : 'Google Authenticator non activé'}</p>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">{twoFactorEnabled ? 'Un code à usage unique sera demandé pour modifier votre mot de passe.' : 'La double authentification est optionnelle. Vous pouvez modifier votre mot de passe normalement.'}</p>
                 </div>
               </div>
             )}

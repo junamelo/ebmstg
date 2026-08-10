@@ -16,6 +16,8 @@ class AuditLogMiddleware:
     SENSITIVE_PATHS = [
         '/api/accounts/users/',
         '/api/accounts/change-password/',
+        '/api/auth/change-password/',
+        '/api/auth/two-factor/',
         '/api/billing/invoices/',
         '/api/billing/publish/',
     ]

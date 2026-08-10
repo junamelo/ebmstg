@@ -224,11 +224,25 @@ class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, write_only=True)
     new_password = serializers.CharField(required=True, write_only=True, validators=[validate_password])
     new_password_confirm = serializers.CharField(required=True, write_only=True)
+    two_factor_code = serializers.RegexField(r'^\d{6}$', required=False, write_only=True)
     
     def validate(self, attrs):
         if attrs['new_password'] != attrs['new_password_confirm']:
             raise serializers.ValidationError({"new_password": "Les mots de passe ne correspondent pas"})
         return attrs
+
+
+class TwoFactorSetupSerializer(serializers.Serializer):
+    """Le mot de passe courant évite qu'une session volée active son propre TOTP."""
+    password = serializers.CharField(required=True, write_only=True)
+
+
+class TwoFactorCodeSerializer(serializers.Serializer):
+    code = serializers.RegexField(r'^\d{6}$', write_only=True)
+
+
+class TwoFactorDisableSerializer(TwoFactorCodeSerializer):
+    password = serializers.CharField(required=True, write_only=True)
 
 
 class ResetPasswordSerializer(serializers.Serializer):

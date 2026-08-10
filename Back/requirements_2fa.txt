@@ -1,0 +1,4 @@
+# Dépendances de la double authentification TOTP (Google Authenticator)
+pyotp==2.9.0
+qrcode[pil]==8.2
+cryptography==46.0.7

@@ -6,14 +6,17 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.utils import timezone
 from django.db.models import Q
+import pyotp
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 from .models import User, StatusHistory, ROLE_PERMISSIONS
 from .serializers import (
     UserSerializer, UserListSerializer, RegisterSerializer, LoginSerializer,
     ChangeStatusSerializer, PermissionSerializer, StatusHistorySerializer,
     CreateUserSerializer, ChangePasswordSerializer, ResetPasswordSerializer,
-    RefreshTokenSerializer
+    RefreshTokenSerializer, TwoFactorSetupSerializer, TwoFactorCodeSerializer,
+    TwoFactorDisableSerializer
 )
+from .two_factor import encrypt_secret, decrypt_secret, provisioning_uri, qr_code_data_uri, verify_code
 
 class RegisterView(generics.GenericAPIView):
     permission_classes = [AllowAny]
@@ -142,6 +145,14 @@ class ChangePasswordView(generics.GenericAPIView):
                 {'error': 'Ancien mot de passe incorrect'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # La 2FA est facultative. Elle devient obligatoire uniquement pour les
+        # utilisateurs qui ont volontairement activé Google Authenticator.
+        if user.two_factor_enabled and not verify_code(user.two_factor_secret, serializer.validated_data.get('two_factor_code')):
+            return Response(
+                {'error': 'Code Google Authenticator invalide ou expiré.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         
         # Définir le nouveau mot de passe
         user.set_password(serializer.validated_data['new_password'])
@@ -155,6 +166,85 @@ class ChangePasswordView(generics.GenericAPIView):
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         })
+
+
+class TwoFactorStatusView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({'enabled': request.user.two_factor_enabled})
+
+
+class TwoFactorSetupView(generics.GenericAPIView):
+    """Démarre l'enrôlement TOTP et retourne uniquement le QR temporaire."""
+    permission_classes = [IsAuthenticated]
+    serializer_class = TwoFactorSetupSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        if not user.check_password(serializer.validated_data['password']):
+            return Response({'error': 'Mot de passe courant incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+        if user.two_factor_enabled:
+            return Response({'error': 'Google Authenticator est déjà activé pour ce compte.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Tant que l'utilisateur n'a pas confirmé, réutiliser la même clé.
+        # Un rafraîchissement de page ou un second clic ne doit pas invalider le
+        # QR code déjà scanné dans Google Authenticator.
+        secret = decrypt_secret(user.two_factor_secret)
+        if not secret:
+            secret = pyotp.random_base32()
+            user.two_factor_secret = encrypt_secret(secret)
+            user.save(update_fields=['two_factor_secret'])
+        uri = provisioning_uri(secret, user)
+        return Response({
+            'qr_code': qr_code_data_uri(uri),
+            'manual_key': secret,
+            'message': 'Scannez le QR code puis confirmez le code à 6 chiffres affiché par Google Authenticator.',
+        })
+
+
+class TwoFactorConfirmView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = TwoFactorCodeSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        if user.two_factor_enabled:
+            return Response({'error': 'Google Authenticator est déjà activé.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not user.two_factor_secret or not decrypt_secret(user.two_factor_secret):
+            return Response({'error': 'La configuration en attente est introuvable. Cliquez sur « Activer Google Authenticator » et scannez le nouveau QR code.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not verify_code(user.two_factor_secret, serializer.validated_data['code']):
+            return Response({'error': 'Code Google Authenticator invalide ou expiré.'}, status=status.HTTP_400_BAD_REQUEST)
+        user.two_factor_enabled = True
+        user.two_factor_enabled_at = timezone.now()
+        user.save(update_fields=['two_factor_enabled', 'two_factor_enabled_at'])
+        return Response({'message': 'Google Authenticator est activé.'})
+
+
+class TwoFactorDisableView(generics.GenericAPIView):
+    """Désactivation volontaire protégée par mot de passe et TOTP."""
+    permission_classes = [IsAuthenticated]
+    serializer_class = TwoFactorDisableSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        if not user.two_factor_enabled:
+            return Response({'error': 'Google Authenticator n’est pas activé.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not user.check_password(serializer.validated_data['password']):
+            return Response({'error': 'Mot de passe courant incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not verify_code(user.two_factor_secret, serializer.validated_data['code']):
+            return Response({'error': 'Code Google Authenticator invalide ou expiré.'}, status=status.HTTP_400_BAD_REQUEST)
+        user.two_factor_secret = ''
+        user.two_factor_enabled = False
+        user.two_factor_enabled_at = None
+        user.save(update_fields=['two_factor_secret', 'two_factor_enabled', 'two_factor_enabled_at'])
+        return Response({'message': 'Google Authenticator a été désactivé.'})
 
 
 class RefreshTokenView(generics.GenericAPIView):

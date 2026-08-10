@@ -52,6 +52,12 @@ class User(AbstractUser):
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
     last_login_ip = models.GenericIPAddressField(null=True, blank=True)
+
+    # Double authentification TOTP (Google Authenticator). La clé est chiffrée
+    # avant son enregistrement ; elle ne doit jamais être exposée par l'API.
+    two_factor_secret = models.CharField(max_length=255, blank=True, default='')
+    two_factor_enabled = models.BooleanField(default=False)
+    two_factor_enabled_at = models.DateTimeField(null=True, blank=True)
     
     class Meta:
         db_table = 'users'
