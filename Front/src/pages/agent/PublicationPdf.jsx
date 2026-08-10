@@ -256,7 +256,6 @@ export default function PublicationPdf() {
                   <th>Période</th>
                   <th>Agent</th>
                   <th>Lignes traitées</th>
-                  <th>Montant total</th>
                   <th>Statut</th>
                 </tr>
               </thead>
@@ -272,7 +271,6 @@ export default function PublicationPdf() {
                     <td>{pub.periode_debut} - {pub.periode_fin}</td>
                     <td>{pub.agent_name || 'Système'}</td>
                     <td><strong>{pub.nombre_lignes_traitees || 0}</strong></td>
-                    <td><strong>{pub.montant_total || 0} FCFA</strong></td>
                     <td>
                       <span className={`badge ${pub.statut === 'PUBLIEE' ? 'badge-success' : 'badge-warning'}`}>
                         {pub.statut === 'PUBLIEE' ? 'Publié' : pub.statut}

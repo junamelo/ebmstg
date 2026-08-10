@@ -201,14 +201,19 @@ export const getStatsAgentFacturation = async () => {
       erreursDecoupage: 0,
       lignesSansForfait: 0,
       servicesActifs: [],
-      historiquePublications: (response.data.agents || []).map(agent => ({ date: '-', periode: agent.nom_complet || agent.email, nbFactures: agent.nombre_publications || 0, statut: 'TRAITEE' })),
+      historiquePublications: (response.data.dernieres_publications || []).map(publication => ({
+        date: publication.date_publication ? new Date(publication.date_publication).toLocaleDateString('fr-FR') : '-',
+        periode: `${publication.periode_debut || '—'} - ${publication.periode_fin || '—'}`,
+        nbFactures: publication.nombre_lignes_traitees || 0,
+        statut: publication.statut || 'VALIDEE',
+      })),
       statistiques: {
         total_publications: performance.total_publications || 0,
         montant_total: performance.montant_total || 0,
         lignes_traitees: 0,
       },
       evolution_quotidienne: response.data.publications_periode || [],
-      dernieres_publications: response.data.agents || [],
+      dernieres_publications: response.data.dernieres_publications || [],
     }
   }
   const data = response.data

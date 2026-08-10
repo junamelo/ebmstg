@@ -224,6 +224,18 @@ def stats_chef_facturation(request):
     total_montant = Publication.objects.filter(agent__in=agents).aggregate(
         total=Sum('montant_total')
     )['total'] or Decimal('0')
+
+    # Vraies publications récentes : ne pas réutiliser la liste des agents
+    # comme historique, car elle ne contient pas les dates de période.
+    dernieres_publications = list(
+        Publication.objects
+        .filter(agent__in=agents)
+        .order_by('-date_publication')[:10]
+        .values(
+            'id', 'cycle_facturation', 'periode_debut', 'periode_fin',
+            'date_publication', 'nombre_lignes_traitees', 'statut'
+        )
+    )
     
     return Response({
         'agents': agents_stats,
@@ -242,6 +254,7 @@ def stats_chef_facturation(request):
             }
             for item in publications_periode
         ],
+        'dernieres_publications': dernieres_publications,
     })
 
 

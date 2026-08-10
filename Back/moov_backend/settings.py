@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+from urllib.parse import urlsplit, urlunsplit
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -93,12 +94,77 @@ WSGI_APPLICATION = 'moov_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if os.environ.get('POSTGRES_DB'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ['POSTGRES_DB'],
+            'USER': os.environ['POSTGRES_USER'],
+            'PASSWORD': os.environ['POSTGRES_PASSWORD'],
+            'HOST': os.environ.get('POSTGRES_HOST', '127.0.0.1'),
+            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+            'CONN_MAX_AGE': 60,
+            'CONN_HEALTH_CHECKS': True,
+        }
     }
-}
+else:
+    # Secours pour le développement sans configuration PostgreSQL.
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+
+def _redis_url_with_database(redis_url, database):
+    """Conserve les identifiants Redis/Garnet en changeant seulement la base."""
+    parsed = urlsplit(redis_url)
+    return urlunsplit((
+        parsed.scheme,
+        parsed.netloc,
+        f'/{database}',
+        parsed.query,
+        parsed.fragment,
+    ))
+
+
+# Garnet parle le protocole RESP de Redis. Les trois bases logiques sont
+# séparées afin que le cache, les messages Celery et leurs résultats ne se
+# mélangent pas.
+REDIS_URL = os.environ.get('REDIS_URL', '')
+if REDIS_URL:
+    CACHE_REDIS_URL = _redis_url_with_database(REDIS_URL, 0)
+    CELERY_BROKER_URL = _redis_url_with_database(REDIS_URL, 1)
+    CELERY_RESULT_BACKEND = _redis_url_with_database(REDIS_URL, 2)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': CACHE_REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            },
+            'KEY_PREFIX': 'moov_ebilling',
+        }
+    }
+else:
+    # Le projet reste utilisable en développement si Garnet/Redis n'est pas
+    # encore lancé, mais les tâches Celery ne peuvent alors pas être démarrées.
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'moov-ebilling-local',
+        }
+    }
+
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TIMEZONE = TIME_ZONE if 'TIME_ZONE' in globals() else 'Africa/Casablanca'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 60 * 60
+CELERY_TASK_SOFT_TIME_LIMIT = 55 * 60
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 
 # Password validation

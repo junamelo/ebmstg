@@ -6,6 +6,7 @@
 # Donnees locales et medias clients
 Back/db.sqlite3
 Back/media/
+Back/backups/
 Contexte/testPDF/
 
 # Frontend

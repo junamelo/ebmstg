@@ -317,7 +317,6 @@ export default function DetailContrat() {
   }
 
   const lignesActives = contrat.lignes.filter(l => l.statut === 'ACTIF').length
-  const caMensuel = contrat.lignes.reduce((sum, l) => sum + l.montantEstime, 0)
 
   const getStatutStyle = (statut) => {
     return statut === 'ACTIF'
@@ -746,7 +745,7 @@ export default function DetailContrat() {
       </motion.div>
 
       {/* Stats rapides */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
           <div className="flex items-center gap-3">
@@ -778,21 +777,6 @@ export default function DetailContrat() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-[#e05500]/10 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-[#e05500]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-zinc-900 dark:text-white">{caMensuel.toLocaleString()}</p>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">CA mensuel (F)</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
           className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center">

@@ -97,12 +97,6 @@ export default function ContratCard({ contrat, delay, onVoirDetails }) {
           </div>
         )}
 
-        {/* CA */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-zinc-500">CA mensuel</span>
-          <span className="text-lg font-bold text-[#e05500]">{contrat.caMensuel.toLocaleString()} F</span>
-        </div>
-
         {/* Date */}
         <div className="flex items-center justify-between text-xs text-zinc-500">
           <span>Créé le {new Date(contrat.dateCreation).toLocaleDateString('fr-FR')}</span>

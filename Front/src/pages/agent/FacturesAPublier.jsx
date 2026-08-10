@@ -3,6 +3,21 @@ import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import './FacturesAPublier.css'
 
+// Certains PDF accolent le libellé de l'entreprise au numéro (ex. WACEMSAA2026...).
+// Le nom reste dans sa propre colonne : on ne montre ici que le numéro de facture.
+const afficherNumeroFacture = (facture) => {
+  const numero = facture.numero_facture_pdf || facture.numero_facture || ''
+  const prefixeEntreprise = (facture.company_name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase()
+
+  return prefixeEntreprise && numero.toUpperCase().startsWith(prefixeEntreprise)
+    ? numero.slice(prefixeEntreprise.length)
+    : numero
+}
+
 export default function FacturesAPublier() {
   const [factures, setFactures] = useState([])
   const [selection, setSelection] = useState([])
@@ -164,14 +179,6 @@ export default function FacturesAPublier() {
           </div>
         </div>
 
-        <div className="stat-card">
-          <i className="ti ti-coin"></i>
-          <div>
-            <div className="stat-value">{stats.montant_total.toLocaleString('fr-FR')} FCFA</div>
-            <div className="stat-label">Montant total</div>
-          </div>
-        </div>
-
         {selection.length > 0 && (
           <div className="stat-card stat-selection">
             <i className="ti ti-checkbox"></i>
@@ -276,7 +283,6 @@ export default function FacturesAPublier() {
                   <th>Entreprise</th>
                   <th>Ligne</th>
                   <th>Période</th>
-                  <th>Montant TTC</th>
                   <th>PDF</th>
                 </tr>
               </thead>
@@ -293,7 +299,9 @@ export default function FacturesAPublier() {
                         onChange={() => toggleSelection(facture.id)}
                       />
                     </td>
-                    <td className="numero">{facture.numero_facture}</td>
+                      <td className="numero">
+                        {afficherNumeroFacture(facture)}
+                      </td>
                     <td>{facture.company_name}</td>
                     <td>
                       {facture.line_msisdn ? (
@@ -308,11 +316,8 @@ export default function FacturesAPublier() {
                         year: 'numeric'
                       })}
                     </td>
-                    <td className="montant">
-                      {parseFloat(facture.montant_ttc).toLocaleString('fr-FR')} FCFA
-                    </td>
-                    <td>
-                      {facture.fichier_pdf ? (
+                      <td>
+                        {facture.has_pdf || facture.fichier_pdf ? (
                         <span className="badge badge-success">
                           <i className="ti ti-file-check"></i>
                           Attaché

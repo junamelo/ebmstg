@@ -1,0 +1,2 @@
+# Pilote PostgreSQL pour Django (installation locale et production)
+psycopg[binary]==3.3.4
