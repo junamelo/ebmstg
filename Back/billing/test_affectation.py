@@ -90,6 +90,52 @@ class AffectationEmployeTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.line2.refresh_from_db()
         self.assertEqual(self.line2.employe, self.employe2)
+
+    def test_agent_cree_employe_directement_depuis_une_ligne(self):
+        """Le numéro de la ligne est imposé au nouveau compte employé."""
+        self.client.force_authenticate(user=self.agent)
+        response = self.client.post(
+            f'/api/billing/lines/{self.line2.id}/create-employee/',
+            {
+                'first_name': 'Afi',
+                'last_name': 'Mensah',
+                'email': 'afi.mensah@test.com',
+                'password': 'Employe@2026',
+                # Le serveur ne doit jamais accepter un numéro arbitraire.
+                'telephone': '79999999',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.line2.refresh_from_db()
+        self.assertIsNotNone(self.line2.employe)
+        self.assertEqual(self.line2.employe.telephone, self.line2.msisdn)
+        self.assertEqual(self.line2.employe.username, self.line2.msisdn)
+        self.assertEqual(self.line2.employe.role, 'EMPLOYE')
+        self.assertEqual(self.line2.company, self.company)
+
+    def test_agent_cree_employe_et_ligne_dans_entreprise_choisie(self):
+        """La création autonome exige un contrat et crée la ligne liée à celui-ci."""
+        self.client.force_authenticate(user=self.agent)
+        response = self.client.post(
+            '/api/billing/lines/create-employee-with-line/',
+            {
+                'company': self.company.id,
+                'msisdn': '79998888',
+                'first_name': 'Kossi',
+                'last_name': 'Doe',
+                'email': 'kossi.doe@test.com',
+                'password': 'Employe@2026',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        line = Line.objects.get(msisdn='79998888')
+        self.assertEqual(line.company, self.company)
+        self.assertIsNotNone(line.employe)
+        self.assertEqual(line.employe.telephone, '79998888')
     
     def test_02_agent_peut_retirer_employe(self):
         """Test : Agent peut retirer un employé d'une ligne"""

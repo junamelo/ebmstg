@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../../services/api'
-import ModalNouveauContrat from '../agent/components/ModalNouveauContrat'
 
 function StatCard({ label, value }) {
   return (
@@ -17,9 +17,6 @@ export default function CommercialDashboard() {
   const [erreur, setErreur] = useState('')
   const [recherche, setRecherche] = useState('')
   const [selected, setSelected] = useState(null)
-  const [modalOuvert, setModalOuvert] = useState(false)
-  const [demandeEnvoyee, setDemandeEnvoyee] = useState('')
-  const [demandes, setDemandes] = useState([])
 
   const chargerContrats = async () => {
     setChargement(true)
@@ -30,9 +27,6 @@ export default function CommercialDashboard() {
       })
       const data = response.data?.results || response.data || []
       setContrats(Array.isArray(data) ? data : [])
-      const demandesResponse = await api.get('/billing/contract-requests/')
-      const demandesData = demandesResponse.data?.results || demandesResponse.data || []
-      setDemandes(Array.isArray(demandesData) ? demandesData : [])
     } catch (e) {
       console.error('Erreur chargement contrats commercial:', e)
       setErreur("Impossible de charger vos contrats pour l'instant.")
@@ -67,20 +61,6 @@ export default function CommercialDashboard() {
     }
   }
 
-  const soumettreDemande = async (payload) => {
-    try {
-      await api.post('/billing/contract-requests/', payload)
-      setModalOuvert(false)
-      setDemandeEnvoyee('Demande envoyée. Le contrat sera créé après validation par un agent de facturation.')
-      await chargerContrats()
-    } catch (e) {
-      const data = e.response?.data || {}
-      const message = data.detail || data.error || data.payeur?.telephone?.[0] || data.contrat?.compte?.[0] || 'Impossible de soumettre la demande de contrat.'
-      setErreur(message)
-      throw new Error(message)
-    }
-  }
-
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -88,44 +68,18 @@ export default function CommercialDashboard() {
         <h1 className="text-2xl font-bold text-zinc-900">Espace Commercial</h1>
         <p className="text-zinc-600 text-sm">Consultez les contrats que vous avez prospectés et les informations des payeurs associés.</p>
         </div>
-        <button
-          onClick={() => { setErreur(''); setDemandeEnvoyee(''); setModalOuvert(true) }}
+        <Link
+          to="/commercial/demandes"
           className="rounded-lg bg-[#002a7a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#003d9e]"
         >
-          + Soumettre un contrat
-        </button>
+          Voir mes demandes
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard label="Contrats" value={contrats.length} />
         <StatCard label="Contrats actifs" value={contratsActifs} />
         <StatCard label="Payeurs associés" value={payeursUniques} />
-      </div>
-
-      <div className="bg-white rounded-xl border border-zinc-200 p-4">
-        <h2 className="mb-3 font-semibold text-zinc-900">Mes demandes de contrats</h2>
-        {demandes.length === 0 ? (
-          <p className="text-sm text-zinc-500">Aucune demande soumise.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-600">
-                <tr><th className="p-3">Code</th><th className="p-3">Client</th><th className="p-3">Soumise le</th><th className="p-3">Statut</th><th className="p-3">Commentaire</th></tr>
-              </thead>
-              <tbody>
-                {demandes.map(demande => (
-                  <tr key={demande.id} className="border-t border-zinc-100">
-                    <td className="p-3 font-medium">{demande.compte_propose}</td>
-                    <td className="p-3">{demande.raison_sociale || '—'}</td>
-                    <td className="p-3">{demande.date_soumission ? new Date(demande.date_soumission).toLocaleDateString('fr-FR') : '—'}</td>
-                    <td className="p-3">{demande.statut === 'PENDING' ? 'En attente' : demande.statut === 'APPROVED' ? 'Validée' : 'Rejetée'}</td>
-                    <td className="p-3">{demande.decision_comment || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
 
       <div className="bg-white rounded-xl border border-zinc-200 p-4">
@@ -148,7 +102,6 @@ export default function CommercialDashboard() {
         </div>
 
         {erreur && <div className="mb-3 text-sm text-red-600">{erreur}</div>}
-        {demandeEnvoyee && <div className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{demandeEnvoyee}</div>}
 
         {chargement ? (
           <div className="py-12 text-center text-zinc-500 text-sm">Chargement...</div>
@@ -230,13 +183,6 @@ export default function CommercialDashboard() {
         </div>
       )}
 
-      {modalOuvert && (
-        <ModalNouveauContrat
-          commercialMode
-          onClose={() => setModalOuvert(false)}
-          onCreate={soumettreDemande}
-        />
-      )}
     </div>
   )
 }

@@ -335,7 +335,7 @@ export default function AgentDashboard() {
             Voir tout →
           </Link>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto publication-history-table">
           <table className="w-full">
             <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-xs uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
               <tr>

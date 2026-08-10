@@ -209,3 +209,52 @@ class DemandeContratCommercialTests(APITestCase):
         company = Company.objects.get(compte='A26002000')
         self.assertEqual(company.commercial_id, self.commercial.id)
         self.assertEqual(company.payeur.username, 'A26002000')
+
+
+class AjoutLignesEnLotTests(APITestCase):
+    def setUp(self):
+        self.agent = User.objects.create(username='agent_lot', role='AGENT_FACTURATION', status='ACTIF', est_actif=True)
+        self.company = Company.objects.create(compte='A26003000', raison_sociale='CLIENT LOT')
+        self.client.force_authenticate(user=self.agent)
+
+    def test_ajout_lignes_en_lot_est_atomique(self):
+        response = self.client.post('/api/billing/lines/bulk-create/', {
+            'company': self.company.id,
+            'lignes': [
+                {'msisdn': '79000101', 'utilisateur': 'Employé un', 'cycle': 'HYB', 'forfait': '5000'},
+                {'msisdn': '79000102', 'utilisateur': 'Employé deux', 'cycle': 'OP', 'forfait': '7000'},
+            ],
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Line.objects.filter(company=self.company).count(), 2)
+
+        response = self.client.post('/api/billing/lines/bulk-create/', {
+            'company': self.company.id,
+            'lignes': [
+                {'msisdn': '79000103', 'cycle': 'HYB'},
+                {'msisdn': '79000101', 'cycle': 'OP'},
+            ],
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Line.objects.filter(company=self.company).count(), 2)
+
+    def test_employes_disponibles_retourne_numero_et_nom(self):
+        employe_disponible = User.objects.create(
+            username='79000150', first_name='Afi', last_name='Koffi',
+            telephone='79000150', role='EMPLOYE', status='ACTIF', est_actif=True,
+        )
+        employe_occupe = User.objects.create(
+            username='79000151', first_name='Déjà', last_name='Affecté',
+            telephone='79000151', role='EMPLOYE', status='ACTIF', est_actif=True,
+        )
+        Line.objects.create(company=self.company, msisdn='79000151', employe=employe_occupe)
+        employe_meme_numero = User.objects.create(
+            username='autre_79000151', first_name='Autre', last_name='Compte',
+            telephone='79000151', role='EMPLOYE', status='ACTIF', est_actif=True,
+        )
+
+        response = self.client.get('/api/billing/lines/available-employees/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn({'id': employe_disponible.id, 'numero': '79000150', 'nom': 'Afi Koffi', 'email': ''}, response.data)
+        self.assertFalse(any(item['id'] == employe_occupe.id for item in response.data))
+        self.assertFalse(any(item['id'] == employe_meme_numero.id for item in response.data))

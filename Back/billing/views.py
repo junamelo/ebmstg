@@ -6,6 +6,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q, Count, Sum
+from django.db import transaction
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
@@ -317,6 +320,204 @@ class LineViewSet(viewsets.ModelViewSet):
         )
         output_serializer = LineSerializer(line)
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create(self, request):
+        """Crée plusieurs lignes d'un même contrat de manière atomique."""
+        if request.user.role not in ['SUPER_ADMIN', 'CHEF_FACTURATION', 'AGENT_FACTURATION']:
+            return Response({'error': 'Seuls les agents habilités peuvent ajouter des lignes.'}, status=status.HTTP_403_FORBIDDEN)
+        company_id = request.data.get('company')
+        lignes = request.data.get('lignes')
+        if not company_id or not isinstance(lignes, list) or not lignes:
+            return Response(
+                {'error': 'company et une liste non vide de lignes sont obligatoires.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(lignes) > 100:
+            return Response({'error': '100 lignes maximum par ajout.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        erreurs, serializers_lignes, numeros = [], [], set()
+        for index, ligne in enumerate(lignes, start=1):
+            serializer = LineCreateSerializer(data={**ligne, 'company': company_id})
+            if not serializer.is_valid():
+                erreurs.append({'ligne': index, 'erreurs': serializer.errors})
+                continue
+            numero = serializer.validated_data['msisdn']
+            if numero in numeros:
+                erreurs.append({'ligne': index, 'erreurs': {'msisdn': ['Numéro dupliqué dans cet ajout.']}})
+                continue
+            numeros.add(numero)
+            serializers_lignes.append(serializer)
+
+        if erreurs:
+            return Response(
+                {'error': "Aucune ligne n'a été ajoutée. Corrigez les erreurs indiquées.", 'erreurs': erreurs},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from django.db import transaction
+        with transaction.atomic():
+            nouvelles_lignes = [serializer.save() for serializer in serializers_lignes]
+            company = nouvelles_lignes[0].company
+            AuditContrat.objects.create(
+                company=company,
+                utilisateur=request.user,
+                type_action='AJOUT_LIGNE',
+                description=f'{len(nouvelles_lignes)} lignes ajoutées en lot',
+                nouvelles_valeurs={'msisdn': [ligne.msisdn for ligne in nouvelles_lignes]},
+            )
+        return Response(LineSerializer(nouvelles_lignes, many=True).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'], url_path='available-employees')
+    def available_employees(self, request):
+        """Employés disposant d'un MSISDN et encore sans ligne associée."""
+        if request.user.role not in ['SUPER_ADMIN', 'CHEF_FACTURATION', 'AGENT_FACTURATION']:
+            return Response({'error': 'Accès réservé aux agents habilités.'}, status=status.HTTP_403_FORBIDDEN)
+
+        employees = User.objects.filter(
+            role='EMPLOYE',
+            telephone__isnull=False,
+        ).exclude(telephone='').exclude(lines__isnull=False).order_by('first_name', 'last_name', 'id')
+
+        numeros_deja_utilises = set(Line.objects.values_list('msisdn', flat=True))
+        disponibles, numeros_vus = [], set()
+        for employee in employees:
+            numero = ''.join(ch for ch in str(employee.telephone or '') if ch.isdigit())
+            if len(numero) != 8 or numero in numeros_vus or numero in numeros_deja_utilises:
+                continue
+            numeros_vus.add(numero)
+            nom = f'{employee.first_name} {employee.last_name}'.strip() or employee.username
+            disponibles.append({
+                'id': employee.id,
+                'numero': numero,
+                'nom': nom,
+                'email': employee.email,
+            })
+        return Response(disponibles)
+
+    def _create_employee_for_line(self, request, line, payload):
+        """Crée le compte employé et l'attache de façon atomique à une ligne."""
+        if line.employe_id:
+            return None, Response(
+                {'error': 'Cette ligne est déjà associée à un employé. Retirez d’abord cet employé si vous devez le remplacer.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        first_name = str(payload.get('first_name', '')).strip()
+        last_name = str(payload.get('last_name', '')).strip()
+        email = str(payload.get('email', '')).strip()
+        password = payload.get('password', '')
+        errors = {}
+        if not first_name:
+            errors['first_name'] = ['Le prénom est obligatoire.']
+        if not last_name:
+            errors['last_name'] = ['Le nom est obligatoire.']
+        if not email:
+            errors['email'] = ["L'e-mail est obligatoire."]
+        if not password:
+            errors['password'] = ['Le mot de passe temporaire est obligatoire.']
+        if errors:
+            return None, Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            validate_password(password)
+        except DjangoValidationError as error:
+            return None, Response({'password': list(error.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+        numero = line.msisdn
+        if User.objects.filter(Q(username=numero) | Q(telephone=numero)).exists():
+            return None, Response(
+                {'error': 'Un compte utilisateur utilise déjà ce numéro. Utilisez une autre ligne ou corrigez le compte existant.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            employe = User.objects.create_user(
+                username=numero,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                telephone=numero,
+                role='EMPLOYE',
+                status='ACTIF',
+                created_by=request.user,
+            )
+            line.employe = employe
+            line.utilisateur = f'{first_name} {last_name}'.strip()
+            line.save(update_fields=['employe', 'utilisateur', 'date_modification'])
+            AuditContrat.objects.create(
+                company=line.company,
+                utilisateur=request.user,
+                type_action='MODIFICATION_LIGNE',
+                description=f'Compte employé créé et affecté à la ligne {line.msisdn}',
+                nouvelles_valeurs={
+                    'line_id': line.id,
+                    'msisdn': line.msisdn,
+                    'employe_id': employe.id,
+                    'employe': line.utilisateur,
+                },
+            )
+        return employe, None
+
+    @action(detail=True, methods=['post'], url_path='create-employee')
+    def create_employee(self, request, pk=None):
+        """Crée un employé pour une ligne existante du contrat affiché."""
+        if request.user.role not in ['SUPER_ADMIN', 'CHEF_FACTURATION', 'AGENT_FACTURATION']:
+            return Response({'error': 'Accès réservé aux agents habilités.'}, status=status.HTTP_403_FORBIDDEN)
+        line = self.get_object()
+        employe, error_response = self._create_employee_for_line(request, line, request.data)
+        if error_response:
+            return error_response
+        return Response({
+            'message': 'Employé créé et affecté à la ligne avec succès.',
+            'employee': {
+                'id': employe.id,
+                'first_name': employe.first_name,
+                'last_name': employe.last_name,
+                'email': employe.email,
+                'telephone': employe.telephone,
+            },
+            'line': LineSerializer(line).data,
+        }, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['post'], url_path='create-employee-with-line')
+    def create_employee_with_line(self, request):
+        """Crée une ligne dans l'entreprise choisie puis le compte employé lié."""
+        if request.user.role not in ['SUPER_ADMIN', 'CHEF_FACTURATION', 'AGENT_FACTURATION']:
+            return Response({'error': 'Accès réservé aux agents habilités.'}, status=status.HTTP_403_FORBIDDEN)
+
+        company_id = request.data.get('company')
+        try:
+            company = Company.objects.get(pk=company_id)
+        except (Company.DoesNotExist, ValueError, TypeError):
+            return Response({'company': ['Veuillez choisir une entreprise valide.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        line_serializer = LineCreateSerializer(data={
+            'company': company.id,
+            'msisdn': request.data.get('msisdn', ''),
+            'cycle': request.data.get('cycle', 'HYB'),
+            'forfait': request.data.get('forfait', '0'),
+        })
+        line_serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            line = line_serializer.save()
+            employe, error_response = self._create_employee_for_line(request, line, request.data)
+            if error_response:
+                transaction.set_rollback(True)
+                return error_response
+            AuditContrat.objects.create(
+                company=company,
+                utilisateur=request.user,
+                type_action='AJOUT_LIGNE',
+                description=f'Ligne {line.msisdn} créée avec son compte employé',
+                nouvelles_valeurs={'msisdn': line.msisdn, 'employe_id': employe.id},
+            )
+        return Response({
+            'message': 'Employé et ligne créés puis liés au contrat avec succès.',
+            'employee': {'id': employe.id, 'first_name': employe.first_name, 'last_name': employe.last_name, 'email': employe.email, 'telephone': employe.telephone},
+            'line': LineSerializer(line).data,
+        }, status=status.HTTP_201_CREATED)
     
     @extend_schema(
         summary="Assigner un employé à une ligne",

@@ -397,17 +397,27 @@ class LineSerializer(serializers.ModelSerializer):
 class LineListSerializer(serializers.ModelSerializer):
     """Serializer simplifié pour la liste des lignes"""
     company_name = serializers.CharField(source='company.raison_sociale', read_only=True)
+    employe_info = serializers.SerializerMethodField()
     
     class Meta:
         model = Line
         fields = [
-            'id', 'company', 'company_name', 'msisdn', 'utilisateur',
+            'id', 'company', 'company_name', 'msisdn', 'utilisateur', 'employe', 'employe_info',
             'forfait', 'cycle', 'statut', 'date_creation',
             # Services de la ligne
             'facture_detaillee', 'option_nolimit', 'option_blackberry',
             'est_incognito', 'est_roaming', 'est_internet',
             'est_international', 'est_non_revenu'
         ]
+
+    def get_employe_info(self, obj):
+        if not obj.employe:
+            return None
+        return {
+            'id': obj.employe.id,
+            'nom': f"{obj.employe.first_name} {obj.employe.last_name}".strip() or obj.employe.username,
+            'email': obj.employe.email,
+        }
 
 
 class CompanySerializer(serializers.ModelSerializer):

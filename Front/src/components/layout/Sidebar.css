@@ -8,7 +8,10 @@
   padding: 0;
   box-shadow: 2px 0 12px rgba(0,0,0,0.06);
   transition: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
+  position: sticky;
+  top: 64px;
+  align-self: flex-start;
+  height: calc(100vh - 64px);
   overflow: visible;
 }
 

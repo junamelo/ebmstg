@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { getUtilisateurs, activerCompte, suspendreCompte, reinitialiserMotDePasseAdmin } from '../../services/adminService'
 import api from '../../services/api'
+import * as XLSX from 'xlsx'
 import './Admin.css'
 
 // ── Couleurs avatar par rôle ─────────────────────────────────
@@ -46,14 +47,15 @@ function ModalGestionLignes({ payeur, onClose, onSuccess }) {
 
   const chargerLignesDisponibles = async () => {
     try {
-      // Récupérer les lignes sans entreprise (disponibles)
-      const response = await api.get('/billing/lines/', { params: { company__isnull: true } })
-      const lignesAPI = response.data.results || response.data
-      setLignesDisponibles(lignesAPI.map(ligne => ({
-        id: ligne.id,
-        numero: ligne.msisdn,
-        forfait: ligne.package_nom || 'Standard',
-        statut: 'Disponible'
+      const response = await api.get('/billing/lines/available-employees/')
+      const employes = response.data.results || response.data || []
+      setLignesDisponibles(employes.map(employe => ({
+        id: employe.id,
+        numero: employe.numero,
+        utilisateur: employe.nom,
+        forfait: 'À définir',
+        statut: 'Disponible',
+        employe: employe.id,
       })))
     } catch (error) {
       console.error('Erreur chargement lignes:', error)
@@ -68,6 +70,26 @@ function ModalGestionLignes({ payeur, onClose, onSuccess }) {
 
     const reader = new FileReader()
     reader.onload = (event) => {
+      if (/\.xlsx?$/i.test(file.name)) {
+        const workbook = XLSX.read(event.target.result, { type: 'array' })
+        const feuille = workbook.Sheets[workbook.SheetNames[0]]
+        const lignesImportees = XLSX.utils.sheet_to_json(feuille, { header: 1, raw: false })
+          .map((ligne, index) => {
+            const numero = String(ligne[0] || '').replace(/\D/g, '')
+            if (!/^(78|79|96|97|98|99)\d{6}$/.test(numero)) return null
+            return {
+              id: `import-${index}-${numero}`,
+              numero: numero.replace(/(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4'),
+              utilisateur: String(ligne[1] || '').trim(),
+              forfait: 'À définir',
+              statut: 'Nouveau',
+              source: 'import',
+            }
+          })
+          .filter(Boolean)
+        setLignes(lignesImportees)
+        return
+      }
       const text = event.target.result
       const lignesImportees = text.split('\n')
         .map(ligne => ligne.trim())
@@ -82,7 +104,8 @@ function ModalGestionLignes({ payeur, onClose, onSuccess }) {
       
       setLignes(lignesImportees)
     }
-    reader.readAsText(file)
+    if (/\.xlsx?$/i.test(file.name)) reader.readAsArrayBuffer(file)
+    else reader.readAsText(file)
   }
 
   const handleSaisieManuelle = (e) => {
@@ -247,7 +270,7 @@ function ModalGestionLignes({ payeur, onClose, onSuccess }) {
                         />
                         <div className="max-h-32 overflow-y-auto border rounded p-2 bg-zinc-50">
                           {lignesDisponibles
-                            .filter(ligne => ligne.numero.includes(rechercheLigne))
+                            .filter(ligne => ligne.numero.includes(rechercheLigne) || (ligne.utilisateur || '').toLowerCase().includes(rechercheLigne.toLowerCase()))
                             .map(ligne => (
                               <div 
                                 key={ligne.id} 
@@ -256,7 +279,7 @@ function ModalGestionLignes({ payeur, onClose, onSuccess }) {
                               >
                                 <div>
                                   <span className="font-mono text-sm">{ligne.numero}</span>
-                                  <span className="text-xs text-zinc-500 ml-2">{ligne.forfait}</span>
+                                  <span className="text-xs text-zinc-700 ml-2">{ligne.utilisateur || 'Utilisateur non renseigné'}</span>
                                 </div>
                                 <button className="text-blue-600 hover:text-blue-800 text-xs">
                                   Ajouter

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
+import ModalAssocierLignesPayeur from './components/ModalAssocierLignesPayeur'
 
 export default function DetailContrat() {
   const { id } = useParams()
@@ -12,15 +13,19 @@ export default function DetailContrat() {
   const [erreur, setErreur] = useState(null)
   const [modalAffectation, setModalAffectation] = useState(null)
   const [modalAjoutLigne, setModalAjoutLigne] = useState(false)
+  const [modalAjoutMultiple, setModalAjoutMultiple] = useState(false)
+  const [modalAssociationLignes, setModalAssociationLignes] = useState(false)
   const [modalModifierServices, setModalModifierServices] = useState(null)
   const [servicesLigne, setServicesLigne] = useState({})
-  const [employes, setEmployes] = useState([])
+  const [formEmploye, setFormEmploye] = useState({ first_name: '', last_name: '', email: '', password: '' })
+  const [creationEmploye, setCreationEmploye] = useState(false)
   const [message, setMessage] = useState(null)
   const [auditLog, setAuditLog] = useState([])
   const [auditChargement, setAuditChargement] = useState(false)
   const [modalResiliation, setModalResiliation] = useState(false)
   const [msisdnSaisi, setMsisdnSaisi] = useState('')
   const [ligneExistante, setLigneExistante] = useState(null)
+  const [lignesLot, setLignesLot] = useState([{ msisdn: '', utilisateur: '', cycle: 'HYB', forfait: '0' }])
   const [dataResiliation, setDataResiliation] = useState({
     date_resiliation: '',
     motif_resiliation: '',
@@ -29,20 +34,8 @@ export default function DetailContrat() {
 
   useEffect(() => {
     chargerContrat()
-    chargerEmployes()
     chargerAudit()
   }, [id])
-
-  const chargerEmployes = async () => {
-    try {
-      // Charger tous les employés disponibles pour affectation
-      const response = await api.get('/auth/users/', { params: { role: 'EMPLOYE' } })
-      const users = response.data.results || response.data
-      setEmployes(users)
-    } catch (error) {
-      console.error('Erreur chargement employés:', error)
-    }
-  }
 
   const chargerContrat = async () => {
     try {
@@ -116,6 +109,7 @@ export default function DetailContrat() {
         statut_factures: company.statut_factures || '',
         mode_reglement: company.mode_reglement || '',
         commercial: company.commercial_info || null,
+        payeur: company.payeur_info || null,
       })
     } catch (error) {
       console.error('Erreur chargement contrat:', error)
@@ -137,15 +131,22 @@ export default function DetailContrat() {
     }
   }
 
-  const affecterEmploye = async (ligneId, employeId) => {
+  const creerEtAffecterEmploye = async (event) => {
+    event.preventDefault()
+    if (!modalAffectation) return
     try {
-      await api.post(`/billing/lines/${ligneId}/assigner_employe/`, { employe_id: employeId })
-      setMessage({ type: 'success', text: 'Employé affecté avec succès' })
-      chargerContrat()
+      setCreationEmploye(true)
+      const response = await api.post(`/billing/lines/${modalAffectation.id}/create-employee/`, formEmploye)
+      setMessage({ type: 'success', text: response.data.message || 'Employé créé et affecté avec succès' })
+      await Promise.all([chargerContrat(), chargerAudit()])
       setModalAffectation(null)
+      setFormEmploye({ first_name: '', last_name: '', email: '', password: '' })
     } catch (error) {
-      const errorMsg = error.response?.data?.error || 'Erreur lors de l\'affectation'
+      const data = error.response?.data
+      const errorMsg = data?.error || Object.values(data || {}).flat().join(' ') || 'Erreur lors de la création de l’employé'
       setMessage({ type: 'error', text: errorMsg })
+    } finally {
+      setCreationEmploye(false)
     }
   }
 
@@ -200,6 +201,51 @@ export default function DetailContrat() {
     } catch (error) {
       const errorMsg = error.response?.data?.msisdn?.[0] || error.response?.data?.error || 'Erreur lors de l\'ajout'
       setMessage({ type: 'error', text: errorMsg })
+    }
+  }
+
+  const mettreAJourLigneLot = (index, champ, valeur) => {
+    setLignesLot(lignes => lignes.map((ligne, position) => position === index ? { ...ligne, [champ]: valeur } : ligne))
+  }
+
+  const ajouterLigneLot = () => {
+    setLignesLot(lignes => [...lignes, { msisdn: '', utilisateur: '', cycle: 'HYB', forfait: '0' }])
+  }
+
+  const retirerLigneLot = (index) => {
+    setLignesLot(lignes => lignes.length > 1 ? lignes.filter((_, position) => position !== index) : lignes)
+  }
+
+  const enregistrerLignesLot = async (e) => {
+    e.preventDefault()
+    const numeros = lignesLot.map(ligne => String(ligne.msisdn || '').replace(/\D/g, ''))
+    if (numeros.some(numero => !/^(78|79|96|97|98|99)\d{6}$/.test(numero))) {
+      setMessage({ type: 'error', text: 'Chaque numéro doit comporter 8 chiffres et un préfixe Moov valide.' })
+      return
+    }
+    if (new Set(numeros).size !== numeros.length) {
+      setMessage({ type: 'error', text: 'Un même numéro ne peut pas être ajouté deux fois dans le lot.' })
+      return
+    }
+    try {
+      await api.post('/billing/lines/bulk-create/', {
+        company: parseInt(id),
+        lignes: lignesLot.map((ligne, index) => ({
+          ...ligne,
+          msisdn: numeros[index],
+          utilisateur: ligne.utilisateur || '',
+          forfait: parseFloat(ligne.forfait) || 0,
+        })),
+      })
+      setMessage({ type: 'success', text: `${lignesLot.length} ligne(s) ajoutée(s) avec succès.` })
+      setModalAjoutMultiple(false)
+      setLignesLot([{ msisdn: '', utilisateur: '', cycle: 'HYB', forfait: '0' }])
+      chargerContrat()
+      chargerAudit()
+    } catch (error) {
+      const details = error.response?.data?.erreurs
+      const premierDetail = details?.[0]?.erreurs?.msisdn?.[0]
+      setMessage({ type: 'error', text: premierDetail || error.response?.data?.error || "Erreur lors de l'ajout des lignes." })
     }
   }
 
@@ -295,31 +341,77 @@ export default function DetailContrat() {
       {/* Modal d'affectation */}
       {modalAffectation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold mb-4">Affecter un employé</h3>
-            <p className="text-sm text-zinc-600 mb-4">Ligne : {modalAffectation.numero}</p>
-            {employes.length === 0 ? (
-              <p className="text-sm text-zinc-500 mb-4">Aucun employé disponible</p>
-            ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {employes.map(emp => (
-                  <button
-                    key={emp.id}
-                    onClick={() => affecterEmploye(modalAffectation.id, emp.id)}
-                    className="w-full text-left px-4 py-3 hover:bg-zinc-100 rounded-lg"
-                  >
-                    <p className="font-semibold">{emp.first_name} {emp.last_name}</p>
-                    <p className="text-sm text-zinc-500">{emp.email}</p>
-                  </button>
-                ))}
+          <form onSubmit={creerEtAffecterEmploye} className="bg-white rounded-xl p-6 max-w-md w-full mx-4 space-y-4">
+            <div>
+              <h3 className="text-lg font-bold">Créer et affecter un employé</h3>
+              <p className="mt-1 text-sm text-zinc-600">L’employé sera directement rattaché à ce contrat et à cette ligne.</p>
+            </div>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+              <p><span className="font-medium">Entreprise :</span> {contrat?.raisonSociale} ({contrat?.numeroContrat})</p>
+              <p className="mt-1"><span className="font-medium">Numéro de ligne :</span> <span className="font-mono">{modalAffectation.numero}</span></p>
+              <p className="mt-1 text-xs text-blue-700">Ce numéro est déjà créé et ne peut pas être modifié.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="text-sm font-medium text-zinc-700">Prénom *
+                <input required value={formEmploye.first_name} onChange={e => setFormEmploye(prev => ({ ...prev, first_name: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2" />
+              </label>
+              <label className="text-sm font-medium text-zinc-700">Nom *
+                <input required value={formEmploye.last_name} onChange={e => setFormEmploye(prev => ({ ...prev, last_name: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2" />
+              </label>
+            </div>
+            <label className="block text-sm font-medium text-zinc-700">E-mail *
+              <input required type="email" value={formEmploye.email} onChange={e => setFormEmploye(prev => ({ ...prev, email: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2" />
+            </label>
+            <label className="block text-sm font-medium text-zinc-700">Mot de passe temporaire *
+              <input required type="password" minLength="8" value={formEmploye.password} onChange={e => setFormEmploye(prev => ({ ...prev, password: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2" />
+              <span className="mt-1 block text-xs font-normal text-zinc-500">Au moins 8 caractères.</span>
+            </label>
+            <div className="flex gap-3 pt-2">
+              <button type="button" disabled={creationEmploye} onClick={() => { setModalAffectation(null); setFormEmploye({ first_name: '', last_name: '', email: '', password: '' }) }} className="flex-1 rounded-lg bg-zinc-200 px-4 py-2.5 font-medium text-zinc-800 hover:bg-zinc-300 disabled:opacity-60">Annuler</button>
+              <button type="submit" disabled={creationEmploye} className="flex-1 rounded-lg bg-[#002a7a] px-4 py-2.5 font-medium text-white hover:bg-[#003d9e] disabled:opacity-60">{creationEmploye ? 'Création…' : 'Créer et affecter'}</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {modalAssociationLignes && (
+        <ModalAssocierLignesPayeur
+          company={{ id: contrat.id, compte: contrat.numeroContrat, raisonSociale: contrat.raisonSociale }}
+          payeur={contrat.payeur}
+          onClose={() => setModalAssociationLignes(false)}
+          onSuccess={(text) => { setMessage({ type: 'success', text }); chargerContrat(); chargerAudit() }}
+        />
+      )}
+
+      {modalAjoutMultiple && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/50 p-4">
+          <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
+              <div><h3 className="text-lg font-bold">Ajouter plusieurs lignes</h3><p className="text-sm text-zinc-500">Les services par défaut du contrat seront appliqués à chaque nouvelle ligne.</p></div>
+              <button type="button" onClick={() => setModalAjoutMultiple(false)} className="rounded-md px-2 py-1 text-zinc-500 hover:bg-zinc-100">✕</button>
+            </div>
+            <form onSubmit={enregistrerLignesLot} className="flex min-h-0 flex-1 flex-col">
+              <div className="overflow-auto p-6">
+                <div className="mb-3 overflow-x-auto rounded-lg border border-zinc-200">
+                  <table className="w-full min-w-[760px] text-sm">
+                    <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500"><tr><th className="px-3 py-3">N°</th><th className="px-3 py-3">MSISDN *</th><th className="px-3 py-3">Utilisateur</th><th className="px-3 py-3">Cycle *</th><th className="px-3 py-3">Forfait mensuel</th><th className="px-3 py-3"></th></tr></thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {lignesLot.map((ligne, index) => <tr key={index}>
+                        <td className="px-3 py-2 text-zinc-500">{index + 1}</td>
+                        <td className="px-3 py-2"><input required value={ligne.msisdn} onChange={e => mettreAJourLigneLot(index, 'msisdn', e.target.value.replace(/\D/g, '').slice(0, 8))} placeholder="79XXXXXX" inputMode="numeric" maxLength={8} className="w-full rounded-md border border-zinc-300 px-2 py-1.5" /></td>
+                        <td className="px-3 py-2"><input value={ligne.utilisateur} onChange={e => mettreAJourLigneLot(index, 'utilisateur', e.target.value)} placeholder="Nom de l'utilisateur" className="w-full rounded-md border border-zinc-300 px-2 py-1.5" /></td>
+                        <td className="px-3 py-2"><select value={ligne.cycle} onChange={e => mettreAJourLigneLot(index, 'cycle', e.target.value)} className="w-full rounded-md border border-zinc-300 px-2 py-1.5"><option value="HYB">Hybride</option><option value="OP">Open</option></select></td>
+                        <td className="px-3 py-2"><input value={ligne.forfait} onChange={e => mettreAJourLigneLot(index, 'forfait', e.target.value)} type="number" min="0" step="0.01" className="w-full rounded-md border border-zinc-300 px-2 py-1.5" /></td>
+                        <td className="px-3 py-2 text-right"><button type="button" disabled={lignesLot.length === 1} onClick={() => retirerLigneLot(index)} className="rounded-md px-2 py-1 text-red-600 hover:bg-red-50 disabled:opacity-30">Retirer</button></td>
+                      </tr>)}
+                    </tbody>
+                  </table>
+                </div>
+                <button type="button" onClick={ajouterLigneLot} className="rounded-lg border border-[#002a7a] px-3 py-2 text-sm font-medium text-[#002a7a] hover:bg-blue-50">+ Ajouter une ligne au lot</button>
+                <p className="mt-3 text-xs text-zinc-500">Chaque numéro doit être unique, comporter 8 chiffres et commencer par 78, 79, 96, 97, 98 ou 99. Si une ligne est invalide, aucune ligne du lot ne sera créée.</p>
               </div>
-            )}
-            <button
-              onClick={() => setModalAffectation(null)}
-              className="mt-4 w-full px-4 py-2 bg-zinc-200 rounded-lg hover:bg-zinc-300"
-            >
-              Annuler
-            </button>
+              <div className="flex justify-end gap-2 border-t border-zinc-200 px-6 py-4"><button type="button" onClick={() => setModalAjoutMultiple(false)} className="rounded-lg border border-zinc-300 px-4 py-2 text-sm">Annuler</button><button type="submit" className="rounded-lg bg-[#002a7a] px-4 py-2 text-sm font-medium text-white hover:bg-[#003d9e]">Ajouter {lignesLot.length} ligne(s)</button></div>
+            </form>
           </div>
         </div>
       )}
@@ -348,7 +440,7 @@ export default function DetailContrat() {
                 <p className="text-xs text-zinc-500 mt-1">8 chiffres, préfixe Moov: 78, 79, 96, 97, 98, 99</p>
                 {ligneExistante && (
                   <div className="mt-2 text-xs rounded-md border border-amber-300 bg-amber-50 text-amber-800 px-2 py-1">
-                    Ce numéro existe déjà ({ligneExistante.msisdn}) — contrat: {ligneExistante.company_name || 'N/A'} ; statut: {ligneExistante.statut || 'N/A'}
+                    Ce numéro existe déjà ({ligneExistante.msisdn}) — utilisateur : <strong>{ligneExistante.employe_info?.nom || ligneExistante.utilisateur || 'Non renseigné'}</strong> ; contrat : {ligneExistante.company_name || 'N/A'} ; statut : {ligneExistante.statut || 'N/A'}
                   </div>
                 )}
               </div>
@@ -635,11 +727,11 @@ export default function DetailContrat() {
           <div className="flex gap-2">
             {!contrat.est_resilie && (
               <>
-                <button 
-                  className="px-4 py-2.5 bg-gradient-to-br from-[#e05500] to-[#c2410c] text-white font-semibold rounded-lg hover:shadow-lg transition-all" 
-                  onClick={() => { setMsisdnSaisi(''); setLigneExistante(null); setModalAjoutLigne(true) }}
+                <button
+                  className="px-4 py-2.5 border border-[#002a7a] text-[#002a7a] font-semibold rounded-lg hover:bg-blue-50 transition-all"
+                  onClick={() => setModalAssociationLignes(true)}
                 >
-                  + Nouvelle Ligne
+                  Associer des lignes au payeur
                 </button>
                 <button 
                   className="px-4 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-all" 

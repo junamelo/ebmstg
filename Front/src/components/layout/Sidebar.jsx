@@ -44,7 +44,8 @@ const menusPayeur = [
 ]
 
 const menusCommercial = [
-  { path: '/commercial/dashboard',  label: 'Mes contrats',        icon: <IconContrats /> },
+  { path: '/commercial/contrats',   label: 'Mes contrats',        icon: <IconContrats /> },
+  { path: '/commercial/demandes',   label: 'Mes demandes',        icon: <IconHistorique /> },
   { path: '/commercial/profil',     label: 'Mon profil',          icon: <IconProfil /> },
 ]
 

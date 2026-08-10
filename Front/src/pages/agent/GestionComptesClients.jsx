@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import PasswordInput from '../../components/common/PasswordInput'
 import { genererMotDePasseDefaut, genererLoginPayeur, genererLoginEmploye } from '../../utils/passwordUtils'
+import api from '../../services/api'
 
 export default function GestionComptesClients() {
   const [comptes, setComptes] = useState([
@@ -33,8 +34,17 @@ export default function GestionComptesClients() {
   const [motDePasse, setMotDePasse] = useState('')
   const [forcerChangement, setForcerChangement] = useState(true)
   const [envoyerEmail, setEnvoyerEmail] = useState(true)
+  const [entreprises, setEntreprises] = useState([])
+  const [message, setMessage] = useState(null)
+  const [soumission, setSoumission] = useState(false)
   const [pageCourante, setPageCourante] = useState(1)
   const ITEMS_PAR_PAGE = 6
+
+  useEffect(() => {
+    api.get('/billing/companies/')
+      .then(response => setEntreprises(response.data.results || response.data || []))
+      .catch(() => setMessage({ type: 'error', text: 'Impossible de charger les entreprises.' }))
+  }, [])
 
   const ouvrirModal = (type) => {
     setTypeCompte(type)
@@ -57,7 +67,7 @@ export default function GestionComptesClients() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
     // Générer le login pour employé à partir du numéro de ligne
@@ -65,6 +75,42 @@ export default function GestionComptesClients() {
       ? genererLoginEmploye(formData.numeroLigne)
       : login
     
+    if (typeCompte === 'EMPLOYE') {
+      try {
+        setSoumission(true)
+        const response = await api.post('/billing/lines/create-employee-with-line/', {
+          company: formData.entreprise,
+          msisdn: formData.numeroLigne,
+          first_name: formData.prenom,
+          last_name: formData.nom,
+          email: formData.email,
+          password: motDePasse,
+        })
+        const employee = response.data.employee
+        const line = response.data.line
+        const entreprise = entreprises.find(item => String(item.id) === String(formData.entreprise))
+        setComptes(prev => [{
+          id: employee.id,
+          nom: employee.last_name,
+          prenom: employee.first_name,
+          numeroLigne: line.msisdn,
+          email: employee.email,
+          entreprise: entreprise?.raison_sociale || line.company_name,
+          role: 'EMPLOYE',
+          estActif: true,
+        }, ...prev])
+        setMessage({ type: 'success', text: response.data.message })
+        setModalOuvert(false)
+        setFormData({})
+      } catch (error) {
+        const data = error.response?.data
+        setMessage({ type: 'error', text: data?.error || Object.values(data || {}).flat().join(' ') || 'Création impossible.' })
+      } finally {
+        setSoumission(false)
+      }
+      return
+    }
+
     const nouveauCompte = {
       id: String(Date.now()),
       ...formData,
@@ -112,6 +158,8 @@ export default function GestionComptesClients() {
           </button>
         </div>
       </motion.div>
+
+      {message && <div className={`rounded-lg px-4 py-3 text-sm ${message.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>{message.text}</div>}
 
       <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
         <table className="w-full">
@@ -221,13 +269,17 @@ export default function GestionComptesClients() {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Numéro de ligne *</label>
-                    <input type="text" name="numeroLigne" required className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg"
+                    <input type="text" name="numeroLigne" required inputMode="numeric" pattern="[0-9]{8}" maxLength="8" className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg"
                       onChange={handleChange} />
+                    <p className="mt-1 text-xs text-zinc-500">8 chiffres, préfixe Moov.</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Entreprise *</label>
-                    <input type="text" name="entreprise" required className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg"
-                      onChange={handleChange} />
+                    <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Entreprise / contrat *</label>
+                    <select name="entreprise" required value={formData.entreprise || ''} onChange={handleChange} className="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900">
+                      <option value="">Sélectionner l’entreprise liée</option>
+                      {entreprises.map(entreprise => <option key={entreprise.id} value={entreprise.id}>{entreprise.raison_sociale} — {entreprise.compte}</option>)}
+                    </select>
+                    <p className="mt-1 text-xs text-zinc-500">Une ligne sera créée et rattachée automatiquement à ce contrat.</p>
                   </div>
                 </>
               )}
@@ -312,8 +364,8 @@ export default function GestionComptesClients() {
               </div>
               
               <div className="flex gap-3 pt-4 flex-shrink-0">
-                <button type="submit" className="flex-1 px-4 py-2.5 bg-[#002a7a] text-white font-semibold rounded-lg hover:bg-[#003d9e] transition-colors">
-                  Créer
+                <button type="submit" disabled={soumission} className="flex-1 px-4 py-2.5 bg-[#002a7a] text-white font-semibold rounded-lg hover:bg-[#003d9e] transition-colors disabled:opacity-60">
+                  {soumission ? 'Création…' : 'Créer'}
                 </button>
                 <button type="button" onClick={() => setModalOuvert(false)} className="flex-1 px-4 py-2.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">
                   Annuler

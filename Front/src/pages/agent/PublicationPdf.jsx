@@ -138,14 +138,14 @@ export default function PublicationPdf() {
         )}
 
         {!rapportTraitement?.ok && rapportTraitement && (
-          <div className="alert" style={{ background: '#fff7ed', border: '1px solid #fdba74', color: '#9a3412' }}>
+          <div className="alert" style={{ background: '#fef2f2', border: '1px solid #fca5a5', color: '#b91c1c' }}>
             <strong>⚠️ Problème pendant le découpage/matching.</strong>
             <p style={{ marginTop: 6 }}>{rapportTraitement.error || 'Certaines factures n\'ont pas pu être traitées automatiquement.'}</p>
           </div>
         )}
 
         {(rapportTraitement?.warnings?.length > 0 || rapportTraitement?.split_errors?.length > 0 || rapportTraitement?.errors_per_page?.length > 0) && (
-          <div className="alert" style={{ background: '#fefce8', border: '1px solid #fde047', color: '#713f12' }}>
+          <div className="alert" style={{ background: '#fef2f2', border: '1px solid #fca5a5', color: '#b91c1c' }}>
             <strong>⚠️ Détails des avertissements</strong>
             <ul style={{ marginTop: 8, paddingLeft: 18 }}>
               {rapportTraitement.warnings?.slice(0, 5).map((w, i) => <li key={`w-${i}`}>{String(w)}</li>)}
@@ -240,14 +240,14 @@ export default function PublicationPdf() {
         </form>
       </div>
 
-      <div className="card">
-        <div className="card-header">
+      <div className="card publication-history-card">
+        <div className="card-header publication-history-header">
           <h2 className="card-title">Historique des publications</h2>
         </div>
         {historique.length === 0 ? (
           <div className="empty-state"><p>Aucune publication enregistrée.</p></div>
         ) : (
-          <div className="table-container">
+          <div className="table-container publication-history-table">
             <table>
               <thead>
                 <tr>

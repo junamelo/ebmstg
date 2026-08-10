@@ -30,6 +30,7 @@ import GestionContrats from './pages/agent/GestionContrats'
 import DetailContrat from './pages/agent/DetailContrat'
 import GestionCommerciaux from './pages/agent/GestionCommerciaux'
 import CommercialDashboard from './pages/commercial/CommercialDashboard'
+import CommercialDemandes from './pages/commercial/CommercialDemandes'
 
 export default function App() {
   return (
@@ -115,8 +116,10 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Navigate to="/commercial/dashboard" replace />} />
-            <Route path="dashboard" element={<CommercialDashboard />} />
+            <Route index element={<Navigate to="/commercial/contrats" replace />} />
+            <Route path="dashboard" element={<Navigate to="/commercial/contrats" replace />} />
+            <Route path="contrats" element={<CommercialDashboard />} />
+            <Route path="demandes" element={<CommercialDemandes />} />
             <Route path="profil" element={<MonProfil />} />
           </Route>
 

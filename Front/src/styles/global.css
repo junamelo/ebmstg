@@ -363,3 +363,31 @@ tbody td {
   gap: 16px;
   padding: 16px 0 4px;
 }
+
+/* Présentation commune des historiques de publication. */
+.publication-history-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.publication-history-table thead {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.publication-history-table th {
+  padding: 12px 24px;
+  color: #52525b;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.publication-history-table td {
+  border-bottom: 1px solid #f4f4f5;
+}
+
+.publication-history-table tbody tr:hover {
+  background: #fafafa;
+}

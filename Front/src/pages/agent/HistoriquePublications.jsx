@@ -278,7 +278,7 @@ export default function HistoriquePublications() {
         transition={{ delay: 0.4 }}
         className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm"
       >
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto publication-history-table">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-zinc-50 to-zinc-100 dark:from-zinc-900/80 dark:to-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
               <tr>
