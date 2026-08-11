@@ -588,3 +588,33 @@ class Publication(models.Model):
     
     def __str__(self):
         return f"Publication {self.cycle_facturation} - {self.date_publication.strftime('%d/%m/%Y')}"
+
+
+class TraitementPDF(models.Model):
+    """Suivi persistant d'un import PDF exécuté par Celery."""
+    class Statut(models.TextChoices):
+        EN_ATTENTE = 'EN_ATTENTE', 'En attente'
+        EN_COURS = 'EN_COURS', 'En cours'
+        TERMINE = 'TERMINE', 'Terminé'
+        ECHEC = 'ECHEC', 'Échec'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    agent = models.ForeignKey(User, on_delete=models.CASCADE, related_name='traitements_pdf')
+    fichier_source = models.FileField(upload_to='imports_pdf/%Y/%m/')
+    type_facture = models.CharField(max_length=3, default='SOM')
+    cycle = models.CharField(max_length=20, blank=True)
+    periode_debut = models.DateField(null=True, blank=True)
+    periode_fin = models.DateField(null=True, blank=True)
+    auto_match = models.BooleanField(default=True)
+    statut = models.CharField(max_length=20, choices=Statut.choices, default=Statut.EN_ATTENTE)
+    task_id = models.CharField(max_length=100, blank=True)
+    progression = models.PositiveSmallIntegerField(default=0)
+    resultat = models.JSONField(default=dict, blank=True)
+    erreur = models.TextField(blank=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_debut = models.DateTimeField(null=True, blank=True)
+    date_fin = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'traitements_pdf'
+        ordering = ['-date_creation']

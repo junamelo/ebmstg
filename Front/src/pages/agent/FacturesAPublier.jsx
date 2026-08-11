@@ -97,6 +97,13 @@ export default function FacturesAPublier() {
         texte: `✅ ${response.data.factures_publiees} facture(s) publiée(s) avec succès !${response.data.notifications?.envoyees ? ` ${response.data.notifications.envoyees} notification(s) envoyée(s).` : ''}`
       })
       
+      if (response.data.notifications?.en_attente) {
+        setMessage({
+          type: 'success',
+          texte: `${response.data.factures_publiees} facture(s) publiee(s). Les e-mails sont envoyes en arriere-plan.`,
+        })
+      }
+
       // Recharger la liste
       setTimeout(() => {
         chargerFactures()
@@ -221,9 +228,8 @@ export default function FacturesAPublier() {
             <div className="notification-choice" title="Les notifications seront envoyées après la publication">
               <span>Notifier après publication :</span>
               <label><input type="checkbox" checked={notificationChannels.includes('EMAIL')} onChange={() => toggleNotificationChannel('EMAIL')} /> E-mail</label>
-              <label><input type="checkbox" checked={notificationChannels.includes('SMS')} onChange={() => toggleNotificationChannel('SMS')} /> SMS</label>
             </div>
-            <button
+            {notifMessage && <button
               className="btn-secondary btn-notif"
               onClick={notifierSelection}
               disabled={selection.length === 0}
@@ -231,7 +237,7 @@ export default function FacturesAPublier() {
             >
               <i className="ti ti-mail"></i>
               Notifier ({selection.length})
-            </button>
+            </button>}
 
             <button
               className="btn-primary btn-publish"

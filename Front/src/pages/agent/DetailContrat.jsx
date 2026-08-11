@@ -22,6 +22,7 @@ export default function DetailContrat() {
   const [message, setMessage] = useState(null)
   const [auditLog, setAuditLog] = useState([])
   const [auditChargement, setAuditChargement] = useState(false)
+  const [exportPdf, setExportPdf] = useState(false)
   const [modalResiliation, setModalResiliation] = useState(false)
   const [msisdnSaisi, setMsisdnSaisi] = useState('')
   const [ligneExistante, setLigneExistante] = useState(null)
@@ -147,6 +148,30 @@ export default function DetailContrat() {
       setMessage({ type: 'error', text: errorMsg })
     } finally {
       setCreationEmploye(false)
+    }
+  }
+
+  const exporterContratPdf = async () => {
+    if (!contrat?.id) return
+    try {
+      setExportPdf(true)
+      const response = await api.get(`/billing/companies/${contrat.id}/export-pdf/`, {
+        responseType: 'blob',
+      })
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const lien = document.createElement('a')
+      lien.href = url
+      lien.download = `contrat_${contrat.numeroContrat}.pdf`
+      document.body.appendChild(lien)
+      lien.click()
+      lien.remove()
+      window.URL.revokeObjectURL(url)
+      setMessage({ type: 'success', text: 'Contrat PDF telecharge avec succes.' })
+    } catch (error) {
+      console.error('Erreur export PDF contrat:', error)
+      setMessage({ type: 'error', text: 'Impossible de generer le PDF du contrat.' })
+    } finally {
+      setExportPdf(false)
     }
   }
 
@@ -724,6 +749,13 @@ export default function DetailContrat() {
             <p className="text-zinc-600 dark:text-zinc-400 font-mono text-lg">{contrat.numeroContrat}</p>
           </div>
           <div className="flex gap-2">
+            <button
+              className="px-4 py-2.5 border border-zinc-300 text-zinc-700 font-semibold rounded-lg hover:bg-zinc-50 transition-all disabled:opacity-60"
+              onClick={exporterContratPdf}
+              disabled={exportPdf}
+            >
+              {exportPdf ? 'Export PDF...' : 'Exporter PDF'}
+            </button>
             {!contrat.est_resilie && (
               <>
                 <button

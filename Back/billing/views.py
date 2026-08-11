@@ -7,8 +7,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q, Count, Sum
 from django.db import transaction
+from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
@@ -35,6 +37,7 @@ from accounts.permissions import (
     CanPublishInvoices, CanUploadPDF, CanValidateInvoices, CanGenerateInvoices
 )
 from accounts.models import User
+from io import BytesIO
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -259,6 +262,107 @@ class CompanyViewSet(viewsets.ModelViewSet):
         result = paginator.paginate_queryset(audits, request)
         serializer = AuditContratSerializer(result, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='export-pdf')
+    def export_pdf(self, request, pk=None):
+        """GÃ©nÃ¨re un document PDF du contrat et de ses lignes."""
+        company = self.get_object()
+        from .services.contract_pdf import generer_pdf_contrat
+        contenu = generer_pdf_contrat(company)
+        nom_fichier = f"contrat_{company.compte}.pdf".replace('/', '_').replace('\\', '_')
+        return FileResponse(contenu, as_attachment=True, filename=nom_fichier, content_type='application/pdf')
+
+        try:
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib.units import cm
+            from reportlab.pdfgen import canvas
+        except ImportError:
+            return Response(
+                {'error': 'La gÃ©nÃ©ration PDF n’est pas disponible sur le serveur.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        contenu = BytesIO()
+        pdf = canvas.Canvas(contenu, pagesize=A4)
+        largeur, hauteur = A4
+        y = hauteur - 2 * cm
+
+        def nouvelle_page():
+            nonlocal y
+            pdf.showPage()
+            y = hauteur - 2 * cm
+
+        def ligne(texte='', gras=False, retrait=0):
+            nonlocal y
+            if y < 2 * cm:
+                nouvelle_page()
+            pdf.setFont('Helvetica-Bold' if gras else 'Helvetica', 10)
+            # ReportLab ne fait pas le retour automatique sur canvas : limiter
+            # les lignes longues du commentaire et des adresses.
+            texte = str(texte or '-').replace('\n', ' ')
+            while texte:
+                morceau, texte = texte[:105], texte[105:]
+                pdf.drawString(2 * cm + retrait, y, morceau)
+                y -= 0.55 * cm
+                if texte and y < 2 * cm:
+                    nouvelle_page()
+
+        pdf.setTitle(f'Contrat {company.compte}')
+        pdf.setFont('Helvetica-Bold', 18)
+        pdf.drawString(2 * cm, y, 'MOOV AFRICA - CONTRAT CLIENT')
+        y -= 1.1 * cm
+        ligne(f'Code contrat : {company.compte}', gras=True)
+        ligne(f'Raison sociale : {company.raison_sociale}')
+        ligne(f'Categorie : {company.get_categorie_display()}')
+        ligne(f'Statut : {company.statut}')
+        ligne(f'Statut factures : {company.statut_factures}')
+        ligne(f'Date effet : {company.date_effet or "-"}')
+        ligne(f'Date fin : {company.date_fin or "-"}')
+        ligne(f'Mode reglement : {company.get_mode_reglement_display()}')
+        ligne(f'Exonere TVA : {"Oui" if company.est_exonere else "Non"}')
+        ligne(f'Adresse 1 : {company.adresse or "-"}')
+        ligne(f'Adresse 2 : {company.adresse_ligne2 or "-"}')
+        ligne(f'Observation : {company.observation or "-"}')
+        ligne(f'Revenu : {company.type_revenu or "-"}')
+        if company.commercial:
+            ligne(f'Commercial : {company.commercial.prenom} {company.commercial.nom}')
+        if company.payeur:
+            ligne(f'Payeur : {company.payeur.first_name} {company.payeur.last_name} ({company.payeur.email})')
+        if company.est_resilie:
+            ligne('CONTRAT RESILIE', gras=True)
+            ligne(f'Date resiliation : {company.date_resiliation or "-"}')
+            ligne(f'Motif : {company.motif_resiliation or "-"}')
+
+        y -= 0.25 * cm
+        ligne(f'LIGNES TELEPHONIQUES ({company.lines.count()})', gras=True)
+        for index, item in enumerate(company.lines.select_related('employe').order_by('msisdn'), start=1):
+            titulaire = '-'
+            if item.employe:
+                titulaire = f'{item.employe.first_name} {item.employe.last_name}'.strip() or item.employe.username
+            services = []
+            if item.facture_detaillee:
+                services.append('Fact. detaillee')
+            if item.option_nolimit:
+                services.append(f'No Limit {item.option_nolimit}')
+            if item.est_incognito:
+                services.append('Incognito')
+            if item.est_roaming:
+                services.append('Roaming')
+            if item.est_internet:
+                services.append('Internet')
+            if item.est_international:
+                services.append('International')
+            if item.est_non_revenu:
+                services.append('Non revenu')
+            ligne(f'{index}. {item.msisdn} | {item.statut} | {item.cycle} | {titulaire}', retrait=0.25 * cm)
+            ligne(f'Services : {", ".join(services) if services else "Aucun"}', retrait=0.7 * cm)
+
+        pdf.setFont('Helvetica-Oblique', 8)
+        pdf.drawRightString(largeur - 2 * cm, 1.2 * cm, 'Document genere par le Portail Moov Africa')
+        pdf.save()
+        contenu.seek(0)
+        nom_fichier = f"contrat_{company.compte}.pdf".replace('/', '_').replace('\\', '_')
+        return FileResponse(contenu, as_attachment=True, filename=nom_fichier, content_type='application/pdf')
 
 
 class LineViewSet(viewsets.ModelViewSet):
@@ -962,7 +1066,7 @@ from django.db.models import Q, Sum, Count
 from django.core.files.base import ContentFile
 import uuid
 
-from .models import Invoice, HistoriqueFacturation, Publication
+from .models import Invoice, HistoriqueFacturation, Publication, TraitementPDF
 from .serializers import (
     InvoiceSerializer, InvoiceListSerializer, InvoiceCreateSerializer,
     GenerateInvoiceSerializer, CalculLineInvoiceSerializer,
@@ -1456,7 +1560,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         
         invoice_ids = request.data.get('invoice_ids', [])
         notification_channels = request.data.get('notification_channels', [])
-        if not isinstance(notification_channels, list) or any(channel not in ['EMAIL', 'SMS'] for channel in notification_channels):
+        if not isinstance(notification_channels, list) or any(channel != 'EMAIL' for channel in notification_channels):
             return Response({'error': 'Canaux de notification invalides'}, status=status.HTTP_400_BAD_REQUEST)
         
         if not invoice_ids:
@@ -1578,11 +1682,23 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 publication.montant_total += montant_total
                 publication.save()
         
-        notifications = []
+        notifications = {
+            'demandee': bool(notification_channels),
+            'en_attente': 0,
+            'envoyees': 0,
+            'non_configurees': 0,
+            'echecs': 0,
+        }
         if notification_channels:
-            from .services.notification_service import notifier_facture
-            for facture in factures:
-                notifications.extend(notifier_facture(facture, notification_channels))
+            try:
+                from .tasks import envoyer_notifications_factures
+                envoyer_notifications_factures.delay(factures_publiees_ids)
+                notifications['en_attente'] = len(factures_publiees_ids)
+            except Exception as exc:
+                # La publication reste valide : l'Ã©chec d'un e-mail ne doit pas
+                # annuler la mise Ã  disposition des factures dans le portail.
+                notifications['echecs'] = len(factures_publiees_ids)
+                notifications['detail'] = f'Notification non planifiÃ©e : {exc}'
 
         return Response({
             'message': f'{len(factures_publiees_ids)} facture(s) publiée(s) avec succès',
@@ -1591,12 +1707,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             'montant_total': float(montant_total),
             'publication_id': str(publication.id),
             'publication_created': created,
-            'notifications': {
-                'demandee': bool(notification_channels),
-                'envoyees': sum(item.statut == 'ENVOYEE' for item in notifications),
-                'non_configurees': sum(item.statut == 'NON_CONFIGUREE' for item in notifications),
-                'echecs': sum(item.statut == 'ECHEC' for item in notifications),
-            }
+            'notifications': notifications
         }, status=status.HTTP_200_OK)
     
     @extend_schema(
@@ -1630,6 +1741,48 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         cycle = serializer.validated_data.get('cycle')
         periode_debut = serializer.validated_data.get('periode_debut')
         periode_fin = serializer.validated_data.get('periode_fin')
+
+        # Le fichier est d'abord persisté, puis le worker Celery le traite hors
+        # de la requête HTTP. L'interface peut ainsi suivre un statut fiable.
+        traitement = TraitementPDF.objects.create(
+            agent=request.user,
+            fichier_source=fichier,
+            auto_match=auto_match,
+            type_facture=type_facture,
+            cycle=cycle or '',
+            periode_debut=periode_debut,
+            periode_fin=periode_fin,
+        )
+        try:
+            from .tasks import traiter_import_pdf
+            async_result = traiter_import_pdf.delay(str(traitement.id))
+            traitement.task_id = async_result.id
+            traitement.save(update_fields=['task_id'])
+        except Exception as exc:
+            # Ne pas laisser une fausse tâche en attente si le broker est arrêté.
+            traitement.fichier_source.delete(save=False)
+            traitement.delete()
+            return Response(
+                {
+                    'error': 'Le service de traitement asynchrone est indisponible.',
+                    'details': str(exc),
+                    'solution': 'Démarrez Garnet et le worker Celery puis réessayez.',
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        return Response(
+            {
+                'message': 'PDF reçu. Le découpage et le rapprochement sont en attente.',
+                'job': {
+                    'id': str(traitement.id),
+                    'statut': traitement.statut,
+                    'progression': traitement.progression,
+                    'date_creation': traitement.date_creation.isoformat(),
+                },
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
         
         try:
             # Importer les services PDF
@@ -1787,6 +1940,35 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path=r'pdf-jobs/(?P<job_id>[^/.]+)',
+        permission_classes=[IsAuthenticated, CanUploadPDF],
+    )
+    def pdf_job(self, request, job_id=None):
+        """Retourne l'état persistant d'un import PDF asynchrone."""
+        traitement = TraitementPDF.objects.filter(id=job_id).select_related('agent').first()
+        if not traitement:
+            return Response({'error': 'Traitement PDF introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Un agent ne voit que ses propres imports. Chef et administrateur peuvent
+        # consulter les imports de leur équipe.
+        if request.user.role == 'AGENT_FACTURATION' and traitement.agent_id != request.user.id:
+            return Response({'error': 'Accès non autorisé à ce traitement.'}, status=status.HTTP_403_FORBIDDEN)
+
+        return Response({
+            'id': str(traitement.id),
+            'task_id': traitement.task_id,
+            'statut': traitement.statut,
+            'progression': traitement.progression,
+            'resultat': traitement.resultat,
+            'erreur': traitement.erreur if traitement.statut == TraitementPDF.Statut.ECHEC else '',
+            'date_creation': traitement.date_creation,
+            'date_debut': traitement.date_debut,
+            'date_fin': traitement.date_fin,
+        })
     
     def _generer_numero_facture(self, company, periode_debut):
         """Générer un numéro de facture unique"""

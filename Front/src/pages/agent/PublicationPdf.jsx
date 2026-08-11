@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { uploadBlocPdf, getHistoriquePublications } from '../../services/adminService'
+import { uploadBlocPdf, getHistoriquePublications, getStatutTraitementPdf } from '../../services/adminService'
 import '../admin/Admin.css'
+
+const ACTIVE_PDF_JOB_KEY = 'moov_active_pdf_job'
 
 export default function PublicationPdf() {
   const [fichier, setFichier] = useState(null)
@@ -15,6 +17,7 @@ export default function PublicationPdf() {
   const [historique, setHistorique] = useState([])
   const [dragOver, setDragOver] = useState(false)
   const [rapportTraitement, setRapportTraitement] = useState(null)
+  const [traitement, setTraitement] = useState(null)
   const fileInputRef = useRef()
 
   useEffect(() => { 
@@ -27,11 +30,90 @@ export default function PublicationPdf() {
     const fin = new Date(year, now.getMonth() + 1, 0).toISOString().split('T')[0] // Dernier jour du mois
     setPeriodeDebut(debut)
     setPeriodeFin(fin)
+
+    // Si la page est rechargée pendant un long découpage, reprendre le suivi
+    // au lieu de laisser l'utilisateur sans information.
+    try {
+      const jobEnCours = JSON.parse(sessionStorage.getItem(ACTIVE_PDF_JOB_KEY) || 'null')
+      if (jobEnCours?.id && !['TERMINE', 'ECHEC'].includes(jobEnCours.statut)) {
+        setTraitement(jobEnCours)
+      }
+    } catch {
+      sessionStorage.removeItem(ACTIVE_PDF_JOB_KEY)
+    }
   }, [])
 
   const chargerHistorique = () => {
     getHistoriquePublications().then(setHistorique).catch(console.error)
   }
+
+  const terminerTraitement = (resultat) => {
+    const summary = resultat.summary || resultat
+    const matching = resultat.matching || resultat.auto_match || {}
+    const nbFichiers = summary.files_created || summary.total_blocks || 0
+    const nbMatches = matching.successfully_matched ?? matching.matched ?? 0
+    const nbAlreadyProcessed = matching.skipped_already_processed
+      ?? matching.skipped?.length
+      ?? matching.details?.skipped?.length
+      ?? 0
+    const nbErrors = matching.details?.errors?.length ?? matching.errors?.length ?? 0
+
+    setMessage({
+      type: nbErrors > 0 ? 'danger' : (nbAlreadyProcessed > 0 ? 'warning' : 'success'),
+      texte: nbErrors > 0
+        ? `Traitement termine avec ${nbErrors} erreur(s) : ${nbFichiers} PDF crees, ${nbMatches} factures mises a jour.`
+        : nbAlreadyProcessed > 0
+          ? `Attention : ${nbAlreadyProcessed} facture(s) etaient deja traitees. Aucun PDF n'a ete rattache a nouveau pour ces factures.`
+          : `Traitement termine ! ${nbFichiers} PDF crees, ${nbMatches} factures mises a jour.`,
+    })
+    setRapportTraitement({
+      ok: nbErrors === 0,
+      warning: nbAlreadyProcessed > 0,
+      summary,
+      matching,
+      warnings: resultat.warnings || [],
+      split_errors: resultat.split_errors || [],
+      errors_per_page: resultat.errors_per_page || [],
+    })
+    sessionStorage.removeItem(ACTIVE_PDF_JOB_KEY)
+    chargerHistorique()
+  }
+
+  useEffect(() => {
+    if (!traitement?.id || ['TERMINE', 'ECHEC'].includes(traitement.statut)) return undefined
+    let annule = false
+    const verifier = async () => {
+      try {
+        const etat = await getStatutTraitementPdf(traitement.id)
+        if (annule) return
+        setTraitement(etat)
+        setProgression(etat.progression || 0)
+        if (etat.statut === 'TERMINE') {
+          terminerTraitement(etat.resultat || {})
+        } else if (etat.statut === 'ECHEC') {
+          const resultat = etat.resultat || {}
+          const erreur = etat.erreur || resultat.error || 'Erreur lors du traitement du PDF.'
+          setMessage({ type: 'danger', texte: `Erreur : ${erreur}` })
+          setRapportTraitement({
+            ok: false,
+            warnings: resultat.warnings || [],
+            split_errors: resultat.split_errors || [],
+            errors_per_page: resultat.errors_per_page || [],
+            error: erreur,
+          })
+          sessionStorage.removeItem(ACTIVE_PDF_JOB_KEY)
+        }
+      } catch (error) {
+        if (!annule) {
+          console.error('Impossible de suivre le traitement PDF :', error)
+          setMessage({ type: 'danger', texte: 'Impossible de récupérer l’état du traitement. Actualisez la page : le traitement continue côté serveur.' })
+        }
+      }
+    }
+    verifier()
+    const intervalle = window.setInterval(verifier, 2000)
+    return () => { annule = true; window.clearInterval(intervalle) }
+  }, [traitement?.id, traitement?.statut])
 
   const handleDrop = (e) => {
     e.preventDefault()
@@ -53,6 +135,14 @@ export default function PublicationPdf() {
     
     try {
       const resultat = await uploadBlocPdf(fichier, cycle, periodeDebut, periodeFin, setProgression, typeFacture)
+      if (resultat.job?.id) {
+        setTraitement(resultat.job)
+        sessionStorage.setItem(ACTIVE_PDF_JOB_KEY, JSON.stringify(resultat.job))
+        setMessage({ type: 'info', texte: 'PDF envoyÃ©. DÃ©coupage et rapprochement en attente du worker...' })
+        setRapportTraitement(null)
+        setFichier(null)
+        return
+      }
       
       // Adapter le message selon la réponse du backend Django
       // Le backend retourne les compteurs dans `summary` et `matching`.
@@ -128,12 +218,19 @@ export default function PublicationPdf() {
 
         {message && <div className={`alert alert-${message.type}`}>{message.texte}</div>}
 
-        {rapportTraitement?.ok && (
+        {rapportTraitement?.ok && !rapportTraitement?.warning && (
           <div className="alert" style={{ background: '#dcfce7', border: '1px solid #86efac', color: '#166534' }}>
             <strong>🟢 Découpage réussi.</strong>
             <span style={{ marginLeft: 8 }}>
               {rapportTraitement.summary?.files_created || 0} fichiers générés, {rapportTraitement.matching?.successfully_matched || 0} factures mises à jour.
             </span>
+          </div>
+        )}
+
+        {rapportTraitement?.ok && rapportTraitement?.warning && (
+          <div className="alert alert-warning">
+            <strong>Attention : certaines factures etaient deja traitees.</strong>
+            <span style={{ marginLeft: 8 }}>Elles ont ete ignorees afin d'eviter une double publication.</span>
           </div>
         )}
 
@@ -210,8 +307,13 @@ export default function PublicationPdf() {
           </div>
           <input ref={fileInputRef} type="file" accept="application/pdf" style={{ display: 'none' }} onChange={e => setFichier(e.target.files[0])} />
 
-          {uploading && (
+          {(uploading || (traitement && !['TERMINE', 'ECHEC'].includes(traitement.statut))) && (
             <div style={{ marginTop: 16 }}>
+              {!uploading && (
+                <p className="text-muted" style={{ marginBottom: 8, fontSize: 12 }}>
+                  Analyse du PDF en arrière-plan : cette étape peut prendre plusieurs minutes pour un gros fichier. Vous pouvez actualiser cette page, le suivi reprendra automatiquement.
+                </p>
+              )}
               <div className="flex-between" style={{ marginBottom: 4 }}>
                 <span className="text-muted">
                   {progression < 100 ? 'Upload en cours...' : 'Découpage et matching en cours...'}
@@ -231,8 +333,8 @@ export default function PublicationPdf() {
           )}
 
           <div style={{ marginTop: 20 }}>
-            <button type="submit" className="btn btn-primary" disabled={uploading || !fichier}>
-              {uploading
+            <button type="submit" className="btn btn-primary" disabled={uploading || (traitement && !['TERMINE', 'ECHEC'].includes(traitement.statut)) || !fichier}>
+              {uploading || (traitement && !['TERMINE', 'ECHEC'].includes(traitement.statut))
                 ? <><div className="spinner" style={{ width: 16, height: 16 }}></div> Traitement...</>
                 : '🚀 Publier et découper automatiquement'}
             </button>

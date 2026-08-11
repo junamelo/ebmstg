@@ -23,6 +23,7 @@ export default function Simulation() {
   const [erreur, setErreur]           = useState('')
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState(null)
+  const [simulationSuccess, setSimulationSuccess] = useState(false)
 
   useEffect(() => {
     console.log('[Simulation] Chargement initial...')
@@ -124,6 +125,8 @@ export default function Simulation() {
         typeClient: 'HYB'
       }
       setResultat(resultat)
+      setSimulationSuccess(true)
+      window.setTimeout(() => setSimulationSuccess(false), 5000)
 
       // Sauvegarder en base
       setSaving(true)
@@ -181,6 +184,8 @@ export default function Simulation() {
         typeClient: 'OP'
       }
       setResultat(resultat)
+      setSimulationSuccess(true)
+      window.setTimeout(() => setSimulationSuccess(false), 5000)
 
       // Sauvegarder en base
       setSaving(true)
@@ -210,6 +215,7 @@ export default function Simulation() {
     setOptionsChoisies([])
     setResultat(null)
     setErreur('')
+    setSimulationSuccess(false)
   }
 
   if (chargementInit) {
@@ -307,6 +313,13 @@ export default function Simulation() {
           </Link>
         </div>
       </div>
+
+      {simulationSuccess && (
+        <div className="simulation-top-success" role="status">
+          <i className="ti ti-circle-check"></i>
+          Simulation terminee avec succes. Consultez le resultat ci-dessous.
+        </div>
+      )}
 
       <div className="simulation-layout">
         {/* Illustration */}
@@ -620,6 +633,10 @@ export default function Simulation() {
           {/* ── Résultat ── */}
           {resultat && (
             <div className="card resultat-card">
+              <div className="simulation-success-tip" role="status">
+                <i className="ti ti-circle-check"></i>
+                Simulation terminee avec succes.
+              </div>
               <div className="card-header">
                 <h2 className="card-title">Résultat de la simulation</h2>
               </div>

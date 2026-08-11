@@ -36,6 +36,17 @@ export default function Navbar() {
     return '/profil'
   }
 
+  const nomUtilisateur = [
+    user?.prenom || user?.first_name,
+    user?.nom || user?.last_name,
+  ].filter(Boolean).join(' ') || user?.username || user?.email || 'Utilisateur'
+
+  const initialesUtilisateur = nomUtilisateur
+    .trim()
+    .replace(/\s+/g, '')
+    .slice(0, 2)
+    .toUpperCase()
+
   const getRoleLabel = () => {
     if (isAdmin()) return 'Super Administrateur'
     if (isChefFacturation()) return 'Chef Facturation'
@@ -66,9 +77,9 @@ export default function Navbar() {
       <div className="navbar-user">
         <div className="user-menu" onClick={() => setMenuOuvert(!menuOuvert)}>
           <div className="user-avatar">
-            {user?.prenom?.[0]}{user?.nom?.[0]}
+            {initialesUtilisateur}
           </div>
-          <span className="user-name">{user?.prenom} {user?.nom}</span>
+          <span className="user-name">{nomUtilisateur}</span>
           <span className="chevron">▾</span>
 
           {menuOuvert && (

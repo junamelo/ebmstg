@@ -25,6 +25,11 @@ export const uploadBlocPdf = async (fichier, cycle, periodeDebut, periodeFin, on
   return response.data
 }
 
+export const getStatutTraitementPdf = async (jobId) => {
+  const response = await api.get(`/billing/invoices/pdf-jobs/${jobId}/`)
+  return response.data
+}
+
 /**
  * Récupère l'historique des publications
  * Endpoint: GET /api/billing/publications/
