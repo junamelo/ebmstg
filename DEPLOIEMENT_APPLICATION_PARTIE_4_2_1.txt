@@ -1,0 +1,37 @@
+PARTIE 4 : EXPLOITATION (Guide d'exploitation)
+
+4.2. DEPLOIEMENT ET SUIVI
+
+4.2.1. Déploiement de l'application
+
+Le portail Moov e-Factures est composé d'un frontend React, d'une API Django REST Framework, d'une base PostgreSQL, d'un serveur Garnet compatible Redis et d'un worker Celery chargé des traitements PDF en arrière-plan.
+
+Le déploiement de développement est réalisé sur Windows 11, sans Docker. Les composants sont lancés séparément. PostgreSQL conserve les données métier, tandis que Garnet transmet les tâches à Celery. Les paramètres de connexion sont définis dans le fichier .env, qui ne doit pas être publié avec le code source.
+
+Dans le dossier Back, les migrations sont appliquées et la configuration est vérifiée :
+
+python manage.py migrate
+python manage.py check
+
+Le serveur Django est ensuite lancé avec :
+
+python manage.py runserver 8000
+
+L'API est accessible sur http://localhost:8000. Elle gère l'authentification, les utilisateurs, les contrats, les lignes, les services, les factures et les simulations.
+
+Garnet doit être démarré sur le port 6379 avant Celery. Le worker est lancé depuis le dossier Back avec :
+
+python -m celery -A moov_backend worker -l INFO -P solo
+
+Celery exécute notamment le découpage et la publication des blocs PDF sans bloquer l'interface.
+
+Dans le dossier Front, les dépendances sont installées puis le frontend est lancé avec :
+
+npm install
+npm run dev
+
+L'interface est accessible sur http://localhost:3000 et communique avec l'API Django située sur le port 8000. Les fichiers PDF sont conservés dans le stockage média du backend.
+
+L'ordre de démarrage est le suivant : PostgreSQL, Garnet, Django, Celery, puis React/Vite. Le déploiement est validé lorsque l'interface s'ouvre, que la connexion fonctionne, que l'API répond, que Celery est connecté à Garnet et que les factures publiées sont consultables.
+
+Pour une future mise en production, l'application pourra être installée sur Linux avec un serveur applicatif, Nginx, HTTPS, un stockage média sécurisé et des services PostgreSQL, Garnet et Celery supervisés.

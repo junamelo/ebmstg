@@ -1,0 +1,62 @@
+3.4. MISE EN PLACE DE LA BASE DE DONNÉES
+
+La base de données du portail Moov e-Factures est mise en place avec PostgreSQL. Il s'agit d'un système de gestion de base de données relationnelle adapté à la conservation des informations structurées et à la gestion des relations entre les utilisateurs, les contrats, les lignes téléphoniques, les services et les factures.
+
+L'application utilise Django et son ORM (Object Relational Mapping). Les structures de données sont définies sous forme de modèles Python dans les applications accounts et billing. Django transforme ensuite ces modèles en tables PostgreSQL et gère leur évolution au moyen de migrations. Une migration est un fichier versionné qui décrit une création, une modification ou une suppression de table, de champ, de relation ou de contrainte.
+
+Ce mécanisme facilite le suivi des changements apportés à la base de données. Il permet également de reproduire la même structure sur un autre poste de développement ou sur un serveur, sans devoir créer manuellement chaque table avec des requêtes SQL.
+
+Avant l'exécution des migrations, les paramètres de connexion à PostgreSQL sont définis dans le fichier .env situé à la racine du projet. Les valeurs sensibles, notamment les mots de passe, ne sont pas écrites directement dans le code source.
+
+Exemple de paramètres de connexion :
+
+POSTGRES_DB=moov_billing
+POSTGRES_USER=moov_user
+POSTGRES_PASSWORD=mot_de_passe_securise
+POSTGRES_HOST=127.0.0.1
+POSTGRES_PORT=5433
+
+Dans l'environnement de développement du projet, PostgreSQL écoute sur le port 5433. Dans le fichier settings.py, Django lit ces variables d'environnement et sélectionne le moteur django.db.backends.postgresql. Cette configuration permet à l'API de se connecter à la base moov_billing sans exposer les informations de connexion dans le dépôt Git.
+
+La création ou la mise à jour de la structure est réalisée depuis le dossier Back à l'aide des commandes suivantes :
+
+python manage.py makemigrations accounts billing
+python manage.py migrate
+
+La première commande génère les nouvelles migrations lorsque les modèles ont été modifiés. La seconde applique les migrations non encore exécutées dans PostgreSQL. Django conserve l'historique de ces opérations dans sa table interne django_migrations, ce qui évite l'application répétée d'une même modification.
+
+La base est organisée autour de plusieurs groupes de tables.
+
+Les tables users et status_history assurent la gestion des comptes, des rôles, des statuts et de l'historique des changements de statut. Un utilisateur peut être super administrateur, chef de facturation, agent de facturation, commercial, payeur ou employé. Les éléments liés à la double authentification optionnelle sont aussi conservés dans la table des utilisateurs.
+
+Les tables commerciaux, companies, contract_requests, lines et audit_contrats couvrent la gestion contractuelle. La table companies représente l'entreprise cliente et les informations de son contrat postpayé, telles que le compte, la raison sociale, la catégorie, le payeur, le commercial, les dates, le mode de règlement, le statut de facturation et les informations de résiliation. Une demande soumise par un commercial est d'abord enregistrée dans contract_requests, avant la création effective du contrat après validation. Chaque contrat peut contenir plusieurs lignes téléphoniques enregistrées dans la table lines. Les actions importantes effectuées sur un contrat sont conservées dans audit_contrats afin d'assurer la traçabilité.
+
+Les tables packages, services, tarifs_services et cycles correspondent au catalogue tarifaire. Elles enregistrent les forfaits, les services optionnels, leurs tarifs et l'association entre une ligne et un service sur une période donnée. Les données de ces tables sont notamment utilisées pendant la simulation de facturation.
+
+Les tables invoices, publications, traitements_pdf, historique_facturation, notifications_factures et simulations sont destinées au processus de facturation. Une facture est associée à une entreprise et, dans le cas d'une facture sommaire, à une ligne téléphonique. Elle enregistre le numéro, la période, les montants HT, TVA et TTC, le statut et le chemin du fichier PDF. La table traitements_pdf conserve le suivi des blocs importés et découpés par le worker Celery. Les états EN_ATTENTE, EN_COURS, TERMINÉ et ÉCHEC permettent de suivre une opération longue. Les publications, les actions réalisées sur les factures, les notifications et les simulations sont également historisées dans des tables dédiées.
+
+L'extrait suivant illustre la définition d'une relation entre une facture et le contrat auquel elle appartient :
+
+class Invoice(models.Model):
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name='invoices'
+    )
+    line = models.ForeignKey(
+        Line,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='invoices'
+    )
+    numero_facture = models.CharField(max_length=50, unique=True)
+    montant_ttc = models.DecimalField(max_digits=15, decimal_places=2)
+
+Cette relation signifie qu'une entreprise peut posséder plusieurs factures, tandis qu'une facture est liée à une seule entreprise. Le lien vers la ligne est facultatif : il est renseigné pour une facture sommaire, alors qu'une facture globale reste liée seulement à l'entreprise.
+
+L'intégrité des données est renforcée par des clés étrangères et des contraintes d'unicité. Par exemple, le compte de l'entreprise, le MSISDN d'une ligne, le code d'un forfait, le code d'un service et le numéro d'une facture doivent être uniques. Les clés étrangères empêchent également l'enregistrement d'une ligne sans contrat ou d'une facture sans entreprise correspondante. Selon le besoin métier, la suppression d'un élément entraîne la suppression de ses dépendances ou conserve une valeur nulle afin de préserver l'historique.
+
+La base PostgreSQL constitue donc le référentiel central de l'application. Elle conserve les données métier, les relations entre les acteurs, les journaux d'audit et les résultats des traitements PDF. Les fichiers PDF eux-mêmes sont stockés dans le répertoire média de l'application ; la base enregistre leur chemin ainsi que les informations nécessaires à leur consultation sécurisée.
+
+Avant toute opération de maintenance importante, une sauvegarde de la base doit être effectuée. PostgreSQL permet notamment de produire une copie avec l'outil pg_dump. Cette précaution permet de restaurer les données en cas d'erreur de manipulation, de migration incorrecte ou de problème matériel.

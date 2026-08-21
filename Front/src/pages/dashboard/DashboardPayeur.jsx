@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { getFactures } from '../../services/factureService'
 import { getStatsPayeur } from '../../services/adminService'
+import { isDashboardDemo } from '../../services/dashboardDemo'
 import ImageWithFallback from '../../components/common/ImageWithFallback'
 import illustrationPayeur from '../../assets/illustration-payeur.png'
 import './Dashboard.css'
@@ -48,7 +49,7 @@ export default function DashboardPayeur() {
   const [chargement, setChargement] = useState(true)
 
   useEffect(() => {
-    Promise.all([getStatsPayeur(), getFactures({})])
+    Promise.all([getStatsPayeur(), getFactures({}).catch(() => [])])
       .then(([s, f]) => { setStats(s); setFactures(f.slice(0, 5)) })
       .catch(console.error)
       .finally(() => setChargement(false))

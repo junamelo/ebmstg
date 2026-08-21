@@ -124,7 +124,9 @@ def traiter_import_pdf(self, traitement_id):
                 invoices_query = invoices_query.filter(line__isnull=True)
                 processed_invoices_query = processed_invoices_query.filter(line__isnull=True)
 
-            if traitement.cycle and traitement.type_facture != 'GLO':
+            # Les blocs de démonstration utilisent le cycle technique TEST :
+            # il ne doit pas filtrer les lignes métier HYB/OP avant le matching.
+            if traitement.cycle in {'HYB', 'OP'} and traitement.type_facture != 'GLO':
                 invoices_query = invoices_query.filter(company__lines__cycle=traitement.cycle).distinct()
                 processed_invoices_query = processed_invoices_query.filter(company__lines__cycle=traitement.cycle).distinct()
 
@@ -185,7 +187,8 @@ def traiter_import_pdf(self, traitement_id):
                     nombre_lignes_traitees=match_result['matched'],
                     montant_total=montant_total,
                     commentaire=(
-                        f"Import PDF : {result['files_created']} fichier(s) créé(s), "
+                        f"{'Bloc PDF de test' if traitement.cycle == 'TEST' else 'Import PDF'} : "
+                        f"{result['files_created']} fichier(s) créé(s), "
                         f"{match_result['matched']} facture(s) associée(s), "
                         f"{match_result['not_matched']} sans correspondance."
                     ),

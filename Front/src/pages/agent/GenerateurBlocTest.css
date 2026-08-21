@@ -1,0 +1,95 @@
+.test-block-page {
+  max-width: 1280px;
+}
+
+.test-warning,
+.test-job-card,
+.test-block-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.test-warning {
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  border: 1px solid #fdba74;
+  border-radius: 10px;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.test-warning i { font-size: 25px; }
+
+.test-block-layout { display: grid; gap: 20px; }
+.test-block-settings, .test-block-selection { margin: 0; }
+
+.test-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  padding: 4px 0;
+}
+.test-libelle-field { grid-column: span 2; }
+
+.test-selection-header { align-items: center; gap: 16px; }
+.test-selection-header p { margin: 4px 0 0; font-size: 13px; }
+.test-search { width: min(270px, 100%); }
+
+.test-selection-list {
+  max-height: 480px;
+  overflow-y: auto;
+  border-top: 1px solid #e5e7eb;
+}
+
+.test-selection-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #eef2f7;
+}
+.test-selection-row.selected { background: #eff6ff; }
+.test-selection-row > label:first-child {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  flex: 1;
+  cursor: pointer;
+}
+.test-selection-row input[type="checkbox"] { margin-top: 4px; accent-color: #002a7a; }
+.test-selection-row strong, .test-selection-row small { display: block; }
+.test-selection-row small { margin-top: 3px; color: #64748b; }
+
+.test-amount { display: flex; align-items: center; gap: 7px; color: #475569; font-size: 12px; }
+.test-amount input { width: 120px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; }
+.test-amount em { font-style: normal; font-weight: 600; }
+
+.test-block-footer {
+  padding: 16px 20px;
+  border: 1px solid #dbe4f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.test-job-card {
+  margin: 0 0 20px;
+  padding: 16px 20px;
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  background: #f0fdf4;
+  color: #166534;
+}
+.test-job-card.is-error { border-color: #fca5a5; background: #fef2f2; color: #b91c1c; }
+.test-job-card p { margin: 5px 0 0; }
+.test-job-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+
+@media (max-width: 800px) {
+  .test-form-grid { grid-template-columns: 1fr; }
+  .test-libelle-field { grid-column: auto; }
+  .test-warning, .test-job-card, .test-block-footer, .test-selection-header, .test-selection-row { align-items: flex-start; flex-direction: column; }
+  .test-amount { width: 100%; }
+  .test-amount input { flex: 1; }
+}

@@ -1,0 +1,129 @@
+# Diagramme de classes simplifié — Moov e-Factures
+
+```mermaid
+classDiagram
+direction LR
+
+class Utilisateur {
+  +String nom
+  +String email
+  +String role
+  +seConnecter()
+}
+class OperateurFacturation {
+  +consulterTableauDeBord()
+}
+class SuperAdministrateur {
+  +gererUtilisateurs()
+}
+class ChefFacturation {
+  +validerDemande()
+  +rejeterDemande(motif)
+}
+class AgentFacturation {
+  +gererContrats()
+  +publierFactures()
+}
+class Commercial {
+  +String matricule
+  +soumettreDemande()
+}
+class Payeur {
+  +consulterFactures()
+  +simulerFacturation()
+}
+class Employe {
+  +String msisdn
+  +consulterFactureSommaire()
+  +simulerConsommation()
+}
+
+Utilisateur <|-- OperateurFacturation
+Utilisateur <|-- SuperAdministrateur
+Utilisateur <|-- Commercial
+Utilisateur <|-- Payeur
+Utilisateur <|-- Employe
+OperateurFacturation <|-- ChefFacturation
+OperateurFacturation <|-- AgentFacturation
+
+class Contrat {
+  +String code
+  +String raisonSociale
+  +String statut
+  +ajouterLigne()
+  +resilier(motif)
+}
+class DemandeContrat {
+  +String statut
+  +String motifRejet
+  +soumettre()
+  +valider()
+  +rejeter(motif)
+}
+class Ligne {
+  +String msisdn
+  +String statut
+  +affecterEmploye()
+  +ajouterService()
+}
+class Forfait {
+  +String nom
+  +Decimal prixMensuel
+  +modifierTarif()
+}
+class Service {
+  +String nom
+  +String type
+  +Decimal prix
+  +modifierTarif()
+}
+class Facture {
+  +String numero
+  +String type
+  +Decimal montantTTC
+  +String statut
+  +consulter()
+  +telechargerPDF()
+}
+class Publication {
+  +String periode
+  +String statut
+  +publier()
+}
+class TraitementPDF {
+  +String statut
+  +Integer progression
+  +decouper()
+  +suivreProgression()
+}
+class Simulation {
+  +Decimal montantEstime
+  +calculer()
+}
+
+Commercial "1" --> "0..*" DemandeContrat : soumet
+ChefFacturation "1" --> "0..*" DemandeContrat : traite
+DemandeContrat "0..1" --> "0..1" Contrat : devient
+Commercial "0..1" --> "0..*" Contrat : signe
+Payeur "0..1" --> "0..*" Contrat : gère
+AgentFacturation "1" --> "0..*" Contrat : gère
+Contrat "1" *-- "0..*" Ligne : contient
+Employe "0..1" --> "0..1" Ligne : utilise
+Forfait "0..1" --> "0..*" Ligne : appliqué
+Ligne "0..*" --> "0..*" Service : options
+Contrat "1" *-- "0..*" Facture : factures globales
+Ligne "0..1" --> "0..*" Facture : factures sommaires
+Publication "1" o-- "0..*" Facture : publie
+TraitementPDF "1" --> "0..*" Facture : produit
+AgentFacturation "1" --> "0..*" Publication : lance
+AgentFacturation "1" --> "0..*" TraitementPDF : exécute
+Utilisateur "1" --> "0..*" Simulation : réalise
+Ligne "0..1" --> "0..*" Simulation : concerne
+Payeur "1" --> "0..*" Facture : consulte
+Employe "1" --> "0..*" Facture : consulte
+
+note for Utilisateur "Les rôles correspondent au champ User.role."
+note for Facture "type : GLOBALE ou SOMMAIRE"
+```
+
+Les cardinalités sont indiquées entre guillemets sur chaque association : `1`, `0..1`, `0..*` et `1..*` selon le cas. Le fichier source complet est [DIAGRAMME_CLASSES_MERMAID.mmd](DIAGRAMME_CLASSES_MERMAID.mmd).

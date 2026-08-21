@@ -1,0 +1,61 @@
+PARTIE 5 : GUIDE D'UTILISATION
+
+5.1. DESCRIPTION TEXTUELLE DU LOGICIEL
+
+5.1.1. Présentation générale
+
+Moov e-Factures est un portail web destiné à la publication et à la consultation des factures clients postpayés de Moov Africa Togo. L'application centralise les informations relatives aux entreprises clientes, aux contrats, aux lignes téléphoniques, aux forfaits, aux services et aux factures.
+
+Elle permet aux équipes de facturation de préparer les données contractuelles, d'importer les blocs PDF reçus, de découper automatiquement les documents, de rapprocher les factures avec les contrats et les lignes correspondants, puis de publier les factures. Les clients autorisés peuvent ensuite consulter leurs documents et effectuer une simulation de facturation.
+
+L'accès aux fonctionnalités dépend du rôle de l'utilisateur et du périmètre de ses données. Ainsi, un administrateur ou un opérateur de facturation dispose d'une vision de gestion, tandis qu'un payeur ou un employé accède uniquement aux informations qui lui sont rattachées.
+
+5.1.2. Acteurs principaux
+
+Le super administrateur assure l'administration générale de la plateforme. Il gère les comptes utilisateurs, les rôles, les entreprises, les contrats, les lignes, les forfaits et les services. Il dispose d'une vision globale des données et des statistiques du système.
+
+Le chef de facturation supervise les opérations de facturation. Il peut gérer les agents de son périmètre, contrôler les demandes de contrat soumises par les commerciaux, valider ou rejeter une demande avec un motif, et suivre les publications et les journaux de traitement.
+
+L'agent de facturation réalise les opérations quotidiennes. Il gère les contrats, les lignes et les commerciaux, prépare les forfaits et les services selon ses droits, importe les blocs PDF, suit leur découpage, vérifie les correspondances et publie les factures validées.
+
+Le commercial constitue et soumet les demandes de contrat. Il renseigne les informations nécessaires à la création du contrat et suit l'état de ses demandes. Une demande reste en attente tant qu'elle n'a pas été validée par un utilisateur habilité. En cas de rejet, le motif communiqué est consultable par le commercial.
+
+Le payeur représente le responsable de l'entreprise cliente. Il consulte les factures globales de son contrat ainsi que les factures sommaires des lignes rattachées. Il visualise les informations de son contrat, les lignes actives et les services associés, puis peut effectuer une simulation de facturation.
+
+L'employé est rattaché à une ligne téléphonique précise. Il consulte les services de sa ligne et sa facture sommaire publiée. Son accès est limité à ses propres informations et il peut également réaliser une simulation individuelle.
+
+5.1.3. Authentification et accès aux espaces
+
+L'utilisateur saisit ses identifiants, puis le système le redirige vers l'espace correspondant à son rôle. Les permissions limitent les menus et les données accessibles. L'option 2FA peut être activée dans le profil pour sécuriser la modification du mot de passe.
+
+5.1.4. Gestion des entreprises, contrats et lignes
+
+Les agents habilités créent les contrats et renseignent leurs principales informations : code, catégorie, dates, règlement, statut et résiliation. Les lignes sont ajoutées séparément avec leur MSISDN, forfait, cycle et options, puis peuvent être associées à un employé. Les modifications importantes sont conservées dans l'audit du contrat.
+
+5.1.5. Gestion des forfaits et des services
+
+Les forfaits et services regroupent les offres de voix, SMS, data et les options complémentaires. Selon ses permissions, l'opérateur peut les créer, les modifier ou changer leur statut. Les tarifs enregistrés sont utilisés par la simulation.
+
+5.1.6. Importation, découpage et publication des factures PDF
+
+L'agent importe un bloc PDF en indiquant le type et la période. Celery, via Garnet, découpe le fichier, recherche les correspondances et enregistre les PDF produits. Le traitement peut être suivi avec les statuts EN_ATTENTE, EN_COURS, TERMINÉ ou ÉCHEC. Après vérification, les factures valides sont publiées et ajoutées à l'historique.
+
+5.1.7. Consultation des factures
+
+La consultation des factures permet aux clients postpayés d'accéder aux documents qui leur sont destinés depuis leur espace personnel. Le payeur consulte les factures globales de son entreprise ainsi que les factures sommaires correspondant aux lignes rattachées à son contrat. Pour chaque facture, l'application présente les informations essentielles, notamment le numéro, la période, la date d'émission, le montant et le statut de publication.
+
+L'employé dispose d'un accès plus limité. Il consulte uniquement la facture sommaire de la ligne qui lui est affectée et ne peut pas accéder aux factures globales de l'entreprise ni aux documents d'une autre ligne. Cette séparation permet de respecter le périmètre de chaque utilisateur et d'éviter la consultation de données qui ne lui appartiennent pas.
+
+Lorsqu'un fichier PDF est associé à une facture publiée, l'utilisateur autorisé peut l'ouvrir dans un nouvel onglet ou le télécharger. Si le document n'est pas encore disponible, l'application l'indique clairement. Les factures déjà publiées restent consultables depuis l'historique, tandis que les factures non publiées ou appartenant à un autre contrat ne sont pas affichées dans l'espace de l'utilisateur.
+
+5.1.8. Simulation de facturation
+
+Le payeur ou l'employé saisit ses consommations et choisit les services à simuler. Le système applique les tarifs enregistrés, affiche le montant estimé et conserve le résultat dans l'historique sans modifier une facture réelle.
+
+5.1.9. Notifications et suivi
+
+Une notification par e-mail peut être envoyée après publication si SMTP est configuré. Les tableaux de bord et historiques présentent les contrats, lignes, publications, erreurs, montants et simulations. L'envoi par SMS n'est pas retenu dans la version actuelle.
+
+5.1.10. Règles générales d'utilisation
+
+Il faut vérifier les données et la période avant toute publication. En cas d'erreur, consulter l'interface, les journaux Django et Celery avant de relancer le traitement. Les données du mode démonstration sont fictives et réservées aux captures d'écran.

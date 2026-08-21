@@ -1,0 +1,2427 @@
+
+
+===== PAGE 1 =====
+RÉPUBLIQUE TOGOLAISE
+Travail – Liberté – Patrie
+PRESIDENCE DU CONSEIL
+MINISTERE DE LA PLANIFICATION
+DU DEVELOPPEMENT
+Moov Africa Togo
+Institut Africain d’Informatique
+Représentation du TOGO (IAI-TOGO)
+Moov Africa Togo Boulevard de la Paix Lomé -
+07 BP 12456 Lomé 07, TOGO
+Togo BP14511
+TEL : (+228) 22 20 47 00
+TEL : (+228) 99 99 00 00
+E-mail : iaitogo@iai-togo.tg
+E-mail : moov-contact@moov-africa.tg
+Site web : www.iai-togo.tg
+Site web : https://moov-africa.tg/
+MEMOIRE DE FIN DE FORMATION POUR L’OBTENTION DU
+DIPLOME D’INGENIEUR DES TRAVAUX
+OPTION: Génie Logiciel et Systèmes d’Information
+THÈME :
+DÉVELOPPEMENT D'UN PORTAIL WEB DE PUBLICATION DE ²é
+FACTURES CLIENTS POSTPAYÉS : CAS DE MOOV AFRICA.
+Période: 11 Mai au 08 Août
+Rédigé par : BANLEPO Mintre Benoît
+Etudiant en troisième année
+Année académique : 2025–2026
+SUPERVISEUR MAÎTRE DE STAGE
+M. AZOTI Hodabalo M. SADZO- HETSU Kossivi
+Enseignant à l’IAI-TOGO Chef Service Production SI
+
+===== PAGE 2 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+DÉDICACES
+J’ai le grand plaisir de dédier ce modeste travail,
+À ma très chère mère, pour son amour inconditionnel, ses prières, ses
+encouragements et son soutien constant qui m’ont permis de
+persévérer tout au long de mon parcours.
+À mon très cher père, pour ses précieux conseils, ses encouragements,
+son soutien indéfectible, ainsi que pour tous les sacrifices consentis
+afin de me permettre de poursuivre mes études dans les meilleures
+conditions.
+À ma famille et à tous ceux qui, de près ou de loin, ont contribué à ma
+réussite, pour leur affection, leur présence et leurs encouragements.
+À l’aube de cette nouvelle étape de ma vie professionnelle, je dédie
+également ce travail à mon avenir, avec la conviction que chaque défi
+relevé constitue un pas de plus vers la réalisation de mes ambitions et
+de mes rêves.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO i
+
+===== PAGE 3 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+REMERCIEMENTS
+Dans le cadre de l’obtention du diplôme d’Ingénieur des Travaux Informatiques de l’IAI-
+TOGO, nous avons effectué un stage au sein de Moov Africa Togo, au cours duquel
+nous avons participé à la conception et à la mise en œuvre d’un portail web dédié à la
+publication et à la consultation des factures des clients postpayés. Ce projet répond à
+la nécessité d’améliorer la gestion et l’accessibilité des documents de facturation, tout
+en facilitant le travail des équipes chargées de leur traitement et de leur publication.
+La solution développée permet aux clients entreprises de consulter leurs factures
+globales et sommaires, leurs services souscrits ainsi que l’historique de leurs
+opérations. Elle met également à la disposition des équipes de facturation des
+fonctionnalités permettant d’importer, de découper, de traiter et de publier des blocs
+de fichiers PDF de manière structurée et sécurisée. Le système prend en compte
+plusieurs profils d’utilisateurs, notamment le super administrateur, le chef de
+facturation, l’agent de facturation, le commercial, le payeur et l’employé, avec des
+droits adaptés aux responsabilités de chacun. Une fonctionnalité de simulation de
+facturation permet également d’effectuer des estimations à partir de forfaits et de tarifs
+configurables.
+La conception de la solution s’appuie sur le langage de modélisation UML ainsi que
+sur le processus 2TUP afin de structurer l’analyse, la conception et le développement
+du système. Sur le plan technique, le backend a été développé avec Django REST
+Framework, tandis que l’interface utilisateur repose sur React et Vite. PostgreSQL
+assure la gestion et la persistance des données. Pour l’exécution des traitements
+longs, notamment ceux liés au traitement des fichiers PDF, Celery est utilisé avec un
+broker compatible avec le protocole Redis, en l’occurrence Garnet dans
+l’environnement de développement. Cette architecture permet ainsi de disposer d’une
+plateforme adaptée aux besoins de gestion, de traitement et de publication des
+factures clients postpayés.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO ii
+
+===== PAGE 4 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+SOMMAIRE
+DÉDICACES ................................................................................................................. i
+REMERCIEMENTS ..................................................................................................... ii
+SOMMAIRE ................................................................................................................ iii
+RÉSUMÉ .................................................................................................................... iv
+GLOSSAIRE ................................................................................................................ v
+INTRODUCTION ......................................................................................................... 9
+PARTIE 1 : CAHIER DES CHARGES ......................................................................... 2
+PARTIE 2 : ANALYSE ET CONCEPTION ................................................................. 17
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE .................................................... 45
+PARTIE 4 : EXPLOITATION (GUIDE D’EXPLOITATION)......................................... 62
+PARTIE 5 : GUIDE D’UTILISATION .......................................................................... 71
+CONCLUSION ........................................................................................................... 90
+BIBLIOGRAPHIE INDICATIVE ..................................................................................... I
+WEBOGRAPHIE INDICATIVE .................................................................................... II
+TABLE DES MATIÈRES............................................................................................. V
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO iii
+
+===== PAGE 5 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+RÉSUMÉ
+Dans le cadre de l'obtention du diplôme d'Ingénieur des Travaux Informatiques de l'IAI-
+TOGO, nous avons réalisé un stage au sein de Moov Africa Togo. Le projet porte sur
+le développement d'un portail web de publication de factures clients postpayés.
+L'objectif est de permettre aux clients entreprises de consulter leurs factures globales
+et sommaires, leurs services souscrits et l'historique de leurs opérations, tout en
+donnant aux équipes de facturation un outil fiable pour importer, découper et publier
+des blocs PDF.
+La solution distingue les profils super administrateur, chef de facturation, agent de
+facturation, commercial, payeur et employé. Elle propose aussi une simulation de
+facturation basée sur les forfaits et les tarifs paramétrables. La conception s'appuie sur
+UML et le processus 2TUP. La mise en œuvre associe Django REST Framework pour
+le backend, React avec Vite pour le frontend, PostgreSQL pour la persistance, et
+Celery avec un broker compatible Redis (Garnet dans l'environnement de
+développement) pour les traitements PDF longs.
+.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO iv
+
+===== PAGE 6 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+GLOSSAIRE
+ABREVIATIONS ET ACRONYMES SIGNIFICATIONS
+IAI - TOGO Institut Africain d'Informatique Représentation du
+TOGO
+GLSI Génie Logiciel et Systèmes d'Informations
+UML Unified Modeling Langage
+2TUP Two Tracks Unified Process
+JWT Java Web Token
+RBAC Role-Based Access Control
+API Application Programming Interface
+HTTP Hypertext Transfer Protocol
+SPA Single Page Application
+DSI Direction des Systèmes d'Information
+OTP One-Time Password
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO v
+
+===== PAGE 7 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+LISTE DES FIGURES
+Figure 1: Localisation IAI-Togo .................................................................................... 3
+Figure 2: Organigrammme Moov Africa ....................................................................... 5
+Figure 3: Plan localisation departement technique Moov Africa Togo( ....................... 6
+Figure 4: Processus 2TUP ......................................................................................... 19
+Figure 5: Logo uml ..................................................................................................... 20
+Figure 6: Logo PowerDegner ..................................................................................... 21
+Figure 7: Diagramme de contexte ............................................................................. 21
+Figure 8:Diagramme de cas d’utilisation de l’acteur Super Administrateur: ............... 27
+Figure 9: Diagramme de cas d’utilisation des acteurs chef et Agent facturation ...... 28
+Figure 10: Diagramme de cas d’utilisation de l’acteur Commerciale ......................... 29
+Figure 11: Diagramme de cas d'utilisation de l'acteurPayeur .................................... 30
+Figure 12: Diagramme de cas d'utilisation de l'acteur Employé ................................ 31
+Figure 13: Diagramme d’activité du cas : « S’authentifier ». ...................................... 38
+Figure 14: Diagramme d’activité du cas : « Publier les factures ». ........................... 39
+Figure 15: Diagramme d’activité du cas : « Consulter les factures ». ...................... 40
+Figure 16: Diagramme de séquence du cas « S’authentifier »: ................................ 41
+Figure 17: Diagramme de séquence du cas : « Publier les factures ......................... 42
+Figure 18: Diagramme de séquence du cas : « Consulter les factures ». ............... 43
+Figure 19: Diagramme de classe: .............................................................................. 44
+Figure 20: Logo Django ............................................................................................. 47
+Figure 21: Logo Django REST Framework ................................................................ 47
+Figure 22: Logo react ................................................................................................ 48
+Figure 23: Logo PostgreSQL ..................................................................................... 49
+Figure 24: Logo Garnet.............................................................................................. 49
+Figure 25: Logo Goole Authentificator ....................................................................... 50
+Figure 26: Logo Visual Studio code ........................................................................... 50
+Figure 27:Logo Github ............................................................................................... 51
+Figure 28:Logo Swagger ........................................................................................... 51
+Figure 29: Architecture matérielle de notre application .............................................. 53
+Figure 30: Interaction en Modèle-Vue-Template ....................................................... 54
+Figure 31: Extrait du fichier de configuration .env ...................................................... 56
+Figure 32: Classe User .............................................................................................. 57
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO vi
+
+===== PAGE 8 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+Figure 33: Classe Commercial .................................................................................. 58
+Figure 34: Classe Company ...................................................................................... 59
+Figure 35: Classe Line ............................................................................................... 60
+Figure 36: Classe Invoice .......................................................................................... 61
+Figure 37: Classe TraitementPDF ............................................................................. 62
+Figure 38: Plan de navigation Super Administrateur ................................................. 76
+Figure 39: Plan de navigation du chef facturation ..................................................... 77
+Figure 40: Plan de navigation de l'Agent facturation .................................................. 78
+Figure 41: Plan de navigation Commerciale .............................................................. 79
+Figure 42: Plan de Navigation du Payeur .................................................................. 80
+Figure 43: Plan de navigation de l'Employé ............................................................... 81
+Figure 44:Page de Conexion ..................................................................................... 82
+Figure 45: Dashboard Chef Facturation..................................................................... 83
+Figure 46: page de Gestion Agents facturation ......................................................... 84
+Figure 47: Simulation facturation ............................................................................... 84
+Figure 48: Page de Gestion des clients ..................................................................... 85
+Figure 49: Page de Gestion des Services ................................................................. 85
+Figure 50: Dashoard payeur ...................................................................................... 86
+Figure 51: Page de consultaion Factures Payeur ...................................................... 86
+Figure 52: Page de découpage de blocs de factures Pdf .......................................... 87
+Figure 53: Page de gestion de profile du chef facturation ......................................... 87
+Figure 54: Facture sommaire ...................................................................................... III
+Figure 55:Facture Globale ......................................................................................... IV
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO vii
+
+===== PAGE 9 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+LISTE DES TABLEAUX
+Tableau 1:Évaluations financières utilisation de Google Looker Studio / Power BI ... 13
+Tableau 2: Évaluations financières utilisation acquisition d'une solution clé en main 14
+Tableau 3: Évaluations financières utilisation développement sur mesure ................ 14
+Tableau 4: Planing Prévisionel .................................................................................. 16
+Tableau 5: de jutification du choix de PowerDesigner ............................................... 20
+Tableau 6: Acteurs et leurs cas d'utilisation ............................................................... 24
+Tableau 7: Description textuelle du cas d’utilisation « S’authentifier ». .................... 31
+Tableau 8: Description textuelle du cas d’utilisation « Publier les factures ». ........... 33
+Tableau 9: Description textuelle du cas d’utilisation « Consulter les factures ». ....... 35
+Tableau 10: Matériels utilisés .................................................................................... 46
+Tableau 11: Configuration logicielle ........................................................................... 64
+Tableau 12: Configuration matérielle ......................................................................... 65
+Tableau 13: Actions à mener en cas d'erreurs. ......................................................... 68
+Tableau 14: États d’une demande de contrat ........................................................... 88
+Tableau 15: États d’une facture ................................................................................. 88
+Tableau 16: États d’un traitement PDF ...................................................................... 89
+Tableau 17: États d’une notification de facture .......................................................... 89
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO viii
+
+===== PAGE 10 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+LISTE DES PARTICIPANTS AU PROJET
+NOM FONCTION ROLE
+BANLEPO Mintre Benoît Etudiant en troisième année Réalisateur
+option GLSI à IAI-TOGO
+M. SADZO-HETSU Kossivi Chef Service Production SI à Maître de stage
+Moov Africa Togo
+M. AZOTI Hodabalo
+Enseignant à IAI-TOGO Superviseur
+INTRODUCTION
+La transformation numérique modifie les attentes des clients des opérateurs de
+télécommunications. Les abonnés professionnels souhaitent pouvoir consulter leurs
+données de facturation sans attendre l'envoi mensuel d'un fichier par courrier
+électronique et sans solliciter systématiquement le service client. Pour une entreprise
+disposant de plusieurs lignes, la question est encore plus sensible : le payeur doit
+disposer d'une vue globale tandis que chaque employé ne doit accéder qu'à sa propre
+facture sommaire.
+Moov Africa Togo dispose d'une clientèle postpayée importante, notamment
+composée d'entreprises organisées en flottes. Le traitement des factures implique la
+réception de gros fichiers PDF, leur découpage en documents individuels, leur
+rattachement au bon contrat ou à la bonne ligne, puis leur publication. Ces étapes
+nécessitent un contrôle d'accès précis, une traçabilité des opérations et une interface
+simple pour les clients comme pour les agents de facturation.
+Le présent mémoire décrit la démarche suivie pour concevoir et développer le portail
+Moov e-Factures. La première partie présente le cahier des charges et le choix de la
+solution. La deuxième partie expose l'analyse et la conception UML. La troisième partie
+détaille la réalisation et la mise en œuvre. La quatrième partie constitue le guide
+d'exploitation, tandis que la cinquième présente le guide d'utilisation. Une conclusion
+rappelle les résultats obtenus, les limites et les perspectives.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO ix
+
+===== PAGE 11 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+INTRODUCTION
+PARTIE 1 : CAHIER DES CHARGES
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 2
+
+===== PAGE 12 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+1.1. PRÉSENTATIONS
+1.1.1. Brève présentation de l’IAI-TOGO
+L'IAI-TOGO est une école inter-Etat d'enseignement supérieur en informatique. Il est
+membre du réseau IAI créé le 29 janvier 1971 à Fort Lamy (actuel N'Djamena) en
+République du Tchad. En application de la décision du Conseil d'Administration de
+délocaliser l'IAI, la représentation du TOGO a ouvert ses portes le 24 octobre 2002.
+L'accord d'établissement entre la République togolaise et l'IAI a été signé le 12 mai
+2006.
+L'IAI-TOGO forme en trois (03) ans des ingénieurs des travaux informatiques et des
+licenciés informatiques dans trois (03) filières : Génie Logiciel et Systèmes
+d'Informations (GLSI), Administration Systèmes et Réseaux (ASR) et Multimédia
+Technologies Web et Infographie (MTWI). Le but de sa création est avant tout la
+nécessité de disposer d'un personnel compétent en nombre important, capable de
+répondre à la croissance accélérée et continue de la technologie dans la sous-
+région, et son implication dans tous les secteurs d'activité. L'IAI-TOGO est située
+derrière l'immeuble « SUNU Assurances » dans les locaux du CEB (Centre National
+d'Etude et de Traitements Informatiques) non loin de la CEB sis au quartier
+administratif, au 59 rue de la Kozah, 07 BP 12456 Lomé 07, TOGO.
+Figure 1: Localisation IAI-Togo
+1.1.2. Présentation du cadre de stage
+➢ Statut
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 3
+
+===== PAGE 13 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+Nous avons effectué notre stage de fin de formation au sein de la société Moov Africa
+Togo. Cette dernière est une société anonyme (SA) de droit togolais, filiale du Groupe
+Maroc Telecom, l’un des principaux opérateurs de télécommunications sur le continent
+africain. Moov Africa Togo est opérationnelle depuis 2007 et constitue l’un des deux
+principaux opérateurs de téléphonie mobile du pays. Depuis le 1er janvier 2021, la
+société a intégré le consortium Moov Africa qui regroupe l’ensemble des filiales
+africaines du Groupe Maroc Telecom sous une identité commune.
+Le siège social de l’entreprise est situé à Lomé, boulevard de la Paix, route de
+l’Aviation, dans le quartier Ntifafa Komé.
+➢ Mission
+La mission de Moov Africa Togo est de connecter les clients (particuliers,
+professionnels et entreprises) en leur offrant des solutions de télécommunications sur
+mesure : téléphonie mobile, Internet haut débit, équipements connectés et services à
+valeur ajoutée.
+L’entreprise s’inscrit dans une dynamique de développement économique et social au
+Togo, avec pour objectif d’être l’acteur majeur des télécommunications dans le pays
+en proposant des services de qualité, innovants et accessibles à tous.
+➢ Activités
+Moov Africa Togo propose une gamme complète de services dans le domaine des
+télécommunications. Les principales activités de l'entreprise sont :
+● Téléphonie mobile : forfaits voix et data destinés aux clients se trouvant sur le
+territoire togolais ainsi qu'à ceux évoluant en dehors du pays (itinérance
+internationale) ;
+● Internet : connexion mobile (4G) et fixe (fibre optique) ;
+● Paiement mobile : service de monnaie électronique Flooz, permettant les
+transferts d'argent, les paiements de factures et les achats en ligne ;
+● Services à valeur ajoutée : transfert d'argent international, services
+d'information et de divertissement ;
+Services aux entreprises : solutions sur mesure pour professionnels (connectivité,
+cloud, sécurité).
+➢ Quelques realisations
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 4
+
+===== PAGE 14 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+Voici quelques réalisations marquantes de Moov Africa Togo :
+● Obtention de la licence 3G au Togo en 2016, permettant le déploiement de
+l'internet mobile haut débit ;
+● Lancement de la marque Moov Africa en 2021, unifiant l'ensemble des filiales
+africaines du Groupe Maroc Telecom sous une identité commune ;
+● Développement des services de paiement mobile Flooz, largement adoptés
+par la population togolaise pour les transactions financières quotidiennes ;
+● Création de la filiale Moov Money Togo S.A. en 2025, spécialisée dans la
+monnaie électronique
+➢ Organigramme
+Figure 2: Organigrammme Moov Africa
+➢ Service d’accueil
+Le stage s'est déroulé au sein du département technique de Moov Africa Togo, situé
+à Télésou (communément appelé « Moov antenne »). Ce département est chargé de
+la conception, du déploiement, de la maintenance et de l'optimisation des
+infrastructures réseau de l’opérateur.
+C'est au sein de ce service que s'est déroulée l'intégralité du stage, sous la supervision
+du responsable technique.
+➢ Plan de localisation
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 5
+
+===== PAGE 15 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+Figure 3: Plan localisation departement technique Moov Africa Togo
+1.2. THÈME DU STAGE
+1.2.1. Présentation du sujet
+Dans un contexte où l'accès aux services numériques est devenu une attente majeure
+des consommateurs, les opérateurs de télécommunications doivent constamment
+améliorer l'expérience client. Au Togo, Moov Africa Togo compte environ 60 000
+clients abonnés aux offres postpayées. La grande majorité de ces abonnés sont des
+entreprises: un responsable souscrit un contrat postpayé auprès de l'opérateur, et ses
+employés se voient chacun attribuer une ligne. Ce mode de fonctionnement génère
+deux types de documents de facturation distincts : la facture globale, qui regroupe la
+consommation de l'ensemble des lignes d'une entreprise et est destinée au payeur
+principal, et les factures sommaires, qui détaillent la consommation individuelle de
+chaque employé.
+Actuellement, ces documents sont transmis aux clients uniquement par courrier
+électronique sous format PDF ou par voie postale, en fin de période de facturation. Il
+n'existe aucun moyen pour les clients de consulter en temps réel leur situation
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 6
+
+===== PAGE 16 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+financière ou leur consommation, ni de simuler le montant de leur facture avant la fin
+du mois. C'est dans ce contexte que s'inscrit notre projet, intitulé : « Développement
+d'un portail web de publication de factures clients postpayés : cas de Moov Africa Togo
+».
+1.2.2. Problématique du sujet
+Actuellement, les quelque 60 000 clients postpayés de Moov Africa Togo reçoivent
+leurs factures uniquement par courrier électronique sous format PDF ou par voie
+postale, sans aucun moyen de consultation en temps réel de leur situation financière
+ou de leur consommation. Pour les entreprises clientes, cette situation est d'autant
+plus complexe que la facturation implique deux niveaux : une facture globale pour le
+payeur principal et des factures sommaires pour chaque employé titulaire d'une ligne.
+Aucun outil ne permet aujourd'hui de distinguer et de gérer ces deux niveaux d'accès
+de manière autonome.
+Par ailleurs, il n'existe à ce jour aucune application ou plateforme permettant aux
+clients de consulter leurs services souscrits, leur historique de paiements ou de simuler
+leur facture en cours. Les seules interactions possibles avec l'opérateur se font par
+appel téléphonique au service client ou par déplacement en agence, ce qui représente
+une perte de temps pour les utilisateurs et une sollicitation importante pour les équipes
+de l'opérateur.
+Face à ce constat, plusieurs questions essentielles se posent :
+● Comment permettre aux clients d'accéder facilement et en toute sécurité à
+leurs informations de facturation et de consommation ?
+● Quels mécanismes mettre en place pour garantir la confidentialité des
+données financières personnelles, notamment dans le cas des clients en flotte
+où un payeur principal gère plusieurs lignes ?
+● Comment concevoir un outil de simulation de facturation en temps réel qui
+permette au client de maîtriser sa consommation avant la fin de la période de
+facturation ?
+Quelles technologies et quelles mesures de sécurité adopter pour assurer la fiabilité,
+la disponibilité et la pérennité de la plateforme ?
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 7
+
+===== PAGE 17 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+1.2.3. Intérêt du sujet
+1.2.3.1. Objectifs
+L'objectif général de ce projet est de concevoir et développer un portail web sécurisé
+et intuitif permettant aux clients postpayés de Moov Africa Togo d'accéder de manière
+autonome à leurs informations de facturation, de consulter leurs services souscrits, de
+suivre leur historique de paiements et de simuler leur consommation mensuelle, tout
+en garantissant un accès différencié et sécurisé selon le profil de chaque utilisateur.
+Pour atteindre cet objectif général, nous nous sommes fixés les objectifs spécifiques
+suivants:
+• Permettre aux clients de consulter leurs services souscrits (abonnement,
+options activées : data, appels, SMS, etc.) ;
+• Donner accès aux factures et à l'historique des règlements effectués, avec
+distinction entre la facture globale (destinée au payeur principal de la flotte) et
+les factures sommaires (accessibles à chaque employé pour sa propre ligne) ;
+• Proposer un mode d'aperçu des factures PDF avant téléchargement,
+permettant au client de visualiser le document directement dans l'interface ;
+• Proposer un outil de simulation de facturation mensuelle, permettant au client
+d'estimer sa facture en saisissant ses prévisions de consommation (minutes
+d'appel, SMS, volume de data), sur la base de tarifs configurables par le super
+administrateur ;
+• Mettre en place un système de gestion des accès différenciés, garantissant
+que le payeur principal d'une flotte accède à toutes les lignes, tandis qu'un
+employé n'accède qu'à ses propres informations ;
+• Permettre au super administrateur de gérer l'ensemble de la plateforme :
+publication et découpage automatique des blocs PDF de factures, gestion des
+comptes utilisateurs et des entreprises clientes, configuration des grilles
+tarifaires pour la simulation, consultation des logs et sessions, et administration
+globale du système ;
+• Assurer la sécurité et la confidentialité des données financières personnelles
+des clients, notamment par l'authentification JWT et le chiffrement des mots de
+passe ;
+• Offrir une interface utilisateur claire, moderne et responsive, accessible aussi
+bien sur ordinateur que sur appareil mobile.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 8
+
+===== PAGE 18 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+1.2.3.2. Résultats
+À l'issue de ce projet, les résultats attendus sont les suivants :
+• Une application web fonctionnelle et opérationnelle développée avec Django
+(backend), React (frontend) et PostgreSQL (base de données), dimensionnée
+pour 60 000 abonnés ;
+• Un module de gestion et de consultation des factures (globales et sommaires)
+avec aperçu PDF intégré et téléchargement ;
+• Un système de découpage automatique des blocs PDF de factures, associant
+chaque facture au bon client sur la base du numéro de contrat et de la
+pagination;
+• Un outil de simulation de facturation mensuelle paramétrable par le super
+administrateur ;
+• Un système de gestion des accès basé sur les rôles (super administrateur,
+payeur principal, employé) ;
+• Un mécanisme de réinitialisation de mot de passe par lien envoyé par email ;
+• Une base de données sécurisée contenant les informations clients ;
+• Un guide d'utilisation destiné aux utilisateurs finaux.
+1.3. ÉTUDE DE L’EXISTANT
+Moov Africa Togo compte environ 60 000 clients abonnés à ses offres postpayées. La
+majorité de ces clients sont des entreprises dont les employés disposent chacun d'une
+ligne attribuée par leur employeur dans le cadre d'un contrat de flotte. Actuellement,
+ces clients reçoivent leurs factures uniquement par courrier électronique sous format
+PDF ou par voie postale, en fin de période de facturation. Deux types de documents
+sont générés chaque mois : une facture globale regroupant la consommation de
+l'ensemble des lignes d'une entreprise, transmise au payeur principal, et des factures
+sommaires individuelles par ligne, transmises ou non à chaque employé. Ce mode de
+fonctionnement présente plusieurs limites :
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 9
+
+===== PAGE 19 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+• Absence de consultation en temps réel : le client ne peut connaître sa
+consommation et le montant de sa facture qu'en fin de période, après
+réception du document ;
+• Impossibilité de suivre sa consommation : pendant le mois, aucun outil ne
+permet à l'abonné de vérifier son usage des services (data, appels, SMS) ;
+• Difficulté à maîtriser son budget : ne pouvant anticiper le montant de sa
+facture, le client peut subir des surprises désagréables en fin de mois ;
+• Absence de gestion des accès différenciés : aucun outil ne permet au payeur
+principal de consulter la facture globale et les factures sommaires de manière
+centralisée, ni à chaque employé de consulter uniquement sa propre facture
+en ligne.
+Par ailleurs, il n'existe à ce jour aucune application ou plateforme permettant aux
+clients de consulter leurs services souscrits ou leur historique de paiements. Les
+seules interactions possibles avec l'opérateur se font par appel téléphonique au
+service client ou par déplacement en agence. La direction de Moov Africa Togo
+reconnaît elle-même que l'accès en ligne aux informations de facturation est une
+nécessité pour répondre aux attentes croissantes des clients et améliorer leur
+satisfaction.
+1.4. CRITIQUE DE L’EXISTANT
+L'analyse du système actuel de gestion des factures et des informations clients chez
+Moov Africa Togo révèle plusieurs insuffisances majeures :
+• Absence de visibilité en temps réel : les clients ne disposent d'aucun moyen
+de consulter leur consommation ou le montant de leur facture avant la fin du
+mois. Cette absence de transparence ne permet pas aux abonnés de
+maîtriser leur budget et peut engendrer des mécontentements en fin de
+période ;
+• Défaut de proactivité : le système actuel est purement réactif. Le client reçoit
+sa facture sans avoir eu la possibilité d'anticiper ou d'ajuster sa
+consommation. Aucune alerte ni notification n'est prévue pour informer
+l'utilisateur en cas de dépassement ;
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 10
+
+===== PAGE 20 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+• Sollicitation excessive du service client : en l'absence d'outil d'auto-
+consultation, les clients sont contraints de contacter le service client par
+téléphone ou de se déplacer en agence pour obtenir des informations sur leur
+situation. Cette situation génère une charge de travail importante pour les
+équipes et une perte de temps pour les utilisateurs ;
+• Absence de gestion différenciée des factures : le système ne distingue pas les
+besoins du payeur principal (accès à la facture globale et aux factures
+sommaires de toutes les lignes) de ceux d'un employé simple (accès à sa
+seule facture sommaire). Il n'existe aucun mécanisme de gestion des accès
+différenciés adapté à la structure flotte ;
+Manque d'outils d'aide à la décision : les clients ne disposent d'aucun outil de
+simulation leur permettant d'estimer l'impact de leur consommation sur leur facture.
+Cette lacune limite leur capacité à faire des choix éclairés concernant leur usage des
+services.
+1.5. PROPOSITIONS ET CHOIX DE SOLUTIONS
+1.5.1. Évaluations techniques des solutions
+Face aux insuffisances du système actuel, trois solutions sont envisagées.
+Solution 1 : Utilisation d'un service de tableau de bord existant (Google
+Looker Studio / Power BI)
+Cette solution consiste à utiliser un outil de visualisation de données déjà existant
+pour créer des tableaux de bord à partir des données de facturation.
+Avantages :
+● Mise en œuvre rapide (quelques jours) ;
+● Coût initial faible ;
+● Pas de développement spécifique nécessaire ;
+● Interfaces de visualisation modernes et interactives.
+Inconvénients :
+● Ne permet pas aux clients d'interagir directement avec leurs données en
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 11
+
+===== PAGE 21 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+temps réel ;
+● Nécessite une extraction manuelle ou automatisée des données depuis les
+systèmes existants de Moov Africa Togo ;
+● Pas de fonctionnalité de simulation de facturation intégrée ;
+● Ne résout pas le problème central d'accès client autonome ;
+● Dépendance vis-à-vis d'un outil tiers pour l'évolution des fonctionnalités.
+Solution 2 : Acquisition d'un portail client clé en main (solution
+existante)
+Cette solution consiste à acquérir une solution déjà développée par un éditeur tiers
+spécialisé dans les portails clients pour opérateurs télécoms, tel que Cerillion, dont la
+solution Self Service est déployée auprès d'opérateurs en Afrique subsaharienne et
+en Europe.
+Avantages :
+● Solution éprouvée et déjà testée sur d'autres marchés ;
+● Déploiement rapide (quelques semaines) ;
+● Support technique assuré par l'éditeur ;
+● Mises à jour incluses dans le contrat de maintenance.
+Inconvénients :
+● Difficulté d'adaptation aux besoins spécifiques de Moov Africa Togo
+(simulation personnalisée, gestion des flottes, etc.) ;
+● Coût d'acquisition et de licence élevé, estimé à plus de 24 000 000 FCFA pour
+la première année, frais d'intégration et de maintenance inclus
+● Dépendance vis-à-vis de l'éditeur pour toute évolution ou correction ;
+● Intégration potentiellement complexe avec les systèmes de facturation
+existants ;
+● Personnalisation limitée de l'interface et des fonctionnalités.
+Solution 3 : Développement d'une application web sur mesure
+Cette solution consiste à développer une application web spécifiquement adaptée
+aux besoins de Moov Africa Togo, avec les fonctionnalités suivantes : consultation
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 12
+
+===== PAGE 22 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+des services souscrits, accès aux factures et à l'historique des paiements, simulation
+de facturation en temps réel, et gestion des accès différenciés (clients simples et
+clients en flotte).
+Avantages :
+● Solution parfaitement adaptée aux besoins spécifiques de l'entreprise ;
+● Maîtrise totale du code source et de la maintenance ;
+● Facilité d'évolution et d'ajout de nouvelles fonctionnalités ;
+● Intégration possible avec les systèmes existants de Moov Africa Togo ;
+● Pas de frais de licence récurrents ;
+● Expérience utilisateur entièrement personnalisable ;
+● Possibilité de déployer des fonctionnalités innovantes (simulation, alertes,
+etc.).
+Inconvénients :
+● Durée de développement plus longue (environ 2 à 3 mois) ;
+● Coût initial de développement plus élevé ;
+Nécessité de disposer des compétences techniques appropriées (Django, React,
+PostgreSQL).
+1.5.2. Évaluations financières des solutions proposées
+Solution 1 : Utilisation de Google Looker Studio / Power BI
+Tableau 1:Évaluations financières utilisation de Google Looker Studio / Power BI
+Prix unitaire Total
+1Désignation Description Quantité/Durée
+(FCFA) (FCFA)
+Licence Power BI Par utilisateur
+15 000/mois 12 mois 180 000
+Pro (administrateur)
+Formation Prise en main de l'outil 200 000 1 200 000
+Développement des Création des
+10 000/heure 40 heures 400 000
+tableaux de bord visualisations
+Total 780 000
+1 Source prix Power BI https://www.microsoft.com/fr-fr/power-platform/products/power-bi/pricing
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 13
+
+===== PAGE 23 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+Solution 2 : Acquisition d'une solution clé en main
+Tableau 2: Évaluations financières utilisation acquisition d'une solution clé en main
+Prix
+Total
+Désignation Description unitaire Quantité/Durée
+(FCFA)
+(FCFA)
+Solution portail client télécom
+Licence
+clé en main: Cerillion Self 15 000 000 1 an 15 000 000
+annuelle
+Service
+Installation et Adaptation aux systèmes
+6 000 000 1 6 000 000
+configuration existants de Moov Africa Togo
+Formation Prise en main administrateurs
+750 000 1 750 000
+utilisateurs et support
+Hébergement
+Infrastructure cloud dédiée 1 800 000 1 800 000
+cloud
+Maintenance Support technique et mises à
+2 500 000 1 an 2 500 000
+annuelle jour
+26 050 000
+Total
+2
+Solution 3 : Développement sur mesure
+Tableau 3: Évaluations financières utilisation développement sur mesure
+Prix
+Total
+Désignation Description unitaire Quantité/Durée
+(FCFA)
+(FCFA)
+Matériel de Ordinateur portable
+500 000 1 500 000
+développement (développement)
+Conception et Étude des besoins, 10
+80 heures 800 000
+analyse modélisation UML 000/heure
+Développement 10
+API, logique métier, sécurité 200 heures 2 000 000
+backend (Django) 000/heure
+Développement Interfaces utilisateur, 10
+200 heures 2 000 000
+frontend (React) simulation 000/heure
+Base de données PostgreSQL (gratuit) 0 - 0
+Hébergement (12 Serveur VPS (Digital Ocean / 30
+12 mois 360 000
+mois) OVH) 000/mois
+Tests et Validation, correction, mise 10
+40 heures 400 000
+déploiement en production 000/heure
+Prise en main
+Formation 15
+(administrateurs et support 20 heures 300 000
+utilisateurs 000/heure
+client)
+Total 6 360 000
+2 Référence Cerillion : https://www.thefastmode.com/technology-solutions/37925-cerillion-launches-
+self-service-module-with-latest-bss-oss-suite-update
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 14
+
+===== PAGE 24 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+1.5.3. Choix de la solution
+Au terme de l'étude technique et financière, et en accord avec les objectifs du projet,
+notre choix s'est porté sur la3 troisième solution : le développement d'une application
+web sur mesure.
+Ce choix se justifie par plusieurs raisons :
+• Adéquation aux besoins : seule une solution sur mesure permet de
+répondre précisément aux quatre fonctionnalités attendues (consultation
+des services souscrits, accès aux factures, simulation de facturation,
+gestion des accès différenciés pour les clients en flotte) ;
+• Maîtrise technique : le développement en interne permet de conserver la
+maîtrise du code source et de faciliter les évolutions futures sans dépendre
+d'un tiers ;
+• Sécurité des données : nous pouvons implémenter directement les
+mécanismes de sécurité adaptés aux données financières personnelles
+des clients (authentification, chiffrement, gestion des accès) ;
+• Coût à long terme : bien que le coût initial soit plus élevé que la solution 1,
+il reste inférieur à l'acquisition d'une solution clé en main, surtout si l'on
+considère les frais de licence récurrents annuels (26 050 000FCFA dès la
+première année) ;
+• Valeur ajoutée : cette solution constitue un actif pour l'entreprise,
+développé spécifiquement pour son écosystème, contrairement à une
+solution louée ou acquise auprès d'un tiers ;
+• Expérience utilisateur : nous pouvons concevoir une interface moderne,
+responsive et adaptée aux habitudes des clients togolais, avec des
+fonctionnalités innovantes comme la simulation en temps réel.
+3 Référence solution 3 : https://www.togoinformatique.com/product-category/ordinateurs/ordinateur-
+portable/
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 15
+
+===== PAGE 25 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 1 : CAHIER DES CHARGES
+Ainsi, le développement d'une application web sur mesure avec Django (backend),
+React (frontend) et PostgreSQL (base de données) constitue la solution la plus
+adaptée pour répondre durablement aux besoins des clients postpayés de Moov
+Africa Togo.
+1.6. PLANNING PRÉVISIONNEL DE RÉALISATION
+Tableau 4: Planing Prévisionel
+N° Tâches Date début Date fin Durée (jours)
+Prise de contact avec le maître de stage et
+1 11 mai 17 mai 7
+compréhension du thème
+Analyse des besoins et identification des
+2 18 mai 26 mai 7
+fonctionnalités
+Élaboration et validation du cahier des
+3 27 mai 30 mai 4
+charges
+Analyse, conception et modélisation du
+4 30 mai 7 juin 10
+système (UML)
+Développement backend (Django) et frontend
+5 8 juin 7 juillet 30
+(React)
+6 Tests fonctionnels et correction des bugs 8 juillet 14 juillet 7
+7 Déploiement de l'application 15 juillet 17 juillet 3
+8 Rédaction du rapport de stage 18 juillet 1er août 15
+9 Préparation de la soutenance 2 août 4 août 3
+Marge de sécurité / ajustements 5 août 8 août 4
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 16
+
+===== PAGE 26 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+PARTIE 2 : ANALYSE ET CONCEPTION
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 17
+
+===== PAGE 27 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+2.1. CHOIX DE LA MÉTHODE D’ANALYSE ET JUSTIFICATION
+UML, Pour la modélisation et la conception de notre portail web, deux grandes
+approches d'analyse s'offraient à nous:
+• Une approche orientée objet ;
+• Une approche fonctionnelle.
+Par ailleurs, le côté fortement technique de ce projet nous a orientés vers le cadre de
+développement qu'est le 2TUP (Two Tracks Unified Process), afin de pouvoir
+appréhender séparément, mais aussi combiner au besoin, l'aspect technique et
+l'aspect fonctionnel. Ce cadre, principalement basé sur le langage de modélisation
+UML, nous a conduits à adopter une analyse orientée objet.
+Pourquoi spécifiquement une approche objet ?
+En dépit du fait que les langages de programmation que nous allons utiliser sont des
+langages objet (Python/Django), notre choix d'une approche objet est motivé par
+plusieurs raisons. La principale raison est qu'au niveau de l'objet, l'on ne décrit plus
+par le code des actions à réaliser de façon linéaire, mais par des objets. Cette
+approche offre une meilleure capacitée d'adaptation et d'évolution du modèle lorsque
+des fonctionnalités sont modifiées ou ajoutées, ce qui est particulièrement pertinent
+dans le cas d'un portail de publication de factures dont les fonctionnalités peuvent
+évoluer selon les besoins de Moov Africa Togo.
+2.2. CHOIX DE L’OUTIL DE MODÉLISATION ET JUSTIFICATION
+2.2.1 Présentation du processus de développement 2TUP
+Comme brièvement décrit plus haut, le processus 2TUP est un processus unifié
+(itératif, centré sur l'architecture et piloté par les cas d'utilisation). Son principe général
+stipule que toute évolution imposée au système d'information peut se décomposer et
+se traiter parallèlement, suivant un axe fonctionnel et un axe technique.
+C'est ce cadre de développement qui nous a conduit à utiliser le langage UML sur
+lequel il est basé. Ainsi, analysons de plus près son fonctionnement :
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 18
+
+===== PAGE 28 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+• La branche fonctionnelle consiste à clarifier les besoins fonctionnels.
+• La branche technique capitalise un savoir-faire technique et/ou des
+contraintes techniques.
+• La branche de réalisation consiste à réunir les deux branches, permettant
+de mener une conception applicative et enfin la livraison d'une solution
+adaptée aux besoins.
+Figure 4: Processus 2TUP
+2.2.2 Présentation du langage de modélisation utilize
+UML (Unified Modeling Language) est un langage graphique de modélisation objet
+standardisé, développé dans les années 90 et devenu le standard industriel pour
+représenter les architectures logicielles ; il permet de visualiser, spécifier et
+documenter un système à travers trois familles complémentaires de diagrammes
+structurels (classes, composants, déploiement), comportementaux (cas d'utilisation,
+activités, états-transitions) et dynamiques (séquence, communication, temps) dans le
+but de formaliser les besoins, structurer la conception et faciliter la communication
+entre les parties prenantes, voire de servir de support à la génération automatique de
+code.
+Dans la modélisation des solutions informatiques, UML ne propose pas l’ordre qui doit
+régir les diagrammes. C’est ainsi que les méthodes viennent appuyer le langage pour
+parfaire l’approche objet. Pour ce faire, il faudrait coupler UML à un processus
+développement dont le rôle est de produire des applications de qualité répondant aux
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 19
+
+===== PAGE 29 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Figure 5: Logo uml
+2.2.3. Présentation de l'outil de modélisation
+Une fois la méthode d'analyse arrêtée, nous avons sélectionné
+PowerDesigner (SAP) comme outil de modélisation. C'est un atelier de
+génie logiciel (AGL) largement utilisé en milieu académique et
+professionnel.
+PowerDesigner offre un environnement intégré pour concevoir :
+• Diagrammes UML (cas d'utilisation, classes, séquence, activité)
+• Cohérence entre les niveaux grâce à la traçabilité et génération automatique
+Justification de ce choix:
+Tableau 5: de jutification du choix de PowerDesigner
+Raison Explication
+Richesse fonctionnelle Couvre tout le cycle : de l'analyse
+conceptuelle à la génération du
+schéma physique de base de données
+Fiabilité Génère le script SQL de la base de
+données à partir du MCD, accélérant
+la réalisation
+Familiarité Acquise durant la formation, prise en
+main immédiate sans
+apprentissage supplémentaire
+Alternatives envisagées :
+• draw.io : Gratuit et simple, mais pas de génération de code
+• Visual Paradigm : Modélisation avancée, mais licence payante
+• StarUML : Léger, mais moins complet pour la modélisation de données
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 20
+
+===== PAGE 30 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Conclusion : PowerDesigner offre une couverture fonctionnelle plus
+étendue que ces alternatives pour les besoins de ce projet.
+Figure 6: Logo PowerDegner
+2.3. ÉTUDE DÉTAILLÉE DE LA SOLUTION
+2.3.1. Étude préliminaire
+Nous détaillerons dans cette partie les différents acteurs qui interagiront avec notre
+système et nous en ferons une représentation à l'aide d'un diagramme de contexte
+❖ Diagramme de contexte
+Le diagramme de contexte est un diagramme utilisé en modélisation des systèmes
+pour représenter de manière simplifiée les interactions entre le système étudié et ses
+acteurs externes (entités externes). C'est une vue d'ensemble qui illustre les frontières
+du système, les entités externes (utilisateurs, autres systèmes) et les flux d'information
+principaux entre le système et ces entités.
+Figure 7: Diagramme de contexte
+2.3.2. Capture des besoins fonctionnels
+La capture des besoins fonctionnels est la première étape de la branche gauche du
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 21
+
+===== PAGE 31 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+cycle en Y. Elle formalise et détaille ce qui a été ébauché au cours de l'étude de
+l'existant. Elle va nous permettre de préciser l'étude du contexte fonctionnel du
+système. L'objectif de cette phase est de capturer et documenter toutes les
+fonctionnalités que le système doit offrir pour répondre aux besoins des utilisateurs et
+des parties prenantes, le tout au moyen de diagrammes qui vont suivre.
+Les diagrammes de cas d'utilisation permettent de représenter les interactions entre
+les utilisateurs (acteurs) et le système, décrivant ainsi les fonctionnalités principales
+du système de manière visuelle.
+❖ Les acteurs
+Un acteur représente l'abstraction d'un rôle joué par des entités externes (utilisateur,
+dispositif matériel ou autre système) qui interagissent directement avec le système
+étudié. Le diagramme des cas d'utilisation distingue deux types d'acteurs à savoir :
+Les acteurs principaux :
+On pourra citer dans notre système :
+• Le Super Administrateur:
+IL est responsable de l'administration globale de la plateforme. Il veille à la cohérence
+générale des comptes, des rôles, des statuts, des entreprises, des contrats, des lignes,
+des forfaits et des services. Il possède une vision complète des données et des
+historiques et peut intervenir sur la configuration générale du système. Il constitue le
+niveau d'administration le plus élevé, mais la publication courante des factures reste
+une responsabilité opérationnelle du chef ou de l'agent de facturation.
+• Le Chef de facturation
+Il est responsable de la supervision de l'activité de facturation. Il encadre les agents
+de son périmètre, contrôle les demandes provenant des commerciaux et s'assure que
+les contrats sont correctement validés avant leur exploitation. Il supervise également
+les tarifs, les services, les publications et les rapports de traitement. En cas de rejet
+d'une demande, il justifie sa décision par un motif qui doit pouvoir être consulté par le
+commercial concerné.
+• L'Agent de Facturation
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 22
+
+===== PAGE 32 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+L'agent de facturation est l'opérateur chargé de l'exécution quotidienne des opérations
+de facturation. Il assure la préparation et la fiabilité des données de référence,
+notamment les contrats, les lignes, les forfaits et les services. Il prend en charge les
+blocs PDF reçus, leur découpage, le rapprochement avec les comptes, les numéros
+de facture et les MSISDN, puis la publication des documents correctement associés.
+Il contrôle les rapports, identifie les erreurs et suit l'historique des traitements. Selon
+ses permissions, il peut également examiner et traiter les demandes de contrat.
+• Le Commercial
+Le commercial représente l'interlocuteur chargé de proposer et de suivre les contrats
+avec les clients. Il renseigne les informations nécessaires à la constitution d'une
+demande et reste responsable du suivi de cette demande dans la plateforme. Il ne
+représente pas l'autorité de validation : une demande soumise par un commercial reste
+en attente jusqu'à la décision d'un utilisateur habilité. Le commercial est informé de
+l'acceptation ou du rejet et peut prendre connaissance du motif communiqué en cas
+de décision défavorable.
+• Le Payeur
+Le payeur représente le responsable de l'entreprise cliente, généralement chargé du
+suivi administratif et financier du contrat. Son périmètre est limité à l'entreprise et aux
+lignes qui lui sont rattachées. Il dispose d'une vision globale de la facturation de sa
+flotte et peut accéder aux documents publiés correspondant à son contrat, notamment
+la facture globale et les factures sommaires associées aux lignes. Il peut également
+consulter ses services, effectuer des simulations et suivre son historique.
+• L’Employé
+Il représente l'utilisateur final d'une ligne téléphonique de l'entreprise. Son périmètre
+est volontairement restreint à la ligne qui lui est attribuée. Il consulte les informations
+de cette ligne, les services qui lui sont associés et les factures sommaires publiées qui
+correspondent à son MSISDN. Il peut aussi réaliser une simulation individuelle et gérer
+les éléments autorisés de son profil. Il ne possède aucun droit de gestion sur les
+contrats, les autres lignes ou les données globales de l'entreprise. Son compte se
+connecte avec l'e-mail ou le nom d'utilisateur enregistré ; dans les données de test, ce
+nom d'utilisateur peut correspondre au MSISDN.
+Les acteurs secondaires :
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 23
+
+===== PAGE 33 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+• Le Service Email
+Système externe de messagerie électronique qui reçoit les demandes de
+réinitialisation de mot de passe du portail et envoie les liens sécurisés aux utilisateurs
+concernés.
+❖ Les cas d'utilisation
+Il s'agira comme le nom l'indique, d'une description des principales utilisations qui
+peuvent être faits dans notre application.
+Tableau 6: Acteurs et leurs cas d'utilisation
+CAS D'UTILISATION ACTEURS
+Authentification et Se connecter à la Super Administrateur, Chef de
+profil plateforme facturation, Agent de facturation,
+Commercial, Payeur, Employé
+Réinitialiser le mot de Super Administrateur, Chef de
+passe facturation, Agent de facturation,
+Commercial, Payeur, Employé
+Gérer son profil et Super Administrateur, Chef de
+activer/désactiver le 2FA facturation, Agent de facturation,
+Commercial, Payeur, Employé
+Gestion des Créer un compte utilisateur Super Administrateur, Chef de
+comptes et des facturation, Agent de facturation
+r ôles
+Modifier les informations Super Administrateur, Chef de
+d'un compte facturation, Agent de facturation
+Consulter la liste et le détail Super Administrateur, Chef de
+des comptes facturation, Agent de facturation
+Activer ou désactiver un Super Administrateur
+compte
+Gérer les rôles et les droits Super Administrateur
+d'accès
+Gestion des Créer et consulter les Super Administrateur, Chef de
+acteurs métier commerciaux facturation
+Créer et gérer les payeurs Super Administrateur, Chef de
+facturation, Agent de facturation
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 24
+
+===== PAGE 34 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Créer un employé et Super Administrateur, Chef de
+l'associer à une entreprise facturation, Agent de facturation
+et à une ligne
+Associer plusieurs lignes Super Administrateur, Chef de
+existantes à un payeur facturation, Agent de facturation
+Gestion des Soumettre une demande Commercial
+demandes et des de contrat
+contrats
+Consulter le détail et suivre Commercial, Chef de
+l'état d'une demande facturation, Agent de facturation
+Valider ou rejeter une Chef de facturation, Agent de
+demande avec un motif facturation
+Créer et modifier les Super Administrateur, Chef de
+informations d'un contrat facturation, Agent de facturation
+validé
+Gérer les lignes, options et Super Administrateur, Chef de
+services prévus au contrat facturation, Agent de facturation
+Résilier un contrat, Super Administrateur, Chef de
+renseigner le motif et la facturation, Agent de facturation
+date
+Consulter l'historique des Super Administrateur, Chef de
+actions et exporter le facturation, Agent de facturation
+contrat en PDF
+Gestion des Créer ou modifier un type Super Administrateur, Chef de
+services, forfaits de service facturation, Agent de facturation
+et tarifs
+Créer, modifier ou Super Administrateur, Chef de
+désactiver un service ou facturation, Agent de facturation
+une option
+Créer et gérer les forfaits, Super Administrateur, Chef de
+leurs options et leurs prix facturation, Agent de facturation
+Configurer les règles Super Administrateur, Chef de
+tarifaires de la simulation facturation, Agent de facturation
+Importation et Importer un bloc PDF Chef de facturation, Agent de
+publication des global ou un bloc de facturation
+factures PDF factures sommaires
+Découper Chef de facturation, Agent de
+automatiquement le bloc et facturation
+associer chaque facture au
+bon compte
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 25
+
+===== PAGE 35 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Consulter les factures à Chef de facturation, Agent de
+publier et lancer la facturation
+publication
+Notifier les utilisateurs de la Chef de facturation, Agent de
+disponibilité des factures facturation
+par e-mail
+Consulter l'historique et le Chef de facturation, Agent de
+rapport des publications facturation
+Consultation des Consulter et filtrer ses Payeur, Employé
+factures factures par période
+Consulter la facture globale Payeur
+et les factures sommaires
+de la flotte
+Consulter la facture Employé
+sommaire de sa ligne
+Ouvrir dans un nouvel Payeur, Employé
+onglet ou télécharger le
+PDF publié
+Simuler le montant de la Payeur
+Simulation de facturation d'un contrat
+f acturation
+Simuler le montant de la Employé
+facturation de sa ligne
+Consulter l'historique des Payeur, Employé
+simulations
+❖ Diagramme des cas d’utilisation par acteur :
+Cas d’utilisation de l’acteur Super Administrateur:
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 26
+
+===== PAGE 36 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Figure 8:Diagramme de cas d’utilisation de l’acteur Super Administrateur:
+Cas d’utilisation des acteurs Agent facturation et chef Facturation
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 27
+
+===== PAGE 37 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Figure 9: Diagramme de cas d’utilisation des acteurs chef facturation et Agent facturation
+Cas d’utilisation de l’acteur Commerciale
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 28
+
+===== PAGE 38 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Figure 10: Diagramme de cas d’utilisation de l’acteur Commerciale
+Cas d’utilisation de l’acteur Payeur
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 29
+
+===== PAGE 39 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Figure 11: Diagramme de cas d'utilisation de l'acteurPayeur
+Cas d’utilisation de l’acteur Employé
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 30
+
+===== PAGE 40 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Figure 12: Diagramme de cas d'utilisation de l'acteur Employé
+❖ Description textuelle de quelques cas d’utilisation:
+Description textuelle du cas d’utilisation « S’authentifier ».
+Tableau 7: Description textuelle du cas d’utilisation « S’authentifier ».
+SOMMAIRE D’IDENTIFICATION
+Titre: S'authentifier
+Acteurs: Super administrateur, chef de facturation, agent de facturation,
+commercial, payeur et employé.
+Résumé: Ce cas d'utilisation décrit l'accès sécurisé au portail Moov e-Factures.
+L'utilisateur saisit son identifiant et son mot de passe. Le système vérifie les
+informations, confirme que le compte est actif et délivre un jeton d'accès
+permettant d'utiliser les fonctionnalités autorisées par son rôle.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 31
+
+===== PAGE 41 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Version : 1.0
+Date de création: 12/07/2026
+DESCRIPTION DU SCENARIO
+Préconditions
+• L'utilisateur possède un compte enregistré dans l'application.
+• Le compte n'est pas désactivé ou suspendu.
+• Le service backend et la base de données sont disponibles.
+Scénario Nominal
+1. L'utilisateur ouvre la page de connexion.
+2. Le système affiche le formulaire d'authentification.
+3. L'utilisateur saisit son identifiant. (A1)
+4. L'identifiant peut être l'adresse e-mail enregistrée ou le nom d'utilisateur
+enregistré ; pour un employé, le MSISDN peut servir de nom d'utilisateur.
+5. L'utilisateur saisit son mot de passe.
+6. L'utilisateur valide le formulaire.
+7. Le système recherche le compte correspondant à l'identifiant fourni.
+8. Le système vérifie le mot de passe et le statut du compte. (E1, E2)
+9. Le système crée un jeton d'accès JWT et un jeton de rafraîchissement.
+10. Le système retourne les informations utiles de l'utilisateur, notamment son
+rôle.
+11. L'interface enregistre le jeton d'accès et redirige l'utilisateur vers son espace
+de travail.
+12. Le système applique les permissions correspondant au rôle de l'utilisateur.(
+A2)
+Scénario alternatif
+A1. Connexion d'un payeur avec son identifiant de contrat
+1. Le payeur saisit le nom d'utilisateur qui lui a été attribué, généralement lié à
+son contrat.
+2. Le système vérifie cet identifiant et ouvre l'espace du payeur si les
+informations sont valides.
+A2. Rafraîchissement du jeton
+1. Le jeton d'accès arrive à expiration pendant la session.
+2. L'application utilise le jeton de rafraîchissement encore valide.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 32
+
+===== PAGE 42 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Le système délivre un nouveau jeton d'accès sans demander une nouvelle saisie
+du mot de passe.
+Scénarios d'exceptions
+E1. Identifiant ou mot de passe incorrect
+• Le système refuse la connexion et affiche un message général d'erreur sans
+révéler si l'identifiant existe.
+E2. Compte inactif ou suspendu
+• Le système refuse l'accès et informe l'utilisateur que son compte n'est pas
+autorisé à se connecter.
+Postcondition
+• L'utilisateur authentifié possède une session représentée par un jeton JWT
+valide.
+• L'utilisateur est redirigé vers l'interface correspondant à son rôle.
+• Les requêtes suivantes sont contrôlées par le jeton et les permissions
+associées.
+• En cas d'échec, aucun accès aux données protégées n'est accordé.
+Description textuelle du cas d’utilisation « Publier les factures ».
+Tableau 8: Description textuelle du cas d’utilisation « Publier les factures ».
+SOMMAIRE D’IDENTIFICATION
+Titre: Publier les factures
+Résumé: Ce cas d'utilisation décrit la mise à disposition des factures clients
+postpayés après le traitement des blocs PDF. L'agent vérifie les factures prêtes à
+publier, lance la publication et contrôle le résultat de l'opération.
+Acteur: Agent de facturation et chef
+Date de creation: 12/07/2026
+Version: 1.0
+Responsable: BANLEPO Benoit
+DESCRIPTION DU SCENARIO
+Préconditions
+• L'agent de facturation est authentifié et possède le droit de publier les
+factures ;
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 33
+
+===== PAGE 43 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+• les factures ont été extraites du bloc PDF et sont associées à un contrat ou
+à une ligne ;
+• les fichiers PDF nécessaires sont disponibles dans le stockage média.
+Scénario Nominal
+1. L'agent de facturation ouvre la page des factures à publier. (E1)
+2. Le système affiche les factures prêtes à être publiées avec leur numéro, leur
+type, leur période et leur fichier PDF.
+3. L'agent vérifie les informations affichées et peut filtrer les factures globales
+ou sommaires.
+4. L'agent sélectionne les factures à publier.
+5. L'agent clique sur « Publier les factures ».
+6. Le système vérifie que chaque facture possède un fichier PDF et qu'elle n'a
+pas déjà été publiée. (A1,A2)
+7. Le système place le traitement de publication en file d'attente afin de traiter
+le bloc sans bloquer l'interface. ( E2)
+8. Le traitement associe chaque fichier PDF à la facture correspondante.( A3,
+E3)
+9. Le système met à jour le statut des factures publiées.
+10. Le système enregistre la date, la période et l'agent ayant lancé la
+publication.
+11. Le système met à jour l'historique des publications.
+12. Si l'option e-mail est activée, le système prépare une notification de
+disponibilité de la facture.
+13. Le système affiche le nombre de PDF créés, de factures mises à jour et les
+éventuelles erreurs.
+14. L'agent peut consulter le détail du traitement et revenir à l'historique.
+Scénario alternatif
+A1. Facture déjà traitée
+1. Le système détecte que la facture est déjà publiée ou déjà traitée.
+2. La facture n'est pas retraitée et apparaît dans le bilan avec un
+avertissement orange.
+A2. Fichier PDF manquant
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 34
+
+===== PAGE 44 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+1. Le système ne publie pas la facture concernée et signale l'absence du
+fichier PDF en rouge.
+2. Les autres factures valides continuent leur traitement.
+A3. Correspondance facture-utilisateur incomplète
+1. Le système conserve la facture en attente et indique qu'aucun contrat ou
+aucune ligne n'a pu être identifié.
+Scénarios d'exceptions
+• E1. Problème de connexion: si l'interface ne peut plus joindre le serveur, le
+système affiche un message d'erreur et aucun nouveau traitement n'est
+lancé.
+• E2. Service de traitement indisponible: si le worker Celery ou le broker
+Garnet est arrêté, le traitement reste en attente et l'agent est informé.
+• E3. Erreur de stockage ou de base de données: le système conserve le
+détail de l'erreur, marque la facture en échec et évite de créer une
+publication incohérente.
+Postcondition
+• Les factures publiées sont enregistrées avec leur statut, leur période, leur
+numéro, leur montant et leur fichier PDF. Elles deviennent consultables par
+le payeur ou l'employé concerné. L'historique de publication est mis à jour.
+Description textuelle du cas d’utilisation « Consulter les factures ».
+Tableau 9: Description textuelle du cas d’utilisation « Consulter les factures ».
+SOMMAIRE D’IDENTIFICATION
+Titre: Consulter les factures
+Résumé: Ce cas d'utilisation décrit la consultation des factures publiées dans le
+portail Moov e-Billings. Le payeur consulte les factures globales de ses contrats et
+les factures sommaires de ses lignes ; l'employé consulte uniquement la facture
+sommaire publiée correspondant à sa ligne
+Acteur: Payeur et Employé
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 35
+
+===== PAGE 45 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Date de creation: 12/07/2026
+Version: 1.0
+Responsable: BANLEPO Benoit
+DESCRIPTION DU SCENARIO
+Préconditions
+• L'utilisateur est authentifié et son compte est actif.
+• Le payeur est rattaché à un ou plusieurs contrats, ou l'employé est rattaché
+à une ligne téléphonique.
+• Une facture publiée correspondant au périmètre de l'utilisateur existe.
+• Le fichier PDF est disponible lorsque l'utilisateur demande son ouverture ou
+son téléchargement.
+Scénario Nominal
+1. L'utilisateur ouvre la page « Mes factures ».
+2. Le système identifie son rôle et son périmètre d'accès.
+3. Le système charge uniquement les factures auxquelles l'utilisateur est
+autorisé à accéder. (A1, E1)
+4. Le payeur voit les factures globales de ses contrats et les factures
+sommaires de ses lignes.
+5. L'employé voit les factures sommaires publiées de sa ligne.
+6. Le système affiche, pour chaque facture, son numéro réel, sa date
+d'émission, sa période, son type, son montant et son statut.
+7. L'utilisateur peut parcourir la liste à l'aide de la pagination et utiliser les filtres
+disponibles. (A2)
+8. L'utilisateur sélectionne une facture.
+9. Le système vérifie une nouvelle fois que la facture appartient au périmètre
+de l'utilisateur. (E2)
+10. Le système affiche le détail de la facture avec les informations enregistrées
+en base et issues du PDF associé. ( E3)
+11. L'utilisateur choisit « Aperçu » pour ouvrir le PDF dans un nouvel onglet ou
+« Télécharger » pour l'enregistrer.
+12. Le système fournit le fichier PDF uniquement si celui-ci est attaché et que
+l'autorisation est valide.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 36
+
+===== PAGE 46 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Scénario alternatif
+A1. Aucun résultat
+1. Aucune facture publiée ne correspond au rôle, au contrat ou à la ligne de
+l'utilisateur.
+2. Le système affiche un message indiquant qu'aucune facture n'est
+disponible.
+3. Le cas d'utilisation se termine sans téléchargement.
+A2. Filtrage de la liste
+1. L'utilisateur sélectionne une période, un type de facture ou un statut.
+2. Le système actualise la liste sans afficher de facture située hors de son
+périmètre.
+3. L'utilisateur peut retirer le filtre et revenir à la liste complète autorisée.
+Scénarios d'exceptions
+E1. Session expirée
+• Le système refuse la requête et demande à l'utilisateur de se reconnecter.
+Aucune donnée de facture n'est affichée.
+E2. Accès non autorisé
+• Si l'utilisateur tente d'accéder à une facture d'un autre contrat ou d'une autre
+ligne, le système refuse l'accès et ne révèle pas le contenu du PDF.
+E3. Erreur de chargement
+• Si le serveur, la base de données ou le stockage média est indisponible, le
+système affiche un message d'erreur et l'utilisateur peut réessayer
+ultérieurement.
+Postcondition
+• L'utilisateur a consulté uniquement les factures correspondant à ses droits.
+• La facture reste enregistrée dans la base avec ses informations réelles.
+• Le PDF est ouvert ou téléchargé uniquement lorsqu'il est disponible et que
+l'autorisation est valide.
+• Une éventuelle erreur est affichée sans exposer les données d'une autre
+entreprise ou d'une autre ligne.
+❖ Diagramme d’activité:
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 37
+
+===== PAGE 47 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Figure 13: Diagramme d’activité du cas : « S’authentifier ».
+Diagramme d’activité du cas : « Publier les factures ».
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 38
+
+===== PAGE 48 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Figure 14: Diagramme d’activité du cas : « Publier les factures ».
+Diagramme d’activité du cas : « Consulter les factures ».
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 39
+
+===== PAGE 49 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Figure 15: Diagramme d’activité du cas : « Consulter les factures ».
+❖ Diagramme de séquence
+:
+Diagramme de séquence du cas « S’authentifier »:
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 40
+
+===== PAGE 50 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Figure 16: Diagramme de séquence du cas « S’authentifier »:
+Diagramme de séquence du cas : « Publier les factures ».
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 41
+
+===== PAGE 51 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Figure 17: Diagramme de séquence du cas : « Publier les factures
+Diagramme de séquence du cas : « Consulter les factures ».
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 42
+
+===== PAGE 52 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Figure 18: Diagramme de séquence du cas : « Consulter les factures ».
+❖ Diagramme de classe:
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 43
+
+===== PAGE 53 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 2 : ANALYSE ET CONCEPTION
+Figure 19: Diagramme de classe:
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 44
+
+===== PAGE 54 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 45
+
+===== PAGE 55 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+3.1. MATÉRIELS ET LOGICIELS UTILISÉS
+3.1.1. Matériels utilisés
+Le matériel utilisé pour développer notre solution est un ordinateur probable dont les
+caractéristiques sont les suivantes.
+Tableau 10: Matériels utilisés
+Éléments Caractéristiques
+Marque Dell Inc.
+Modèle Precision 7680
+Processeur 13th Gen Intel(R) Core(TM) i7-13850HX
+Type de système Station de travail autonome, architecture x64
+Mémoire RAM 32 421 Mo au total, soit environ 32 Go
+Disque dur NVMe PC811 SK hynix 953.87 Go
+Système d’exploitation Windows 11 Professionnel, version 10.0.26200, build
+26200
+3.1.2. Logiciels et technologies utilizes
+Le développement d’une application nécessite l’utilisation des langages de
+programmation et certains outils.
+Python et Django
+Description: Python est le langage utilisé pour développer le backend. Django est un
+framework web open source qui fournit une structure organisée pour créer des
+applications web, gérer les utilisateurs, les modèles de données et les migrations.
+Justification: Django a été retenu parce qu'il permet de développer rapidement une
+application structurée. Son ORM facilite la gestion des utilisateurs, contrats, lignes,
+factures, forfaits et services. Les migrations permettent également de faire évoluer la
+base de données sans modifier manuellement les tables.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 46
+
+===== PAGE 56 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+Alternative envisageable :
+Laravel ou Symfony auraient pu être utilisés, mais ils reposent sur PHP et auraient
+nécessité un changement de langage et d'environnement. Node.js aurait également
+été possible, mais Django était mieux adapté à l'organisation du backend déjà
+commencée.
+Figure 20: Logo Django
+Django REST Framework et JWT
+Description: Django REST Framework est une extension de Django qui permet de
+construire des API REST. JWT est utilisé pour authentifier les utilisateurs au moyen
+de jetons d'accès et de renouvellement.
+Justification: cette combinaison sépare clairement le frontend React du backend
+Django. Elle permet au frontend d'appeler les routes de connexion, de contrats, de
+lignes, de factures, de publications et de simulations. Les permissions vérifient ensuite
+le rôle de l'utilisateur avant de donner accès aux données.
+Alternative envisageable: une authentification par session Django aurait été
+possible, mais les jetons JWT sont mieux adaptés à une application frontend séparée
+du backend.
+Figure 21: Logo Django REST Framework
+React et Vite
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 47
+
+===== PAGE 57 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+Description: React est une bibliothèque JavaScript utilisée pour construire l'interface
+web. Vite est l'outil utilisé pour lancer le serveur de développement et compiler
+l'application pour la livraison.
+Justification: React permet de créer des interfaces adaptées aux différents profils :
+administrateur, chef, agent, commercial, payeur et employé. Les composants
+réutilisables facilitent la création des tableaux, formulaires, modales, paginations,
+notifications et badges d'état. Vite fournit un démarrage rapide et une compilation
+efficace.
+Bibliothèques frontend associées : Axios est utilisé pour communiquer avec l'API,
+React Router pour la navigation, Recharts pour certains graphiques et Tailwind CSS
+pour la mise en forme de l'interface.
+Alternative envisageable : Vue.js ou Angular auraient également permis de
+développer le portail. React a été conservé car il correspondait à la base frontend déjà
+commencée et permettait de réutiliser facilement les composants.
+Figure 22: Logo react
+PostgreSQL et SQLite
+Description: PostgreSQL est le système de gestion de base de données relationnelle
+retenu pour l'environnement cible. SQLite reste disponible comme solution de secours
+pour certains essais locaux lorsque PostgreSQL n'est pas configuré.
+Justification: PostgreSQL convient aux relations entre utilisateurs, entreprises,
+contrats, lignes, factures, forfaits, services et historiques. Il assure les contraintes
+d'unicité et la cohérence nécessaires au rapprochement des factures. Le support
+SQLite facilite les premiers tests sur un poste de développement, mais PostgreSQL
+est recommandé dès que plusieurs services ou utilisateurs travaillent en même temps.
+Alternative envisageable: MySQL aurait pu être utilisé, mais PostgreSQL a été
+retenu pour sa robustesse et sa bonne intégration avec Django.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 48
+
+===== PAGE 58 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+Figure 23: Logo PostgreSQL
+Celery et Garnet
+Description : Celery est utilisé pour exécuter les traitements longs en arrière-plan.
+Garnet est un serveur compatible avec le protocole Redis et sert de broker pour
+transmettre les tâches ainsi que de backend pour leurs résultats.
+Justification: le découpage de gros blocs PDF peut prendre du temps. Sans tâche
+asynchrone, la requête web resterait bloquée et l'utilisateur ne pourrait pas quitter la
+page. Avec Celery et Garnet, le traitement possède un statut persistant et continue
+même si l'agent change de page. Le cache peut également être séparé du broker et
+des résultats grâce aux bases logiques configurées.
+Alternative envisageable: Redis associé à Celery aurait également convenu. Garnet
+a été utilisé parce qu'il est compatible avec le protocole Redis dans l'environnement
+de développement. Une exécution synchrone reste possible pour de petits essais,
+mais elle n'est pas adaptée aux gros fichiers PDF.
+Figure 24: Logo Garnet
+Google Authenticator et TOTP
+Description: le double facteur optionnel repose sur un code TOTP compatible avec
+Google Authenticator. Les bibliothèques `pyotp`, `qrcode` et `cryptography` sont
+utilisées pour générer, afficher et vérifier le secret du deuxième facteur.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 49
+
+===== PAGE 59 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+Justification: l'utilisateur peut activer le 2FA depuis son profil. Lorsqu'il est activé, le
+code temporaire est demandé lors des opérations sensibles, notamment la
+modification du mot de passe. Cette protection renforce la sécurité des comptes sans
+imposer le 2FA à tous les utilisateurs.
+Figure 25: Logo Goole Authentificator
+Visual Studio Code
+Description:: Visual Studio Code (VS Code) est un éditeur de code source développé
+par Microsoft, léger, extensible et compatible avec de nombreux langages et
+frameworks. Il propose notamment des fonctionnalités de coloration syntaxique,
+d’autocomplétion, de débogage, de gestion de versions et un vaste catalogue
+d’extensions.
+Justification: il a été utilisé principalement comme environnement de développement
+principal pour l’écriture, la modification et l’organisation du code de l’application. Son
+intégration avec les extensions adaptées aux technologies utilisées a facilité le
+développement, le débogage et la gestion du projet
+Alternative envisageable: PyCharm, environnement de développement intégré (IDE)
+développé par JetBrains, particulièrement adapté au développement Python grâce à
+ses outils de complétion, de débogage, de gestion des environnements virtuels et
+d’analyse du code
+Figure 26: Logo Visual Studio code
+Git et github
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 50
+
+===== PAGE 60 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+Description: Git est l'outil de gestion de versions utilisé pour enregistrer les
+modifications du projet. GitHub sert de dépôt distant pour conserver le code, suivre
+son évolution et disposer d'une sauvegarde du projet.
+Justification: l'association de Git et GitHub permet de garder un historique des
+corrections, de revenir à une version stable et de sécuriser le travail réalisé sur le
+backend, le frontend et la documentation. Elle facilite également le suivi des différentes
+phases de développement.
+Figure 27:Logo Github
+Postman
+Description: Swagger, qui propose une interface web interactive permettant de
+documenter et de tester directement les API REST.
+Justification: Swagger a permis de vérifier le backend indépendamment de l'interface
+React. Ces tests facilitent l'identification de la source d'une erreur en distinguant un
+problème d'API d'un problème d'affichage frontend.
+Alternative envisageable: Postman, outil complet de conception et de test des API,
+offrant des fonctionnalités avancées pour l’envoi de requêtes, la gestion des
+environnements et l’automatisation des tests.
+Figure 28:Logo Swagger
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 51
+
+===== PAGE 61 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+3.2. ARCHITECTURES MATÉRIELLE ET LOGICIELLE DE L’APPLICATION
+3.2.1. Architecture matérielle
+Notre application suit une architecture en trois couches: présentation, traitement et
+données.
+La couche de présentation correspond aux utilisateurs qui accèdent au portail depuis
+un navigateur web. Elle concerne le super administrateur, le chef de facturation, l'agent
+de facturation, le commercial, le payeur et l'employé. L'interface web a été développée
+avec React et Vite, puis elle est exécutée dans le navigateur de l'utilisateur. Le
+navigateur permet de consulter les tableaux de bord, les contrats, les lignes, les
+factures, les forfaits, les services et les historiques. Il permet également de lancer une
+simulation et d'importer un fichier PDF lorsque l'utilisateur possède les droits
+nécessaires. Les échanges entre le navigateur et le serveur applicatif s'effectuent au
+moyen de requêtes HTTP ou HTTPS et de données au format JSON. Lorsqu'un fichier
+est envoyé, la requête utilise également le format multipart/form-data.
+La couche métier est assurée par le serveur applicatif qui exécute l'API développée
+avec Django et Django REST Framework. Il reçoit les requêtes envoyées par le
+frontend, vérifie l'authentification et les permissions, applique les règles métier, puis
+prépare les réponses destinées au navigateur. Cette couche prend en charge la
+gestion des comptes, des rôles, des entreprises, des contrats, des lignes, des forfaits,
+des services, des factures et des simulations. Elle contrôle également le
+rapprochement entre les factures découpées et les comptes ou les lignes
+correspondants. Le traitement des gros blocs PDF est confié à un worker Celery. Celui-
+ci exécute les tâches longues en arrière-plan afin que le navigateur ne reste pas bloqué
+pendant le découpage et la publication. Garnet, compatible avec le protocole Redis,
+sert de broker pour transmettre les tâches au worker et pour faciliter le suivi des
+résultats du traitement.
+La couche d'accès aux données est principalement assurée par PostgreSQL. Cette
+base de données relationnelle conserve les utilisateurs, les entreprises, les contrats,
+les lignes téléphoniques, les factures, les forfaits, les services, les simulations, les
+historiques de publication et les journaux d'actions. Les fichiers PDF ne sont pas
+stockés directement dans les tables PostgreSQL. Ils sont conservés dans le stockage
+média de l'application, tandis que la base enregistre le chemin et les informations
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 52
+
+===== PAGE 62 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+nécessaires pour retrouver chaque document. Le worker Celery lit les fichiers
+importés, crée les PDF individuels et enregistre leur association avec les factures dans
+la base de données.
+Les communications entre les différents composants reposent sur des protocoles
+standards :
+• HTTP ou HTTPS et JSON entre le navigateur et l'API Django ;
+• SQL entre l'API Django et PostgreSQL ;
+• protocole Redis entre l'application, Garnet et Celery ;
+• lecture et écriture de fichiers entre le worker Celery et le stockage média.
+Figure 29: Architecture matérielle de notre application
+3.2.2. Architecture Logicielle
+Le frontend a été développé avec React et Vite. React organise l'interface en
+composants réutilisables et Vite assure le lancement du serveur de développement
+ainsi que la compilation. React Router protège la navigation selon les rôles, tandis
+qu'Axios centralise les appels vers l'API. Cette couche regroupe les tableaux de bord,
+les formulaires, les contrats, les factures, la publication et la simulation.
+Le backend est développé avec Python, Django et Django REST Framework. Les
+applications account et billing regroupent respectivement l'authentification, les rôles,
+les utilisateurs et les fonctions de facturation. Les vues, serializers et permissions
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 53
+
+===== PAGE 63 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+traitent les requêtes REST, valident les données et limitent chaque action au rôle
+autorisé. Les échanges sont sécurisés par des jetons JWT.
+Les modèles Django et l'ORM assurent la gestion des utilisateurs, entreprises,
+contrats, lignes, factures, services, forfaits et historiques dans PostgreSQL. Les
+fichiers PDF sont conservés dans le stockage média, tandis que la base enregistre
+leurs métadonnées, leur statut et leur chemin d'accès.
+Figure 30: Interaction en Modèle-Vue-Template
+3.3. SÉCURITÉ DE L’APPLICATION
+La sécurité de Moov Africa e-Billings repose sur l'authentification, le contrôle des rôles
+et la protection des données et des fichiers PDF.
+Le backend Django utilise Django REST Framework et des jetons JWT pour sécuriser
+les échanges avec React. Les mots de passe sont hachés et contrôlés par les
+validateurs de Django. Les permissions de l'API limitent chaque action au rôle autorisé
+: le super administrateur possède l'accès global, le chef et l'agent gèrent la facturation,
+le commercial suit ses demandes, le payeur son contrat et l'employé sa ligne. Le
+frontend protège les routes selon le rôle et transmet le jeton dans l'en-tête
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 54
+
+===== PAGE 64 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+Authorization. Cette protection côté interface est complétée par les vérifications
+obligatoires du backend.
+Le 2FA est optionnel et compatible avec Google Authenticator. Lorsqu'il est activé, un
+code TOTP à six chiffres est demandé pour modifier le mot de passe. Le secret est
+chiffré avant son enregistrement et le code est vérifié côté serveur.
+PostgreSQL conserve les données métier avec leurs relations et contraintes d'unicité.
+Les factures sont filtrées par contrat ou par ligne afin d'empêcher un accès entre
+entreprises ou entre employés. Les PDF sont conservés dans le stockage média et
+doivent être servis uniquement après vérification des droits.
+3.4. MISE EN PLACE DE LA BASE DE DONNÉES
+La base de données du portail Moov Africa e-Billings est mise en place avec
+PostgreSQL. Il s'agit d'un système de gestion de base de données relationnelle adapté
+à la conservation des informations structurées et à la gestion des relations entre les
+utilisateurs, les contrats, les lignes téléphoniques, les services et les factures.
+L'application utilise Django et son ORM. Les structures de données sont définies sous
+forme de modèles Python dans les applications accounts et billing. Django transforme
+ensuite ces modèles en tables PostgreSQL et gère leur évolution au moyen de
+migrations. Une migration est un fichier versionné qui décrit une création, une
+modification ou une suppression de table, de champ, de relation ou de contrainte. Ce
+mécanisme facilite le suivi des changements apportés à la base de données. Il permet
+également de reproduire la même structure sur un autre poste de développement ou
+sur un serveur, sans devoir créer manuellement chaque table avec des requêtes SQL.
+Avant l'exécution des migrations, les paramètres de connexion à PostgreSQL sont
+définis dans le fichier .env .
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 55
+
+===== PAGE 65 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+• Configuration fichier .env
+Figure 31: Extrait du fichier de configuration .env
+Afin d’illustrer la structure de la base de données, les principales classes de modèles
+utilisées par l’application sont présentées ci-après. Ces classes Django définissent les
+tables PostgreSQL, leurs champs ainsi que les relations entre les données.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 56
+
+===== PAGE 66 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+• Classe User de gestion des acteurs (User)
+Figure 32: Classe User
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 57
+
+===== PAGE 67 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+• Classe Commercial
+Figure 33: Classe Commercial
+• Classe Company représentant le contrat client
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 58
+
+===== PAGE 68 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+Figure 34: Classe Company
+• Classe Line représentant une ligne téléphonique
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 59
+
+===== PAGE 69 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+Figure 35: Classe Line
+• Classe Invoice de gestion des factures
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 60
+
+===== PAGE 70 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+Figure 36: Classe Invoice
+• Classe TraitementPDF de suivi du découpage des blocs PDF
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 61
+
+===== PAGE 71 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE
+Figure 37: Classe TraitementPDF
+PARTIE 4 : EXPLOITATION (GUIDE
+D’EXPLOITATION)
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 62
+
+===== PAGE 72 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 4 : EXPLOITATION (GUIDE D’EXPLOITATION)
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 63
+
+===== PAGE 73 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 4 : EXPLOITATION (GUIDE D’EXPLOITATION)
+La phase de réalisation et de mise en œuvre nous a permis de mettre en œuvre le
+système conçu au départ. La présente partie du document vise alors à décrire la
+procédure à suivre pour permettre la mise en production de l’application.
+4.1. CONFIGURATION LOGICIELLE ET MATÉRIELLE
+4.1.1. Configuration logicielle
+Tableau 11: Configuration logicielle
+Composant Version / paquet Description / rôle
+Système utilisé sur le poste de
+Système d'exploitation Windows 11 64 bits
+développement et de test.
+Environnement de développement intégré
+Version installée sur le
+Visual Studio Code utilisé pour écrire, organiser et déboguer le
+poste
+backend et le frontend.
+Langage et environnement d'exécution du
+Python 3.14.2
+backend.
+Framework utilisé pour développer l'API et la
+Django 6.0.3
+logique métier.
+Django REST Extension utilisée pour exposer les
+3.17.1
+Framework fonctionnalités sous forme d'API REST.
+Simple JWT 5.5.1 Gestion de l'authentification par jetons.
+Bibliothèque utilisée pour construire
+React 18.3.1
+l'interface web.
+Outil de développement et de compilation du
+Vite 5.x
+frontend React.
+Environnement d'exécution nécessaire au
+Node.js 24.16.0
+frontend.
+Gestionnaire des dépendances et des scripts
+npm 11.13.0
+frontend.
+Système de gestion de base de données
+PostgreSQL 16 relationnelle utilisé pour la persistance des
+données.
+Version intégrée à Base de secours utilisable pour un
+SQLite
+Django démarrage local rapide sans PostgreSQL.
+Serveur de données en mémoire utilisé pour
+Garnet Compatible avec Redis le cache et comme intermédiaire des tâches
+asynchrones.
+Exécution en arrière-plan des traitements
+Celery 5.6.3 longs, notamment le découpage et la
+publication des blocs PDF.
+Connexion de Django au serveur Garnet
+django-redis 7.0.0
+compatible avec le protocole Redis.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 64
+
+===== PAGE 74 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 4 : EXPLOITATION (GUIDE D’EXPLOITATION)
+Lecture, découpage et manipulation des
+PyPDF2 3.0.1
+fichiers PDF.
+Traitement d'images et génération de
+Pillow / ReportLab 12.1.1 / 4.4.10
+documents PDF lorsque nécessaire.
+Pilote permettant à Django de communiquer
+psycopg 3.3.4
+avec PostgreSQL.
+Gestion des versions et conservation du code
+Git et GitHub Git 2.45.1
+source.
+Version installée sur le Vérification des endpoints de l'API
+Postman
+poste indépendamment de l'interface React.
+Chrome, Edge ou Accès à l'interface et réalisation des tests
+Navigateur web
+équivalent récent fonctionnels.
+4.1.2. Configuration matérielle
+La configuration matérielle présentée correspond au poste utilisé pour développer, exécuter
+et tester notre application en environnement local.
+Tableau 12: Configuration matérielle
+Composant Caractéristique Description / rôle
+Constructeur du poste utilisé pour le
+Marque Dell Inc.
+développement.
+Modèle de l'ordinateur portable utilisé
+Modèle Precision 7680
+pour le projet.
+Intel64 Family 6 Model 183 Processeur utilisé pour exécuter
+Processeur Stepping 1, environ 2100 l'environnement de développement et
+MHz les services locaux.
+PC basé sur x64, système Architecture du système installée sur le
+Type de système
+64 bits poste.
+Mémoire disponible pour le
+32 421 Mo, soit environ 32
+Mémoire vive (RAM) fonctionnement du backend, du
+Go
+frontend et des outils de test.
+Stockage utilisé pour le système, le
+NVMe PC811 SK hynix,
+Disque dur code source, les dépendances et les
+environ 1 To
+fichiers PDF.
+Windows 11 Professionnel, Système d'exploitation installé sur le
+Système d'exploitation
+version 10.0.26200 poste de développement.
+NVIDIA RTX 2000 Ada
+Cartes graphiques détectées sur le
+Cartes graphiques Generation Laptop GPU et
+poste.
+Intel UHD Graphics
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 65
+
+===== PAGE 75 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 4 : EXPLOITATION (GUIDE D’EXPLOITATION)
+4.2. DÉPLOIEMENT ET SUIVI
+4.2.1. Déploiement de l’application
+Le portail Moov e-Factures est composé d'un frontend React, d'une API Django REST
+Framework, d'une base PostgreSQL, d'un serveur Garnet compatible Redis et d'un
+worker Celery chargé des traitements PDF en arrière-plan.
+Le déploiement de développement est réalisé sur Windows 11, sans Docker. Les
+composants sont lancés séparément. PostgreSQL conserve les données métier,
+tandis que Garnet transmet les tâches à Celery. Les paramètres de connexion sont
+définis dans le fichier .env, qui ne doit pas être publié avec le code source.
+Dans le dossier Back, les migrations sont appliquées et la configuration est vérifiée :
+• python manage.py migrate
+• python manage.py check
+Le serveur Django est ensuite lancé avec :
+• python manage.py runserver 8000
+L'API est accessible sur http://localhost:8000. Elle gère l'authentification, les
+utilisateurs, les contrats, les lignes, les services, les factures et les simulations.
+Garnet doit être démarré sur le port 6379 avant Celery. Le worker est lancé depuis le
+dossier Back avec :
+python -m celery -A moov_backend worker -l INFO -P solo
+Celery exécute notamment le découpage et la publication des blocs PDF sans bloquer
+l'interface.
+Dans le dossier Front, les dépendances sont installées puis le frontend est lancé avec
+:
+• npm install
+• npm run dev
+L'interface est accessible sur http://localhost:3000 et communique avec l'API Django
+située sur le port 8000. Les fichiers PDF sont conservés dans le stockage média du
+backend.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 66
+
+===== PAGE 76 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 4 : EXPLOITATION (GUIDE D’EXPLOITATION)
+L'ordre de démarrage est le suivant : PostgreSQL, Garnet, Django, Celery, puis
+React/Vite. Le déploiement est validé lorsque l'interface s'ouvre, que la connexion
+fonctionne, que l'API répond, que Celery est connecté à Garnet et que les factures
+publiées sont consultables.
+4.2.1. Suivi de l’application
+Après le déploiement, un suivi régulier est réalisé afin de vérifier le bon fonctionnement
+du portail Moov e-Factures et de détecter rapidement les erreurs.
+Le backend Django est surveillé depuis le terminal qui exécute le serveur. Les
+requêtes, les erreurs API et les problèmes d'authentification sont également
+enregistrés dans les fichiers de journalisation du dossier Back/logs. Les fichiers
+app.log et security.log permettent de consulter respectivement l'activité de l'application
+et les événements liés à la sécurité.
+Le frontend React/Vite est suivi dans son terminal et dans la console du navigateur.
+Les onglets Console et Network permettent de repérer les erreurs JavaScript, les
+problèmes de chargement et les requêtes API qui échouent.
+La disponibilité des services est vérifiée à l'aide de leurs ports : PostgreSQL sur le port
+5433, Garnet sur le port 6379, Django sur le port 8000 et Vite sur le port 3000. Une
+vérification complémentaire consiste à ouvrir http://localhost:8000 et
+http://localhost:3000 dans le navigateur. Le service PostgreSQL peut être contrôlé
+depuis pgAdmin ou depuis les services Windows.
+Le worker Celery doit afficher un message de connexion à Garnet et l'état ready. Lors
+du traitement d'un bloc PDF, les messages du worker permettent de suivre le début
+de la tâche, sa progression et les éventuelles erreurs. Une tâche qui reste bloquée ou
+échoue doit être examinée avant de relancer une publication.
+Le stockage média est également surveillé. Il faut vérifier que les blocs PDF importés
+et les factures produites sont toujours présents, que le disque dispose d'un espace
+suffisant et que les processus Django et Celery ont le droit d'écrire dans les dossiers
+media.
+Les contrôles réguliers comprennent la vérification de la configuration Django,
+l'exécution des tests et la compilation du frontend :
+• python manage.py check
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 67
+
+===== PAGE 77 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 4 : EXPLOITATION (GUIDE D’EXPLOITATION)
+• python manage.py test
+• npm run build
+Avant toute modification importante, une sauvegarde de la base PostgreSQL et des
+fichiers PDF doit être réalisée. Les fichiers .env et les journaux contenant des
+informations sensibles doivent rester protégés et ne doivent pas être ajoutés au dépôt
+Git.
+En cas de problème, la première étape consiste à identifier le composant concerné à
+partir des journaux et de l'état des ports. Le service défaillant est ensuite redémarré
+séparément : Django pour une erreur API, Vite pour une erreur d'interface, Garnet ou
+Celery pour une tâche PDF bloquée, et PostgreSQL pour une erreur d'accès aux
+données. Après le redémarrage, une nouvelle connexion et un test fonctionnel sont
+réalisés.
+Lorsqu'une nouvelle version est installée, le code est mis à jour, les dépendances sont
+vérifiées, les migrations sont appliquées si nécessaire, puis les services concernés
+sont redémarrés. Le parcours de connexion et un parcours de publication ou de
+consultation de facture sont ensuite testés afin de confirmer que la mise à jour n'a pas
+introduit de régression.
+4.3. Maintenance : actions à mener en cas de certaines erreurs
+La maintenance du portail Moov e-Bllings consiste à diagnostiquer les erreurs, à
+corriger le composant concerné et à reprendre le parcours interrompu. Avant toute
+intervention importante, une copie de la base PostgreSQL et des fichiers PDF doit être
+conservée.
+Le diagnostic commence par l'observation du message affiché dans l'interface, de la
+console du navigateur, du terminal Django, du terminal Celery et des fichiers
+Back/logs/app.log et Back/logs/security.log. Il faut également vérifier que
+PostgreSQL, Garnet, Django, Celery et le frontend sont toujours démarrés.
+Tableau 13: Actions à mener en cas d'erreurs.
+Code ou erreur Signification Action recommandée
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 68
+
+===== PAGE 78 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 4 : EXPLOITATION (GUIDE D’EXPLOITATION)
+404 Page ou route API Vérifier l'URL et les routes
+introuvable React/Django, corriger l'appel puis
+actualiser la page.
+401 Authentification Se reconnecter et vérifier la validité
+absente ou expirée du jeton JWT et du compte
+utilisateur.
+403 Accès interdit Vérifier le rôle, les permissions et le
+rattachement au contrat ou à la ligne
+concernés.
+400 Données ou requête Lire le détail retourné par l'API,
+invalides corriger le formulaire, le doublon ou
+le PDF, puis soumettre à nouveau.
+500 Erreur interne du Consulter le terminal Django et les
+serveur journaux, corriger la cause, exécuter
+check/tests puis relancer Django.
+Network Error Backend ou frontend Vérifier les ports 8000 et 3000,
+inaccessible relancer le service absent, puis
+actualiser avec Ctrl+F5.
+PostgreSQL Base de données Vérifier PostgreSQL 16, le port 5433
+inaccessible et les variables POSTGRES_* du
+fichier .env, puis appliquer les
+migrations.
+Garnet/Celery Tâche non envoyée Démarrer Garnet sur 6379 avec --
+ou bloquée lua, vérifier REDIS_URL, relancer
+Celery et attendre le message
+ready.
+PDF manquant Aucun fichier associé Vérifier le stockage média et les
+à la facture droits d'écriture, puis réassocier ou
+réimporter le PDF.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 69
+
+===== PAGE 79 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 4 : EXPLOITATION (GUIDE D’EXPLOITATION)
+Notification e- Envoi SMTP échoué Vérifier la configuration SMTP et
+mail l'adresse du destinataire sans
+exposer les secrets, puis renvoyer la
+notification.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 70
+
+===== PAGE 80 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+PARTIE 5 : GUIDE D’UTILISATION
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 71
+
+===== PAGE 81 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+5.1. DESCRIPTION TEXTUELLE DU LOGICIEL
+5.1.1. Présentation Générale
+Moov e-Factures est un portail web destiné à la publication et à la consultation des
+factures clients postpayés de Moov Africa Togo. L'application centralise les
+informations relatives aux entreprises clientes, aux contrats, aux lignes téléphoniques,
+aux forfaits, aux services et aux factures. Elle permet aux équipes de facturation de
+préparer les données contractuelles, d'importer les blocs PDF reçus, de découper
+automatiquement les documents, de rapprocher les factures avec les contrats et les
+lignes correspondants, puis de publier les factures. Les clients autorisés peuvent
+ensuite consulter leurs documents et effectuer une simulation de facturation.
+L'accès aux fonctionnalités dépend du rôle de l'utilisateur et du périmètre de ses
+données. Ainsi, un administrateur ou un opérateur de facturation dispose d'une vision
+de gestion, tandis qu'un payeur ou un employé accède uniquement aux informations
+qui lui sont rattachées.
+5.1.2. Acteurs principaux
+Le super administrateur assure l'administration générale de la plateforme. Il gère les
+comptes utilisateurs, les rôles, les entreprises, les contrats, les lignes, les forfaits et
+les services. Il dispose d'une vision globale des données et des statistiques du
+système.
+Le chef de facturation supervise les opérations de facturation. Il peut gérer les agents
+de son périmètre, contrôler les demandes de contrat soumises par les commerciaux,
+valider ou rejeter une demande avec un motif, et suivre les publications et les journaux
+de traitement.
+L'agent de facturation réalise les opérations quotidiennes. Il gère les contrats, les
+lignes et les commerciaux, prépare les forfaits et les services selon ses droits, importe
+les blocs PDF, suit leur découpage, vérifie les correspondances et publie les factures
+validées.
+Le commercial constitue et soumet les demandes de contrat. Il renseigne les
+informations nécessaires à la création du contrat et suit l'état de ses demandes. Une
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 72
+
+===== PAGE 82 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+demande reste en attente tant qu'elle n'a pas été validée par un utilisateur habilité. En
+cas de rejet, le motif communiqué est consultable par le commercial.
+Le payeur représente le responsable de l'entreprise cliente. Il consulte les factures
+globales de son contrat ainsi que les factures sommaires des lignes rattachées. Il
+visualise les informations de son contrat, les lignes actives et les services associés,
+puis peut effectuer une simulation de facturation.
+L'employé est rattaché à une ligne téléphonique précise. Il consulte les services de sa
+ligne et sa facture sommaire publiée. Son accès est limité à ses propres informations
+et il peut également réaliser une simulation individuelle.
+5.1.3. Authentification et accès aux espaces
+L'utilisateur ouvre la page de connexion et saisit l'identifiant ainsi que le mot de passe
+de son compte. Le système vérifie les informations auprès du serveur et redirige
+l'utilisateur vers l'espace correspondant à son rôle.
+Les menus, les pages et les actions disponibles sont contrôlés par les permissions
+associées au rôle. Un utilisateur ne peut donc pas consulter les données d'un autre
+contrat ou d'une autre ligne lorsque celles-ci ne relèvent pas de son périmètre.
+L'utilisateur peut gérer les éléments autorisés de son profil et, lorsque l'option est
+activée, utiliser un code à usage unique pour modifier son mot de passe.
+5.1.4. Gestion des entreprises, contrats et lignes
+Les agents et les responsables habilités accèdent à la page de gestion des contrats.
+Ils peuvent créer un contrat en renseignant son code, l'entreprise, la catégorie, les
+dates d'effet et de fin, le mode de règlement, les adresses, le statut de facturation, les
+informations de résiliation et les services prévus.
+Après la création du contrat, les lignes téléphoniques sont ajoutées séparément. Pour
+chaque ligne, l'opérateur renseigne ou sélectionne le MSISDN, le forfait, le cycle de
+facturation et les options autorisées. Une ligne peut ensuite être associée à un
+employé et certains services peuvent être retirés ou ajoutés selon les besoins du
+contrat.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 73
+
+===== PAGE 83 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+Les actions importantes effectuées sur un contrat sont conservées dans l'historique
+d'audit. Le statut du contrat et, le cas échéant, le motif et la date de résiliation
+permettent de distinguer un contrat actif d'un contrat résilié.
+5.1.5. Gestion des forfaits et des services
+La gestion des forfaits permet de consulter les offres disponibles et leurs tarifs. Les
+services correspondent aux options pouvant être appliquées à un contrat ou à une
+ligne, notamment la voix, les SMS, la data et les options complémentaires.
+Selon son niveau de permission, l'opérateur peut créer, modifier, activer ou désactiver
+un forfait ou un service. Les tarifs enregistrés servent également de référence lors de
+la simulation de facturation. Une modification du catalogue doit être vérifiée avant
+d'être utilisée dans une nouvelle simulation.
+5.1.6. Importation, découpage et publication des factures PDF
+L'agent ou le chef ouvre la page de publication et sélectionne un bloc PDF, le type de
+facture, la période et le cycle concernés. Le système enregistre le traitement et
+transmet les opérations longues au worker Celery par l'intermédiaire de Garnet.
+Le worker lit le bloc source, découpe les pages en factures individuelles, extrait les
+informations disponibles et recherche la correspondance avec les contrats, les lignes
+et les numéros de facture enregistrés dans la base. Les PDF produits sont conservés
+dans le stockage média et les résultats sont associés aux factures correspondantes.
+Le traitement possède un état de suivi. L'utilisateur peut quitter la page pendant le
+traitement et revenir consulter son état. Les erreurs, les fichiers manquants, les
+factures déjà traitées et les correspondances non trouvées sont signalés dans le
+rapport.
+Après vérification, les factures valides sont sélectionnées dans la page « Factures à
+publier ». L'opérateur lance la publication et le système met à jour le statut des
+factures. Une facture déjà publiée ne doit pas être publiée une seconde fois sans
+vérification préalable. L'historique présente la période, le nombre de factures traitées,
+le statut et, lorsque disponible, le fichier PDF réel.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 74
+
+===== PAGE 84 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+5.1.7. Consultation des factures
+Le payeur accède à la page de ses factures et peut distinguer les factures globales de
+l'entreprise des factures sommaires associées aux lignes. Il peut consulter le numéro,
+la période, la date d'émission, le montant et le statut de chaque facture publiée, puis
+ouvrir ou télécharger le PDF lorsque celui-ci est disponible.
+L'employé accède uniquement aux factures sommaires de la ligne qui lui est affectée.
+Les informations affichées sont filtrées par son compte et son MSISDN. Il ne peut pas
+consulter les factures d'une autre ligne ou la facture globale d'une entreprise qui ne lui
+appartient pas.
+5.1.8. Simulation de facturation
+Depuis l'espace payeur ou employé, l'utilisateur ouvre la page de simulation et
+sélectionne les services ou les options qu'il souhaite évaluer. Il renseigne les
+consommations nécessaires, puis lance le calcul.
+Le système applique les tarifs enregistrés pour les services de voix, de SMS et de
+data, calcule le montant estimé et affiche le détail du résultat. La simulation ne modifie
+pas la facture publiée et ne remplace pas le traitement mensuel réel. Le résultat est
+enregistré dans l'historique des simulations afin que l'utilisateur puisse le consulter
+ultérieurement.
+5.2. PLAN DE NAVIGATION
+• Plan de navigation Super Administrateur
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 75
+
+===== PAGE 85 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+Figure 38: Plan de navigation Super Administrateur
+• Plan de navigation Chef Facturation
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 76
+
+===== PAGE 86 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+Figure 39: Plan de navigation du chef facturation
+• Plan de navigation Agent Facturation
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 77
+
+===== PAGE 87 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+Figure 40: Plan de navigation de l'Agent facturation
+• Plan de navigation Commerciale
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 78
+
+===== PAGE 88 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+Figure 41: Plan de navigation Commerciale
+• Plan de navigation Payeur
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 79
+
+===== PAGE 89 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+Figure 42: Plan de Navigation du Payeur
+• Plan de navigation Employé
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 80
+
+===== PAGE 90 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+Figure 43: Plan de navigation de l'Employé
+5.3. PRÉSENTATION DES DIFFÉRENTES INTERFACES DE L’APPLICATION
+• Authentification
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 81
+
+===== PAGE 91 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+Figure 44:Page de Conexion
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 82
+
+===== PAGE 92 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+• Administration facturation
+Figure 45: Dashboard Chef Facturation
+• Gestion Agents facturation
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 83
+
+===== PAGE 93 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+Figure 46: page de Gestion Agents facturation
+• Page de simulation de facturation
+Figure 47: Simulation facturation
+• Gestion clients
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 84
+
+===== PAGE 94 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+Figure 48: Page de Gestion des clients
+• Gestion Services
+Figure 49: Page de Gestion des Services
+• Dashboard Payeur
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 85
+
+===== PAGE 95 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+Figure 50: Dashoard payeur
+• Page de consultaion des Factures par le payeur
+Figure 51: Page de consultaion Factures Payeur
+• Découpage blocs PDF
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 86
+
+===== PAGE 96 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+Figure 52: Page de découpage de blocs de factures Pdf
+• Gestion du profile chef facturation
+Figure 53: Page de gestion de profile du chef facturation
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 87
+
+===== PAGE 97 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+5.4. PRÉSENTATION DES ÉTATS
+Les états de l'application Moov Africa e-Billings permettent de connaître l'avancement
+d'une demande, d'une facture, d'un traitement PDF ou d'une notification. Ils sont
+présentés ci-dessous sous la forme de tableaux indiquant l'état et sa signification.
+• États d’une demande de contrat
+Tableau 14: États d’une demande de contrat
+État Signification
+En attente de La demande a été soumise par le commercial et attend la
+validation décision d’un agent ou du chef de facturation.
+Approuvée La demande a été acceptée et peut donner lieu à la création
+effective du contrat.
+Rejetée La demande n’a pas été acceptée. Le motif de rejet est
+conservé et rendu visible au commercial.
+• États d’une facture
+Tableau 15: États d’une facture
+État Signification
+Brouillon La facture est enregistrée mais n’est pas encore prête pour la
+validation.
+En cours La facture est en cours de contrôle ou de traitement.
+Validée La facture a été contrôlée et peut être publiée.
+Publiée La facture est disponible pour le payeur ou l’employé
+autorisé.
+Payée Le règlement de la facture a été enregistré.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 88
+
+===== PAGE 98 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+PARTIE 5 : GUIDE D’UTILISATION
+Annulée La facture ne peut plus être utilisée comme facture active.
+• États d’un traitement PDF
+Tableau 16: États d’un traitement PDF
+État Signification
+En attente Le traitement est enregistré et attend son exécution par le
+worker Celery.
+En cours Le bloc PDF est en train d’être découpé et les factures sont
+rapprochées des contrats ou des lignes.
+Terminé Le traitement est achevé. Le résultat et les éventuelles
+erreurs sont disponibles dans le rapport.
+Échec Le traitement n’a pas pu aboutir. Une erreur doit être
+consultée avant une nouvelle tentative.
+• États d’une notification de facture
+Tableau 17: États d’une notification de facture
+État Signification
+Envoyée La notification a été transmise correctement au destinataire.
+Échec L’envoi n’a pas abouti. Le détail de l’erreur est conservé dans
+l’historique.
+Service non Le service de notification n’est pas configuré ; la publication
+configuré de la facture reste indépendante de cette notification.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 89
+
+===== PAGE 99 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+CONCLUSION
+CONCLUSION
+Au terme de ce travail, nous avons conçu et développé le portail web Moov e-Factures,
+destiné à améliorer la publication et la consultation des factures des clients postpayés
+de Moov Africa Togo. Ce projet répond à la nécessité de faciliter le traitement de blocs
+PDF volumineux, d’organiser les informations relatives aux contrats et aux lignes
+téléphoniques, puis de mettre les factures à la disposition des utilisateurs habilités de
+manière plus structurée et plus sécurisée.
+La solution réalisée permet de gérer plusieurs profils d’utilisateurs, à savoir le super
+administrateur, le chef de facturation, l’agent de facturation, le commercial, le payeur
+et l’employé. Elle prend en charge la gestion des contrats, des lignes, des forfaits, des
+services et des demandes de contrat. Elle permet également l’importation de blocs de
+factures PDF, leur découpage en fichiers individuels, le rapprochement avec les
+contrats ou les lignes concernés, la publication des factures validées et leur
+consultation par les payeurs et les employés selon leurs droits d’accès.
+L’intégration de PostgreSQL pour la persistance des données, de Django REST
+Framework pour l’API, de React pour l’interface et de Celery associé à Garnet pour
+les traitements asynchrones a permis de mettre en place une architecture adaptée aux
+opérations longues de traitement des PDF. Ainsi, le découpage peut être exécuté en
+arrière-plan sans bloquer l’interface utilisateur. Les fonctionnalités de simulation,
+d’export de contrat, de suivi des publications et de journalisation des actions
+contribuent également à rendre la plateforme plus utile pour les opérations de
+facturation.
+La réalisation de ce projet nous a permis de mettre en pratique les connaissances
+acquises en analyse, modélisation UML, développement web, conception de base de
+données, sécurité applicative et déploiement d’une application multi-composants. Elle
+a aussi permis de mieux comprendre les contraintes liées à la gestion de documents
+PDF, au rapprochement des données et à la séparation des accès selon les rôles des
+utilisateurs.
+Toutefois, certaines améliorations restent envisageables. Pour une mise en production
+complète, il serait nécessaire de déployer l’application sur une infrastructure sécurisée
+avec HTTPS, un stockage de fichiers dédié, des sauvegardes automatisées et une
+supervision des services. L’intégration complète d’un fournisseur de SMS, la
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 90
+
+===== PAGE 100 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+CONCLUSION
+configuration définitive de l’envoi d’e-mails, l’amélioration de l’extraction des données
+à partir de PDF de qualité variable et l’ajout d’indicateurs de suivi plus avancés
+constituent également des perspectives d’évolution.
+En définitive, le portail Moov e-Factures constitue une base fonctionnelle pour
+moderniser le cycle de publication des factures postpayées. Il permet de réduire les
+manipulations manuelles, d’améliorer la traçabilité des opérations et d’offrir aux clients
+une consultation plus autonome de leurs informations de facturation.
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO 91
+
+===== PAGE 101 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+DOCUMENTS COMPLÉMENTAIRES
+BIBLIOGRAPHIE INDICATIVE
+Ouvrages
+➢ Introduction à UML 2 de Pierre Gérard ;
+➢ Gestion de projets 2 Tracks Unified Process d’El MAZOUZI
+Nadia, FILALI Abderrahmane et TAMAGNON Olivier.
+Note de cours
+➢ Cours d’Introduction au Génie Logiciel de M. SANI Koffi (2023-2024) ;
+➢ Cours d’outil de programmation web de M. DOUTI C M. AKOGO (2023 – 2024).
+Anciens mémoires consultés
+➢ MISE EN PLACE D’UNE PLATEFORME WEB DE
+VALORISATION DE LA CULTURE AFRICAINE : CAS DU TOGO,
+de ABALO Manzima.( 2023 - 2024)
+➢ PLATEFORME NUMÉRIQUE D’OPTIMISATION DE LA
+PRODUCTIVITÉ DES ENTREPRISES, de KOUMAGLO A. Jean-
+Luc (2024 – 2025)
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO
+I
+
+===== PAGE 102 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+DOCUMENTS COMPLÉMENTAIRES
+WEBOGRAPHIE INDICATIVE
+• https://docs.djangoproject.com/ : 11/05/2026 – 05/08/2026, pour consulter la
+documentation officielle de Django ;
+• https://www.django-rest-framework.org/ : 18/05/2026 – 28/07/2026, pour consulter
+la documentation officielle de Django REST Framework et la mise en œuvre des
+API REST;
+• https://www.youtube.com/?app=desktop : Tout au long du
+projet, pour suivre de différents tutoriels en fonction des
+besoins ;
+• https://react.dev/ : 25/05/2026 – 01/08/2026, pour consulter la documentation
+officielle de React et le développement de l’interface utilisateur ;
+• https://vite.dev/ : 27/05/2026 – 20/07/2026, pour consulter la documentation de Vite
+et la configuration de l’environnement de développement React ;
+• https://www.postgresql.org/docs/ : 02/06/2026 – 30/07/2026, pour consulter la
+documentation officielle de PostgreSQL et la gestion de la base de données ;
+• https://gemini.google.com/ : Tout au long du projet, pour effectuer des recherches
+avancées et obtenir des informations complémentaires.
+• https://docs.celeryq.dev/ : 15/06/2026 – 03/08/2026, pour consulter la
+documentation de Celery et la mise en place des traitements asynchrones ;
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO
+II
+
+===== PAGE 103 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+DOCUMENTS COMPLÉMENTAIRES
+DOCUMENTS ANNEXES
+Figure 54: Facture sommaire
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO
+III
+
+===== PAGE 104 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+DOCUMENTS COMPLÉMENTAIRES
+Figure 55:Facture Globale
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO
+IV
+
+===== PAGE 105 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+DOCUMENTS COMPLÉMENTAIRES
+TABLE DES MATIÈRES
+DÉDICACES .................................................................................................................... i
+REMERCIEMENTS ......................................................................................................... ii
+SOMMAIRE .................................................................................................................... iii
+RÉSUMÉ ........................................................................................................................ iv
+GLOSSAIRE ................................................................................................................... v
+LISTE DES FIGURES .................................................................................................... vi
+LISTE DES TABLEAUX ............................................................................................... viii
+LISTE DES PARTICIPANTS AU PROJET .................................................................... ix
+INTRODUCTION ............................................................................................................. 9
+PARTIE 1 : CAHIER DES CHARGES ............................................................................ 2
+1.1. PRÉSENTATIONS ................................................................................................ 3
+1.1.1. Brève présentation de l’IAI-TOGO .................................................................. 3
+1.1.2. Présentation du cadre de stage ...................................................................... 3
+1.2. THÈME DU STAGE .............................................................................................. 6
+1.2.1. Présentation du sujet ......................................................................................... 6
+1.2.2. Problématique du sujet ...................................................................................... 7
+1.2.3. Intérêt du sujet ................................................................................................... 8
+1.2.3.1. Objectifs .......................................................................................................... 8
+1.2.3.2. Résultats ......................................................................................................... 9
+1.3. ÉTUDE DE L’EXISTANT ....................................................................................... 9
+1.4. CRITIQUE DE L’EXISTANT ................................................................................ 10
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO
+V
+
+===== PAGE 106 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+DOCUMENTS COMPLÉMENTAIRES
+1.5. PROPOSITIONS ET CHOIX DE SOLUTIONS ................................................... 11
+1.5.1. Évaluations techniques des solutions .............................................................. 11
+1.5.2. Évaluations financières des solutions proposées ............................................. 13
+1.5.3. Choix de la solution .......................................................................................... 15
+1.6. PLANNING PRÉVISIONNEL DE RÉALISATION ................................................ 16
+PARTIE 2 : ANALYSE ET CONCEPTION .................................................................... 17
+2.1. CHOIX DE LA MÉTHODE D’ANALYSE ET JUSTIFICATION ............................ 18
+2.2. CHOIX DE L’OUTIL DE MODÉLISATION ET JUSTIFICATION ......................... 18
+2.2.1 Présentation du processus de développement 2TUP ................................... 18
+2.2.2 Présentation du langage de modélisation utilize............................................ 19
+2.2.3. Présentation de l'outil de modélisation ......................................................... 20
+2.3. ÉTUDE DÉTAILLÉE DE LA SOLUTION ............................................................. 21
+2.3.1. Étude préliminaire ......................................................................................... 21
+2.3.2. Capture des besoins fonctionnels ................................................................. 21
+PARTIE 3 : RÉALISATION ET MISE EN ŒUVRE ....................................................... 45
+3.1. MATÉRIELS ET LOGICIELS UTILISÉS ............................................................. 46
+3.1.1. Matériels utilisés ........................................................................................... 46
+3.1.2. Logiciels et technologies utilizes ................................................................... 46
+3.2. ARCHITECTURES MATÉRIELLE ET LOGICIELLE DE L’APPLICATION .......... 52
+3.2.1. Architecture matérielle .................................................................................. 52
+3.2.2. Architecture Logicielle .................................................................................. 53
+3.3. SÉCURITÉ DE L’APPLICATION......................................................................... 54
+3.4. MISE EN PLACE DE LA BASE DE DONNÉES .................................................. 55
+PARTIE 4 : EXPLOITATION (GUIDE D’EXPLOITATION) ........................................... 62
+4.1. CONFIGURATION LOGICIELLE ET MATÉRIELLE ........................................... 64
+4.1.1. Configuration logicielle ................................................................................. 64
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO
+VI
+
+===== PAGE 107 =====
+Développement d'un Portail Web de Publication de Factures Clients Postpayés : Cas de Moov Africa:
+DOCUMENTS COMPLÉMENTAIRES
+4.1.2. Configuration matérielle ................................................................................ 65
+4.2. DÉPLOIEMENT ET SUIVI .................................................................................. 66
+4.2.1. Déploiement de l’application ......................................................................... 66
+4.2.1. Suivi de l’application ..................................................................................... 67
+4.3. Maintenance : actions à mener en cas de certaines erreurs .............................. 68
+PARTIE 5 : GUIDE D’UTILISATION ............................................................................. 71
+5.1. DESCRIPTION TEXTUELLE DU LOGICIEL ...................................................... 72
+5.1.1. Présentation Générale .................................................................................. 72
+5.1.2. Acteurs principaux ........................................................................................ 72
+5.1.3. Authentification et accès aux espaces .......................................................... 73
+5.1.4. Gestion des entreprises, contrats et lignes ................................................... 73
+5.1.5. Gestion des forfaits et des services .............................................................. 74
+5.1.6. Importation, découpage et publication des factures PDF ............................. 74
+5.1.7. Consultation des factures ............................................................................. 75
+5.1.8. Simulation de facturation .............................................................................. 75
+5.2. PLAN DE NAVIGATION ...................................................................................... 75
+5.3. PRÉSENTATION DES DIFFÉRENTES INTERFACES DE L’APPLICATION ..... 81
+5.4. PRÉSENTATION DES ÉTATS ........................................................................... 88
+CONCLUSION .............................................................................................................. 90
+BIBLIOGRAPHIE INDICATIVE ........................................................................................ I
+WEBOGRAPHIE INDICATIVE ........................................................................................ II
+TABLE DES MATIÈRES ................................................................................................. V
+REDIGE PAR BANLEPO MINTRE BENOÎT, 3EME ANNÉE IAI-TOGO
+VII

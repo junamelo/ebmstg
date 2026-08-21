@@ -1,0 +1,31 @@
+PARTIE 4 : EXPLOITATION (Guide d'exploitation)
+
+4.2. DEPLOIEMENT ET SUIVI
+
+4.2.2. Suivi de l'application
+
+Après le déploiement, un suivi régulier est réalisé afin de vérifier le bon fonctionnement du portail Moov e-Factures et de détecter rapidement les erreurs.
+
+Le backend Django est surveillé depuis le terminal qui exécute le serveur. Les requêtes, les erreurs API et les problèmes d'authentification sont également enregistrés dans les fichiers de journalisation du dossier Back/logs. Les fichiers app.log et security.log permettent de consulter respectivement l'activité de l'application et les événements liés à la sécurité.
+
+Le frontend React/Vite est suivi dans son terminal et dans la console du navigateur. Les onglets Console et Network permettent de repérer les erreurs JavaScript, les problèmes de chargement et les requêtes API qui échouent.
+
+La disponibilité des services est vérifiée à l'aide de leurs ports : PostgreSQL sur le port 5433, Garnet sur le port 6379, Django sur le port 8000 et Vite sur le port 3000. Une vérification complémentaire consiste à ouvrir http://localhost:8000 et http://localhost:3000 dans le navigateur. Le service PostgreSQL peut être contrôlé depuis pgAdmin ou depuis les services Windows.
+
+Le worker Celery doit afficher un message de connexion à Garnet et l'état ready. Lors du traitement d'un bloc PDF, les messages du worker permettent de suivre le début de la tâche, sa progression et les éventuelles erreurs. Une tâche qui reste bloquée ou échoue doit être examinée avant de relancer une publication.
+
+Le stockage média est également surveillé. Il faut vérifier que les blocs PDF importés et les factures produites sont toujours présents, que le disque dispose d'un espace suffisant et que les processus Django et Celery ont le droit d'écrire dans les dossiers media.
+
+Les contrôles réguliers comprennent la vérification de la configuration Django, l'exécution des tests et la compilation du frontend :
+
+python manage.py check
+python manage.py test
+npm run build
+
+Avant toute modification importante, une sauvegarde de la base PostgreSQL et des fichiers PDF doit être réalisée. Les fichiers .env et les journaux contenant des informations sensibles doivent rester protégés et ne doivent pas être ajoutés au dépôt Git.
+
+En cas de problème, la première étape consiste à identifier le composant concerné à partir des journaux et de l'état des ports. Le service défaillant est ensuite redémarré séparément : Django pour une erreur API, Vite pour une erreur d'interface, Garnet ou Celery pour une tâche PDF bloquée, et PostgreSQL pour une erreur d'accès aux données. Après le redémarrage, une nouvelle connexion et un test fonctionnel sont réalisés.
+
+Lorsqu'une nouvelle version est installée, le code est mis à jour, les dépendances sont vérifiées, les migrations sont appliquées si nécessaire, puis les services concernés sont redémarrés. Le parcours de connexion et un parcours de publication ou de consultation de facture sont ensuite testés afin de confirmer que la mise à jour n'a pas introduit de régression.
+
+Dans une future installation de production, ce suivi pourra être automatisé avec un superviseur de services, une centralisation des journaux, des sauvegardes planifiées et des alertes sur l'indisponibilité de l'API, de PostgreSQL, de Garnet ou de Celery. Ces mécanismes ne sont pas encore déployés sur le poste de développement.

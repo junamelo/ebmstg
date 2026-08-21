@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { getFactures } from '../../services/factureService'
 import { getStatsEmploye } from '../../services/adminService'
+import { isDashboardDemo } from '../../services/dashboardDemo'
 import './Dashboard.css'
 
 export default function DashboardEmploye() {
@@ -12,7 +13,7 @@ export default function DashboardEmploye() {
   const [chargement, setChargement] = useState(true)
 
   useEffect(() => {
-    Promise.all([getStatsEmploye(), getFactures({})])
+    Promise.all([getStatsEmploye(), getFactures({}).catch(() => [])])
       .then(([s, f]) => { setStats(s); setFactures(f.slice(0, 3)) })
       .catch(console.error)
       .finally(() => setChargement(false))

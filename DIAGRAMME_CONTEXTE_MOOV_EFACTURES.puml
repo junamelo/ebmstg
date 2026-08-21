@@ -1,0 +1,68 @@
+@startuml DiagrammeContexteMoovEFactures
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam rectangle {
+  BackgroundColor #EAF2FF
+  BorderColor #174A8B
+  FontColor #111827
+}
+skinparam actor {
+  BorderColor #111827
+  FontColor #111827
+}
+skinparam database {
+  BackgroundColor #F7F7F7
+  BorderColor #555555
+}
+skinparam component {
+  BackgroundColor #FFFDF5
+  BorderColor #A66A00
+}
+skinparam cloud {
+  BackgroundColor #F4F4F4
+  BorderColor #666666
+}
+
+actor "Super administrateur" as admin
+actor "Opérateur de facturation\n(Chef / Agent)" as operateur
+actor "Commercial" as commercial
+actor "Payeur" as payeur
+actor "Employé" as employe
+
+rectangle "Portail Web Moov e-Factures\nPublication et consultation des factures clients postpayés" as portail
+
+database "PostgreSQL\nComptes, contrats, lignes,\nservices, factures et historiques" as postgres
+component "Stockage média\nPDF sources et factures publiées" as media
+component "Garnet\nCache et broker compatible Redis" as garnet
+component "Worker Celery\nDécoupage et publication PDF\nen arrière-plan" as celery
+cloud "Service SMTP\nNotifications e-mail" as smtp
+cloud "Système de facturation\nMoov Africa\nDonnées de consommation" as billing
+
+admin --> portail : gérer les comptes, rôles\net paramètres
+operateur --> portail : gérer contrats et lignes\nimporter, découper et publier les PDF
+commercial --> portail : soumettre et suivre\nles demandes de contrat
+payeur --> portail : consulter factures globales\net simuler une facture
+employe --> portail : consulter facture sommaire\net simuler sa consommation
+
+portail <--> postgres : lecture / écriture\ndes données métier
+portail <--> media : déposer et récupérer\nles fichiers PDF
+portail --> garnet : mettre en file les traitements
+garnet --> celery : transmettre les tâches PDF
+celery --> media : lire les blocs sources\net produire les PDF
+celery --> postgres : enregistrer les résultats\net les statuts
+portail --> smtp : envoyer les notifications\nsi l'option e-mail est activée
+portail <--> billing : échanger les données\nde consommation et de facturation
+
+note bottom of portail
+  L'authentification JWT et les permissions par rôle
+  contrôlent l'accès aux fonctionnalités et aux factures.
+end note
+
+legend bottom
+  **Diagramme de contexte** : les acteurs utilisent le portail ;
+  les composants externes assurent la persistance, le stockage,
+  les traitements asynchrones et les notifications.
+endlegend
+@enduml

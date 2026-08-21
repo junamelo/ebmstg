@@ -6,6 +6,7 @@ import {
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
 import { getStatsAgentFacturation } from '../../services/adminService'
+import { isDashboardDemo } from '../../services/dashboardDemo'
 
 // Design moderne avec Geist-inspired layout + glassmorphism subtil
 // DESIGN_VARIANCE: 6 | MOTION_INTENSITY: 4 | VISUAL_DENSITY: 6

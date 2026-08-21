@@ -3,12 +3,14 @@ Serializers pour l'application billing
 """
 from rest_framework import serializers
 from django.db import transaction
+from decimal import Decimal
 from .models import (
     Company, Line, Package, Service, TarifService,
     CategorieClient, CycleFacturation, TypeForfait, TypeService
 )
 from .models import Commercial, ContractRequest, AuditContrat, ModeReglement, StatutFacturation
 from .models import Simulation as SimulationModel
+from .models import BlocFacturesTest
 from accounts.models import User
 
 MOOV_PREFIXES = ('78', '79', '96', '97', '98', '99')
@@ -742,6 +744,94 @@ class GenerateInvoiceSerializer(serializers.Serializer):
                 "La date de début doit être antérieure à la date de fin"
             )
         return data
+
+
+class TestBlockInvoiceItemSerializer(serializers.Serializer):
+    """Une facture à intégrer dans un bloc PDF de test."""
+    company_id = serializers.IntegerField()
+    line_id = serializers.IntegerField(required=False, allow_null=True)
+    montant_ttc = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        min_value=Decimal('0.01'),
+    )
+
+
+class GenerateTestBlockSerializer(serializers.Serializer):
+    """Validation de la génération d'un bloc PDF de factures de test."""
+    type_facture = serializers.ChoiceField(choices=['SOM', 'GLO'])
+    periode_debut = serializers.DateField()
+    periode_fin = serializers.DateField()
+    date_emission = serializers.DateField(required=False)
+    delai_echeance_jours = serializers.IntegerField(default=30, min_value=1, max_value=365)
+    taux_tva = serializers.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('18.00'),
+        min_value=Decimal('0.00'),
+        max_value=Decimal('100.00'),
+    )
+    libelle = serializers.CharField(
+        max_length=120,
+        required=False,
+        allow_blank=True,
+        default='Services postpayés de test',
+    )
+    items = TestBlockInvoiceItemSerializer(many=True, min_length=1, max_length=100)
+
+    def validate(self, data):
+        if data['periode_debut'] > data['periode_fin']:
+            raise serializers.ValidationError(
+                'La date de début doit être antérieure ou égale à la date de fin.'
+            )
+
+        invoice_type = data['type_facture']
+        seen_companies, seen_lines = set(), set()
+        company_ids = {item['company_id'] for item in data['items']}
+        companies = Company.objects.in_bulk(company_ids)
+        if len(companies) != len(company_ids):
+            raise serializers.ValidationError({'items': 'Une entreprise sélectionnée est introuvable.'})
+
+        line_ids = {item['line_id'] for item in data['items'] if item.get('line_id')}
+        lines = Line.objects.select_related('company').in_bulk(line_ids)
+        if len(lines) != len(line_ids):
+            raise serializers.ValidationError({'items': 'Une ligne sélectionnée est introuvable.'})
+
+        for item in data['items']:
+            company_id = item['company_id']
+            line_id = item.get('line_id')
+            if invoice_type == 'SOM':
+                if not line_id:
+                    raise serializers.ValidationError({'items': 'Une ligne est obligatoire pour un bloc sommaire.'})
+                if lines[line_id].company_id != company_id:
+                    raise serializers.ValidationError({'items': 'Chaque ligne doit appartenir à l’entreprise indiquée.'})
+                if line_id in seen_lines:
+                    raise serializers.ValidationError({'items': 'Une ligne ne peut apparaître qu’une fois dans un bloc.'})
+                seen_lines.add(line_id)
+            else:
+                if line_id:
+                    raise serializers.ValidationError({'items': 'Une facture globale ne doit pas être liée à une ligne.'})
+                if company_id in seen_companies:
+                    raise serializers.ValidationError({'items': 'Une entreprise ne peut apparaître qu’une fois dans un bloc global.'})
+                seen_companies.add(company_id)
+
+        return data
+
+
+class BlocFacturesTestSerializer(serializers.ModelSerializer):
+    """Informations d'un bloc généré, disponible au téléchargement avant import."""
+    createur_nom = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BlocFacturesTest
+        fields = [
+            'id', 'nom_fichier', 'type_facture', 'periode_debut', 'periode_fin',
+            'date_emission', 'nombre_factures', 'montant_total_ttc', 'libelle',
+            'date_creation', 'createur_nom',
+        ]
+
+    def get_createur_nom(self, obj):
+        return obj.createur.get_full_name().strip() or obj.createur.username
 
 
 class CalculLineInvoiceSerializer(serializers.Serializer):

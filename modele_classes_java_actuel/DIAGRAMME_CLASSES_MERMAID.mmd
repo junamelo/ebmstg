@@ -1,0 +1,106 @@
+classDiagram
+direction LR
+
+class Utilisateur {
+  <<abstract>>
+  -String nom
+  -String email
+  -String role
+  +seConnecter()
+}
+class SuperAdministrateur {
+  +gererUtilisateurs()
+}
+class ChefFacturation {
+  +traiterDemande()
+}
+class AgentFacturation {
+  +gererContrats()
+  +publierFactures()
+}
+class Commercial {
+  -String matricule
+  +soumettreDemande()
+}
+class Payeur {
+  +consulterFactures()
+}
+class Employe {
+  -String msisdn
+  +consulterFactureSommaire()
+}
+
+Utilisateur <|-- SuperAdministrateur
+Utilisateur <|-- Commercial
+Utilisateur <|-- Payeur
+Utilisateur <|-- Employe
+Utilisateur <|-- ChefFacturation
+Utilisateur <|-- AgentFacturation
+
+class Contrat {
+  -String code
+  -String raisonSociale
+  -String statut
+  +ajouterLigne()
+  +resilier(motif)
+}
+class DemandeContrat {
+  -String statut
+  -String motifRejet
+  +soumettre()
+  +rejeter(motif)
+}
+class Ligne {
+  -String msisdn
+  -String statut
+  +affecterEmploye()
+  +modifierServices()
+}
+class Forfait {
+  -String nom
+  -Decimal prixMensuel
+  +modifierTarif()
+}
+class Service {
+  -String nom
+  -Decimal prix
+  +modifierTarif()
+}
+class Facture {
+  -String numero
+  -Decimal montantTTC
+  -String statut
+  +consulter()
+  +telechargerPdf()
+}
+class Publication {
+  -String periode
+  -String statut
+  +publier()
+}
+class TraitementPDF {
+  -String statut
+  -Integer progression
+  +decouper()
+}
+class Simulation {
+  -Decimal montantEstime
+  +calculer()
+}
+
+Commercial "1" --> "0..*" DemandeContrat
+ChefFacturation "0..1" --> "0..*" DemandeContrat
+DemandeContrat "0..1" --> "0..1" Contrat
+Commercial "0..1" --> "0..*" Contrat
+Payeur "0..1" --> "0..*" Contrat
+Contrat "1" *-- "0..*" Ligne
+Employe "0..1" --> "0..*" Ligne
+Forfait "0..1" --> "0..*" Ligne
+Ligne "0..*" --> "0..*" Service
+Contrat "1" --> "0..*" Facture
+Ligne "0..1" --> "0..*" Facture
+Utilisateur "1" --> "0..*" TraitementPDF
+Utilisateur "1" --> "0..*" Publication
+Publication "1" o-- "0..*" Facture
+TraitementPDF "1" --> "0..*" Facture
+Utilisateur "1" --> "0..*" Simulation

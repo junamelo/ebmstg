@@ -1,0 +1,82 @@
+DESCRIPTION TEXTUELLE DU CAS D'UTILISATION « S'AUTHENTIFIER »
+
+Titre : S'authentifier
+
+Acteurs principaux : Super administrateur, chef de facturation, agent de facturation, commercial, payeur et employé.
+
+Résumé : Ce cas d'utilisation décrit l'accès sécurisé au portail Moov e-Factures. L'utilisateur saisit son identifiant et son mot de passe. Le système vérifie les informations, confirme que le compte est actif et délivre un jeton d'accès permettant d'utiliser les fonctionnalités autorisées par son rôle.
+
+Version : 1.0
+
+Date de création : 12/08/2026
+
+Date de modification : 12/08/2026
+
+Préconditions :
+- L'utilisateur possède un compte enregistré dans l'application.
+- Le compte n'est pas désactivé ou suspendu.
+- Le service backend et la base de données sont disponibles.
+
+Scénario nominal :
+1. L'utilisateur ouvre la page de connexion.
+2. Le système affiche le formulaire d'authentification.
+3. L'utilisateur saisit son identifiant.
+4. L'identifiant peut être l'adresse e-mail enregistrée ou le nom d'utilisateur enregistré ; pour un employé, le MSISDN peut servir de nom d'utilisateur.
+5. L'utilisateur saisit son mot de passe.
+6. L'utilisateur valide le formulaire.
+7. Le système recherche le compte correspondant à l'identifiant fourni.
+8. Le système vérifie le mot de passe et le statut du compte.
+9. Le système crée un jeton d'accès JWT et un jeton de rafraîchissement.
+10. Le système retourne les informations utiles de l'utilisateur, notamment son rôle.
+11. L'interface enregistre le jeton d'accès et redirige l'utilisateur vers son espace de travail.
+12. Le système applique les permissions correspondant au rôle de l'utilisateur.
+
+Scénarios alternatifs :
+
+A1. Connexion d'un payeur avec son identifiant de contrat
+1. Le payeur saisit le nom d'utilisateur qui lui a été attribué, généralement lié à son contrat.
+2. Le système vérifie cet identifiant et ouvre l'espace du payeur si les informations sont valides.
+
+A2. Connexion d'un employé avec son MSISDN
+1. L'employé saisit le numéro de ligne enregistré comme nom d'utilisateur.
+2. Le système retrouve le compte correspondant et ouvre l'espace limité à sa ligne.
+
+A3. Rafraîchissement du jeton
+1. Le jeton d'accès arrive à expiration pendant la session.
+2. L'application utilise le jeton de rafraîchissement encore valide.
+3. Le système délivre un nouveau jeton d'accès sans demander une nouvelle saisie du mot de passe.
+
+A4. Authentification à deux facteurs activée
+1. L'utilisateur a activé le 2FA dans son profil.
+2. Après la vérification du mot de passe, le système demande le code temporaire fourni par l'application d'authentification.
+3. L'accès est accordé seulement si le code est valide et dans la période de tolérance autorisée.
+
+Scénarios d'exceptions :
+
+E1. Identifiant ou mot de passe incorrect
+Le système refuse la connexion et affiche un message général d'erreur sans révéler si l'identifiant existe.
+
+E2. Compte inactif ou suspendu
+Le système refuse l'accès et informe l'utilisateur que son compte n'est pas autorisé à se connecter.
+
+E3. Code 2FA incorrect ou expiré
+Le système refuse l'accès et demande de saisir un nouveau code temporaire.
+
+E4. Serveur ou base de données indisponible
+Le système affiche un message d'indisponibilité. Aucun jeton n'est délivré.
+
+E5. Session expirée ou jeton invalide
+Le système supprime les informations de session locales et redirige l'utilisateur vers la page de connexion.
+
+Postconditions :
+- L'utilisateur authentifié possède une session représentée par un jeton JWT valide.
+- L'utilisateur est redirigé vers l'interface correspondant à son rôle.
+- Les requêtes suivantes sont contrôlées par le jeton et les permissions associées.
+- En cas d'échec, aucun accès aux données protégées n'est accordé.
+
+Règles d'accès :
+- Le super administrateur accède à l'espace d'administration.
+- Le chef et l'agent de facturation accèdent aux fonctionnalités autorisées de facturation.
+- Le commercial accède au suivi de ses demandes et contrats.
+- Le payeur accède à ses contrats et à ses factures.
+- L'employé accède uniquement aux informations de sa ligne et à ses factures sommaires.

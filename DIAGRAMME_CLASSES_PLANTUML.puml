@@ -1,343 +1,250 @@
-@startuml Diagramme de Classes - Portail Facturation Moov Africa
+@startuml DiagrammeClassesMoovEFacturesSimple
+title Diagramme de classes simplifié — Moov e-Factures
 
-!define ENTITY class
-skinparam classAttributeIconSize 0
+left to right direction
 skinparam backgroundColor white
 skinparam shadowing false
-
-' Configuration des couleurs par package
-skinparam package {
-  BackgroundColor<<utilisateurs>> #FFE4B5
-  BackgroundColor<<contrats>> #FFD700
-  BackgroundColor<<facturation>> #FFA500
-  BackgroundColor<<catalogue>> #FF8C00
-  BorderColor Black
-  FontStyle bold
-}
-
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
 skinparam class {
-  BackgroundColor #FFFACD
-  BorderColor #8B4513
-  ArrowColor #654321
+  FontName Arial
   FontSize 11
+  BorderColor #333333
+  ArrowColor #333333
+  BackgroundColor #EAF2F8
+}
+skinparam class<<acteur>> {
+  BackgroundColor #FCE4EC
+  BorderColor #8E3B55
+}
+skinparam class<<compte>> {
+  BackgroundColor #DDEBF7
+  BorderColor #2F5597
+}
+skinparam class<<metier>> {
+  BackgroundColor #FFF2CC
+  BorderColor #7F6000
+}
+skinparam class<<facturation>> {
+  BackgroundColor #E2F0D9
+  BorderColor #548235
+}
+skinparam class<<catalogue>> {
+  BackgroundColor #E4DFEC
+  BorderColor #7030A0
+}
+skinparam note {
+  BackgroundColor #F8F8F8
+  BorderColor #999999
+  FontSize 10
 }
 
-' ========================================
-' PACKAGE GESTION UTILISATEURS
-' ========================================
-package "Gestion Utilisateurs" <<utilisateurs>> {
-  
-  class User {
-    - id: String
-    - email: String
-    - first_name: String
-    - last_name: String
-    - role: RoleChoices
-    - status: StatusChoices
-    - telephone: String
-    __
-    + has_permission(permission: String): Boolean
-  }
-  
-  class StatusHistory {
-    - id: String
-    - old_status: String
-    - new_status: String
-    - changed_at: Date
-  }
-  
-  enum RoleChoices {
-    SUPER_ADMIN
-    CHEF_FACTURATION
-    AGENT_FACTURATION
-    PAYEUR
-    EMPLOYE
-  }
-  
-  enum StatusChoices {
-    ACTIF
-    INACTIF
-    SUSPENDU
-    BLOQUE
-    EN_ATTENTE
-  }
+' =========================
+' Comptes et acteurs
+' =========================
+abstract class Utilisateur <<compte>> {
+  id : UUID
+  nom : String
+  email : String
+  role : String
+  --
+  seConnecter()
+  gererProfil()
 }
 
-' ========================================
-' PACKAGE GESTION CONTRATS
-' ========================================
-package "Gestion Contrats" <<contrats>> {
-  
-  class Commercial {
-    - id: String
-    - nom: String
-    - prenom: String
-    - matricule: String {unique}
-  }
-  
-  class Company {
-    - id: String
-    - compte: String {unique}
-    - raison_sociale: String
-    - categorie: CategorieClient
-    - statut_factures: StatutFacturation
-    - mode_reglement: ModeReglement
-    - est_resilie: Boolean
-    __
-    + resilier(): void
-  }
-  
-  class Line {
-    - id: String
-    - msisdn: String {unique}
-    - utilisateur: String
-    - forfait: Real
-    - cycle: CycleFacturation
-    - statut: String
-  }
-  
-  class AuditContrat {
-    - id: String
-    - type_action: TypeAction
-    - date_action: Date
-  }
-  
-  enum CategorieClient {
-    GE - Grande Entreprise
-    PE - Petite Entreprise
-    P - Particulier
-    OI - Organisme International
-    EP - Entreprise Publique
-    A - Association
-    NR - Non Revenu
-  }
-  
-  enum StatutFacturation {
-    ACTIF
-    SUSPENDU
-    CLOS
-    EN_ATTENTE
-  }
-  
-  enum ModeReglement {
-    CHEQUE
-    VIREMENT
-    ESPECES
-  }
-  
-  enum CycleFacturation {
-    HYB - Hybride
-    OP - Opérationnel
-  }
-  
-  enum TypeAction {
-    CREATION
-    MODIFICATION
-    RESILIATION
-    CHANGEMENT_STATUT
-    AJOUT_LIGNE
-  }
+abstract class OperateurFacturation <<compte>> {
+  --
+  consulterTableauDeBord()
 }
 
-' ========================================
-' PACKAGE GESTION FACTURATION
-' ========================================
-package "Gestion Facturation" <<facturation>> {
-  
-  class Invoice {
-    - id: String
-    - numero_facture: String {unique}
-    - periode_debut: Date
-    - periode_fin: Date
-    - montant_ttc: Real
-    - statut: StatutFacture
-    - fichier_pdf: String
-    __
-    + publier(): void
-    + annuler(): void
-  }
-  
-  class NotificationFacture {
-    - id: String
-    - canal: Canal
-    - destinataire: String
-    - statut: Statut
-  }
-  
-  class HistoriqueFacturation {
-    - id: String
-    - type_action: TypeActionFacturation
-    - ancien_statut: String
-    - nouveau_statut: String
-  }
-  
-  class Publication {
-    - id: String
-    - cycle_facturation: String
-    - periode_debut: Date
-    - periode_fin: Date
-    - nombre_lignes_traitees: Integer
-    - montant_total: Real
-  }
-  
-  enum StatutFacture {
-    BROUILLON
-    EN_COURS
-    VALIDEE
-    PUBLIEE
-    PAYEE
-    ANNULEE
-  }
-  
-  enum Canal {
-    EMAIL
-    SMS
-  }
-  
-  enum Statut {
-    ENVOYEE
-    ECHEC
-    NON_CONFIGUREE
-  }
-  
-  enum TypeActionFacturation {
-    CREATION
-    MODIFICATION
-    VALIDATION
-    PUBLICATION
-    PAIEMENT
-    ANNULATION
-  }
+class SuperAdministrateur <<acteur>> {
+  --
+  gererUtilisateurs()
 }
 
-' ========================================
-' PACKAGE CATALOGUE PRODUITS
-' ========================================
-package "Catalogue Produits" <<catalogue>> {
-  
-  class Package {
-    - id: String
-    - nom: String
-    - code: String {unique}
-    - type_forfait: TypeForfait
-    - prix_mensuel: Real
-  }
-  
-  class Service {
-    - id: String
-    - nom: String
-    - code: String {unique}
-    - type_service: TypeService
-  }
-  
-  class TarifService {
-    - id: String
-    - nom_option: String
-    - prix: Real
-  }
-  
-  class Cycle {
-    - id: String
-    - date_debut: Date
-    - date_fin: Date
-  }
-  
-  enum TypeForfait {
-    DATA
-    VOIX
-    SMS
-    MIXTE
-  }
-  
-  enum TypeService {
-    PASS
-    OPTION
-    PROMO
-  }
+class ChefFacturation <<acteur>> {
+  --
+  validerDemande()
+  rejeterDemande(motif)
 }
 
-' ========================================
-' RELATIONS ENTRE CLASSES
-' ========================================
+class AgentFacturation <<acteur>> {
+  --
+  gererContrats()
+  publierFactures()
+}
 
-' === Utilisateurs ===
-User "1" *-- "0..*" StatusHistory : historique >
-User "0..1" o-- "0..*" User : created_by >
-User "0..1" o-- "0..*" User : status_changed_by >
-User -- RoleChoices
-User -- StatusChoices
+class Commercial <<acteur>> {
+  matricule : String
+  --
+  soumettreDemande()
+}
 
-' === Contrats ===
-Commercial "0..1" o-- "0..*" Company : gère >
-User "0..1" o-- "0..*" Company : payeur >
-Company "1" *-- "0..*" Line : possède >
-Line "0..1" o-- "1" User : employé >
-Company "1" *-- "0..*" AuditContrat : trace >
-User "1" -- "0..*" AuditContrat : effectue >
-Company -- CategorieClient
-Company -- StatutFacturation
-Company -- ModeReglement
-Line -- CycleFacturation
-AuditContrat -- TypeAction
+class Payeur <<acteur>> {
+  --
+  consulterFactures()
+  simulerFacturation()
+}
 
-' === Facturation ===
-Company "1" o-- "0..*" Invoice : reçoit >
-Line "0..1" o-- "0..*" Invoice : concerne >
-Invoice "1" *-- "0..*" NotificationFacture : génère >
-Invoice "1" *-- "0..*" HistoriqueFacturation : historise >
-User "1" -- "0..*" HistoriqueFacturation : effectue >
-User "1" -- "0..*" Publication : publie >
-Invoice -- StatutFacture
-NotificationFacture -- Canal
-NotificationFacture -- Statut
-HistoriqueFacturation -- TypeActionFacturation
+class Employe <<acteur>> {
+  msisdn : String
+  --
+  consulterFactureSommaire()
+  simulerConsommation()
+}
 
-' === Catalogue ===
-Service "1" *-- "0..*" TarifService : a >
-Line "1" o-- "0..*" Cycle : utilise >
-Service "1" o-- "0..*" Cycle : dans >
-Package -- TypeForfait
-Service -- TypeService
+Utilisateur <|-- OperateurFacturation
+Utilisateur <|-- SuperAdministrateur
+Utilisateur <|-- Commercial
+Utilisateur <|-- Payeur
+Utilisateur <|-- Employe
+OperateurFacturation <|-- ChefFacturation
+OperateurFacturation <|-- AgentFacturation
 
-' ========================================
-' NOTES ET LÉGENDES
-' ========================================
+' =========================
+' Contrats et catalogue
+' =========================
+class Contrat <<metier>> {
+  id : UUID
+  code : String
+  raisonSociale : String
+  categorie : String
+  statut : String
+  dateEffet : Date
+  resilie : Boolean
+  --
+  ajouterLigne()
+  resilier(motif)
+}
 
-note top of User
-  **Utilisateurs du système**
-  Rôles : Admin, Chef, Agent, Payeur, Employé
-  Hiérarchie des permissions
+class DemandeContrat <<metier>> {
+  id : UUID
+  statut : String
+  motifRejet : String
+  dateSoumission : Date
+  --
+  soumettre()
+  valider()
+  rejeter(motif)
+}
+
+class Ligne <<metier>> {
+  id : UUID
+  msisdn : String[8]
+  forfait : Decimal
+  cycle : String
+  statut : String
+  --
+  affecterEmploye()
+  ajouterService()
+}
+
+class Forfait <<catalogue>> {
+  id : UUID
+  nom : String
+  prixMensuel : Decimal
+  --
+  modifierTarif()
+}
+
+class Service <<catalogue>> {
+  id : UUID
+  nom : String
+  type : String
+  prix : Decimal
+  --
+  modifierTarif()
+}
+
+Commercial "1" -- "0..*" DemandeContrat : soumet
+ChefFacturation "1" -- "0..*" DemandeContrat : traite
+DemandeContrat "0..1" --> "0..1" Contrat : devient
+Commercial "0..1" -- "0..*" Contrat : signe
+Payeur "0..1" -- "0..*" Contrat : gère
+Contrat "1" *-- "0..*" Ligne : contient
+Employe "0..1" -- "0..1" Ligne : utilise
+Forfait "0..1" -- "0..*" Ligne : appliqué
+Ligne "0..*" -- "0..*" Service : options
+AgentFacturation "1" -- "0..*" Contrat : gère
+SuperAdministrateur "1" -- "0..*" Forfait : configure
+SuperAdministrateur "1" -- "0..*" Service : configure
+
+' =========================
+' Facturation et traitements
+' =========================
+class Facture <<facturation>> {
+  id : UUID
+  numero : String
+  type : String
+  periode : String
+  montantTTC : Decimal
+  statut : String
+  fichierPDF : File
+  --
+  consulter()
+  telechargerPDF()
+}
+
+class Publication <<facturation>> {
+  id : UUID
+  periode : String
+  statut : String
+  datePublication : Date
+  --
+  publier()
+  consulterHistorique()
+}
+
+class TraitementPDF <<facturation>> {
+  id : UUID
+  fichierSource : File
+  statut : String
+  progression : Integer
+  --
+  decouper()
+  suivreProgression()
+}
+
+class Simulation <<facturation>> {
+  id : UUID
+  montantEstime : Decimal
+  dateSimulation : Date
+  --
+  calculer()
+}
+
+class NotificationFacture <<facturation>> {
+  canal : String
+  destinataire : String
+  statut : String
+  --
+  envoyer()
+}
+
+Contrat "1" *-- "0..*" Facture : factures globales
+Ligne "0..1" -- "0..*" Facture : facture sommaire
+Publication "1" o-- "0..*" Facture : publie
+TraitementPDF "1" --> "0..*" Facture : produit
+AgentFacturation "1" -- "0..*" Publication : lance
+AgentFacturation "1" -- "0..*" TraitementPDF : exécute
+Utilisateur "1" -- "0..*" Simulation : réalise
+Ligne "0..1" -- "0..*" Simulation : concerne
+Facture "1" *-- "0..*" NotificationFacture : notification
+Payeur "1" -- "0..*" Facture : consulte
+Employe "1" -- "0..*" Facture : consulte
+
+note right of Utilisateur
+  Les acteurs correspondent aux valeurs du champ
+  User.role dans l'application Django.
 end note
 
-note top of Company
-  **Contrats entreprises**
-  Un contrat = plusieurs lignes téléphoniques
-  Possibilité de résiliation
+note bottom of Facture
+  type = GLOBALE ou SOMMAIRE
 end note
 
-note top of Invoice
-  **Factures clients**
-  Globales (GLO) ou Individuelles (SOM)
-  Workflow : Brouillon → Publiée → Payée
-end note
-
-note bottom of Cycle
-  **Affectation temporaire**
-  Lie un service à une ligne
-  pendant une période donnée
-end note
-
-legend right
-  **Légende des relations**
-  ──── : Association
-  ◆──── : Composition (contient)
-  ◇──── : Agrégation (utilise)
-  
-  **Cardinalités**
-  1 : Un
-  0..1 : Zéro ou un
-  0..* : Zéro ou plusieurs
-  1..* : Un ou plusieurs
+legend bottom
+  Rose : acteurs | Bleu : comptes | Jaune : contrats
+  Vert : facturation | Violet : catalogue
+  *-- : composition | -- : association | <|-- : héritage
 endlegend
-
 @enduml

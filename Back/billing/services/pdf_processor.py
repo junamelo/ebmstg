@@ -587,11 +587,11 @@ class PDFMatcher:
         
         for file_info in created_files:
             identifiers = file_info['identifiers']
+            matcher = cls.match_global_pdf_to_invoice if invoice_type == 'GLO' else cls.match_pdf_to_invoice
             
             # D'abord vérifier si la facture est déjà traitée (VALIDEE, PUBLIEE, PAYEE)
             processed_invoice = None
             if processed_invoices_queryset is not None:
-                matcher = cls.match_global_pdf_to_invoice if invoice_type == 'GLO' else cls.match_pdf_to_invoice
                 processed_invoice = matcher(
                     identifiers, processed_invoices_queryset
                 )

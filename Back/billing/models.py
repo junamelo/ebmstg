@@ -618,3 +618,34 @@ class TraitementPDF(models.Model):
     class Meta:
         db_table = 'traitements_pdf'
         ordering = ['-date_creation']
+
+
+class BlocFacturesTest(models.Model):
+    """Archive un bloc PDF de test avant son import volontaire dans le circuit normal."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    createur = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='blocs_factures_test',
+        verbose_name='Créé par',
+    )
+    fichier_pdf = models.FileField(upload_to='blocs_test/%Y/%m/', verbose_name='Bloc PDF')
+    nom_fichier = models.CharField(max_length=255)
+    type_facture = models.CharField(max_length=3, choices=[('SOM', 'Sommaire'), ('GLO', 'Globale')])
+    periode_debut = models.DateField()
+    periode_fin = models.DateField()
+    date_emission = models.DateField()
+    nombre_factures = models.PositiveSmallIntegerField()
+    montant_total_ttc = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    libelle = models.CharField(max_length=120, blank=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'blocs_factures_test'
+        verbose_name = 'Bloc de factures de test'
+        verbose_name_plural = 'Blocs de factures de test'
+        ordering = ['-date_creation']
+
+    def __str__(self):
+        return f"{self.nom_fichier} ({self.nombre_factures} facture(s))"

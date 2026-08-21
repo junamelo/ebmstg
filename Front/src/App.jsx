@@ -29,6 +29,7 @@ import GestionComptesClients from './pages/agent/GestionComptesClients'
 import GestionContrats from './pages/agent/GestionContrats'
 import DetailContrat from './pages/agent/DetailContrat'
 import GestionCommerciaux from './pages/agent/GestionCommerciaux'
+import GenerateurBlocTest from './pages/agent/GenerateurBlocTest'
 import CommercialDashboard from './pages/commercial/CommercialDashboard'
 import CommercialDemandes from './pages/commercial/CommercialDemandes'
 
@@ -75,6 +76,7 @@ export default function App() {
             <Route path="contrats" element={<GestionContrats />} />
             <Route path="contrats/:id" element={<DetailContrat />} />
             <Route path="publication" element={<PublicationPdf />} />
+            <Route path="generation-bloc-test" element={<GenerateurBlocTest />} />
             <Route path="factures-a-publier" element={<FacturesAPublier />} />
             <Route path="publication/historique" element={<HistoriquePublications />} />
             <Route path="forfaits" element={<GestionForfaits />} />
@@ -99,6 +101,7 @@ export default function App() {
             <Route path="contrats" element={<GestionContrats />} />
             <Route path="contrats/:id" element={<DetailContrat />} />
             <Route path="publication" element={<PublicationPdf />} />
+            <Route path="generation-bloc-test" element={<GenerateurBlocTest />} />
             <Route path="factures-a-publier" element={<FacturesAPublier />} />
             <Route path="publication/historique" element={<HistoriquePublications />} />
             <Route path="forfaits" element={<GestionForfaits />} />

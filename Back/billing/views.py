@@ -1060,16 +1060,18 @@ class ContractRequestViewSet(viewsets.ModelViewSet):
 # ==================== VIEWSETS PHASE 4 : FACTURATION ====================
 
 from datetime import datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from django.db import transaction
 from django.db.models import Q, Sum, Count
 from django.core.files.base import ContentFile
 import uuid
+from types import SimpleNamespace
 
-from .models import Invoice, HistoriqueFacturation, Publication, TraitementPDF
+from .models import Invoice, HistoriqueFacturation, Publication, TraitementPDF, BlocFacturesTest
 from .serializers import (
     InvoiceSerializer, InvoiceListSerializer, InvoiceCreateSerializer,
     GenerateInvoiceSerializer, CalculLineInvoiceSerializer,
+    GenerateTestBlockSerializer, BlocFacturesTestSerializer,
     ValiderInvoiceSerializer, AnnulerInvoiceSerializer,
     HistoriqueFacturationSerializer, PublicationSerializer,
     PublicationListSerializer, PublicationCreateSerializer,
@@ -1099,6 +1101,8 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             return InvoiceCreateSerializer
         elif self.action == 'generate':
             return GenerateInvoiceSerializer
+        elif self.action == 'generate_test_block':
+            return GenerateTestBlockSerializer
         elif self.action == 'calculate_line':
             return CalculLineInvoiceSerializer
         elif self.action == 'valider':
@@ -1316,6 +1320,181 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             'factures': InvoiceListSerializer(factures_creees, many=True).data,
             'erreurs': erreurs
         })
+
+    def _generer_numero_facture_test(self, type_facture, periode_debut):
+        """Produit un numéro reconnu par l'extracteur et unique en base."""
+        prefix = f'FAC-TEST-{type_facture}-{periode_debut:%Y%m}-'
+        sequence = Invoice.objects.filter(numero_facture__startswith=prefix).count() + 1
+        while True:
+            numero = f'{prefix}{sequence:04d}'
+            if not Invoice.objects.filter(numero_facture=numero).exists():
+                return numero
+            sequence += 1
+
+    @extend_schema(
+        summary='Générer un bloc PDF de test',
+        description=(
+            'Crée un unique PDF multi-pages de factures de test, crée les factures '
+            'EN_COURS correspondantes et lance le même découpage Celery que pour un import PDF.'
+        ),
+        request=GenerateTestBlockSerializer,
+    )
+    @action(
+        detail=False,
+        methods=['post'],
+        url_path='generate-test-block',
+        permission_classes=[IsAuthenticated, CanGenerateInvoices],
+    )
+    def generate_test_block(self, request):
+        """Crée un bloc de test téléchargeable sans le soumettre au découpage."""
+        serializer = GenerateTestBlockSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        type_facture = data['type_facture']
+        periode_debut = data['periode_debut']
+        periode_fin = data['periode_fin']
+        date_emission = data.get('date_emission') or datetime.now().date()
+        date_echeance = date_emission + timedelta(days=data['delai_echeance_jours'])
+        libelle = data.get('libelle') or 'Services postpayés de test'
+        taux_tva = data['taux_tva']
+        company_ids = {item['company_id'] for item in data['items']}
+        line_ids = {item['line_id'] for item in data['items'] if item.get('line_id')}
+        companies = Company.objects.in_bulk(company_ids)
+        lines = Line.objects.select_related('company').in_bulk(line_ids)
+        invoices = []
+        bloc = None
+
+        try:
+            with transaction.atomic():
+                for item in data['items']:
+                    company = companies[item['company_id']]
+                    line = lines.get(item.get('line_id'))
+                    montant_ttc = item['montant_ttc']
+                    if company.est_exonere:
+                        montant_ht = montant_ttc
+                        montant_tva = Decimal('0.00')
+                    else:
+                        divisor = Decimal('1.00') + (taux_tva / Decimal('100.00'))
+                        montant_ht = (montant_ttc / divisor).quantize(
+                            Decimal('0.01'), rounding=ROUND_HALF_UP
+                        )
+                        montant_tva = montant_ttc - montant_ht
+
+                    invoice = Invoice.objects.create(
+                        company=company,
+                        line=line,
+                        numero_facture=self._generer_numero_facture_test(type_facture, periode_debut),
+                        periode_debut=periode_debut,
+                        periode_fin=periode_fin,
+                        montant_ht=montant_ht,
+                        montant_tva=montant_tva,
+                        montant_ttc=montant_ttc,
+                        statut='BROUILLON',
+                        date_emission_pdf=date_emission,
+                        date_echeance=date_echeance,
+                        commentaire=(
+                            'Facture de test préparée par le portail. '
+                            'Elle sera validée seulement après import et découpage du bloc PDF.'
+                        ),
+                    )
+                    HistoriqueFacturation.objects.create(
+                        invoice=invoice,
+                        utilisateur=request.user,
+                        type_action='CREATION',
+                        nouveau_statut='BROUILLON',
+                        commentaire='Facture de test préparée dans un bloc PDF à importer ultérieurement.',
+                    )
+                    invoices.append(invoice)
+
+                from .services.test_block_pdf import generate_test_invoice_block
+                source_pdf = generate_test_invoice_block(invoices, type_facture, libelle)
+                filename = f'bloc_test_{type_facture.lower()}_{periode_debut:%Y%m}_{uuid.uuid4().hex[:8]}.pdf'
+                bloc = BlocFacturesTest(
+                    createur=request.user,
+                    nom_fichier=filename,
+                    type_facture=type_facture,
+                    periode_debut=periode_debut,
+                    periode_fin=periode_fin,
+                    date_emission=date_emission,
+                    nombre_factures=len(invoices),
+                    montant_total_ttc=sum((invoice.montant_ttc for invoice in invoices), Decimal('0.00')),
+                    libelle=libelle,
+                )
+                bloc.fichier_pdf.save(filename, ContentFile(source_pdf.getvalue()), save=False)
+                bloc.save()
+        except Exception as exc:
+            if bloc and bloc.fichier_pdf:
+                bloc.fichier_pdf.delete(save=False)
+            return Response(
+                {'error': 'Impossible de générer le bloc PDF de test.', 'details': str(exc)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        try:
+            from .tasks import traiter_import_pdf
+            async_result = traiter_import_pdf.delay(str(traitement.id))
+            traitement.task_id = async_result.id
+            traitement.save(update_fields=['task_id'])
+        except Exception as exc:
+            # Ne pas conserver des factures de test impossibles à traiter.
+            traitement.fichier_source.delete(save=False)
+            traitement.delete()
+            Invoice.objects.filter(id__in=[invoice.id for invoice in invoices]).delete()
+            return Response(
+                {
+                    'error': 'Le bloc a été généré mais le service Celery est indisponible.',
+                    'details': str(exc),
+                    'solution': 'Démarrez Garnet et le worker Celery, puis réessayez.',
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        return Response(
+            {
+                'message': (
+                    f'Bloc PDF de test généré avec {len(invoices)} facture(s). '
+                    'Le découpage et le rapprochement sont en attente.'
+                ),
+                'test_block': {
+                    'filename': filename,
+                    'type_facture': type_facture,
+                    'factures_creees': len(invoices),
+                    'invoice_ids': [str(invoice.id) for invoice in invoices],
+                    'download_url': f'/api/billing/invoices/test-blocks/{traitement.id}/download/',
+                },
+                'job': {
+                    'id': str(traitement.id),
+                    'statut': traitement.statut,
+                    'progression': traitement.progression,
+                    'date_creation': traitement.date_creation.isoformat(),
+                },
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path=r'test-blocks/(?P<job_id>[^/.]+)/download',
+        permission_classes=[IsAuthenticated, CanGenerateInvoices],
+    )
+    def download_test_block(self, request, job_id=None):
+        """Télécharge le PDF source d'un bloc de test généré par la plateforme."""
+        traitement = TraitementPDF.objects.filter(id=job_id, cycle='TEST').first()
+        if not traitement:
+            return Response({'error': 'Bloc PDF de test introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+        if request.user.role == 'AGENT_FACTURATION' and traitement.agent_id != request.user.id:
+            return Response({'error': 'Accès non autorisé à ce bloc PDF.'}, status=status.HTTP_403_FORBIDDEN)
+        if not traitement.fichier_source or not traitement.fichier_source.storage.exists(traitement.fichier_source.name):
+            return Response({'error': 'Le fichier PDF source est introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+        return FileResponse(
+            traitement.fichier_source.open('rb'),
+            as_attachment=True,
+            filename=traitement.fichier_source.name.rsplit('/', 1)[-1],
+            content_type='application/pdf',
+        )
     
     @extend_schema(
         summary="Calculer la facture d'une ligne",

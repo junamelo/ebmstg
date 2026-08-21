@@ -1,0 +1,101 @@
+PARTIE 4 : EXPLOITATION (Guide d'exploitation)
+
+4.3. MAINTENANCE : ACTIONS À MENER EN CAS DE CERTAINES ERREURS
+
+La maintenance du portail Moov e-Factures consiste à diagnostiquer les erreurs, à corriger le composant concerné et à reprendre le parcours interrompu. Avant toute intervention importante, une copie de la base PostgreSQL et des fichiers PDF doit être conservée.
+
+Le diagnostic commence par l'observation du message affiché dans l'interface, de la console du navigateur, du terminal Django, du terminal Celery et des fichiers Back/logs/app.log et Back/logs/security.log. Il faut également vérifier que PostgreSQL, Garnet, Django, Celery et le frontend sont toujours démarrés.
+
+Tableau : Actions à mener en cas d'erreurs
+
++----------------------+--------------------------------------+--------------------------------------+
+| Code ou erreur       | Signification                        | Action recommandée                  |
++----------------------+--------------------------------------+--------------------------------------+
+| 404                  | Page ou route API introuvable        | Vérifier l'URL et les routes, puis   |
+|                      |                                      | actualiser la page.                 |
+| 401                  | Authentification absente ou expirée | Se reconnecter et vérifier le JWT.  |
+| 403                  | Accès interdit                      | Vérifier le rôle et les permissions.|
+| 400                  | Données ou requête invalides        | Corriger le formulaire ou le PDF.   |
+| 500                  | Erreur interne du serveur           | Consulter les journaux et corriger  |
+|                      |                                      | l'erreur Django.                    |
+| Network Error        | Backend ou frontend inaccessible    | Vérifier les ports 8000 et 3000,   |
+|                      |                                      | puis redémarrer le service absent.  |
+| PostgreSQL            | Base inaccessible                   | Vérifier PostgreSQL, le port 5433  |
+|                      |                                      | et les variables du fichier .env.   |
+| Garnet/Celery         | Tâche non envoyée ou bloquée        | Démarrer Garnet avec --lua, puis    |
+|                      |                                      | relancer Celery.                    |
+| PDF manquant          | Aucun fichier associé à la facture  | Vérifier le stockage média et le    |
+|                      |                                      | résultat du traitement PDF.         |
+| Notification e-mail   | Envoi SMTP échoué                   | Vérifier la configuration SMTP et   |
+|                      |                                      | l'adresse du destinataire.          |
++----------------------+--------------------------------------+--------------------------------------+
+
+Après l'action recommandée, le parcours interrompu doit être repris depuis la dernière étape valide. Une publication déjà réussie ne doit pas être relancée sans vérifier le statut de la facture.
+
+Erreur 404 : page ou route API introuvable
+
+Diagnostic : l'adresse demandée n'existe pas, la route frontend est incorrecte ou le frontend appelle un endpoint qui n'est plus disponible.
+Correction : vérifier l'URL, la configuration des routes React et la déclaration de la route dans Django. Corriger l'appel obsolète puis relancer le backend ou le frontend si nécessaire.
+Reprise : actualiser la page et refaire l'opération depuis le menu de l'application.
+
+Erreur 401 : authentification absente ou expirée
+
+Diagnostic : le jeton JWT est absent, invalide ou arrivé à expiration.
+Correction : se déconnecter puis se reconnecter. Si le problème persiste, vérifier l'URL de connexion, la validité du compte et les journaux Django.
+Reprise : retourner à la page de connexion et reprendre l'opération après une authentification réussie.
+
+Erreur 403 : accès interdit
+
+Diagnostic : l'utilisateur est connecté mais son rôle ne possède pas la permission demandée, ou il tente d'accéder aux données d'un autre contrat ou d'une autre ligne.
+Correction : vérifier le rôle, le statut du compte et les permissions définies dans le backend. Ne pas supprimer le contrôle d'accès pour contourner l'erreur.
+Reprise : utiliser une fonctionnalité autorisée ou demander à l'administrateur de corriger le rattachement du compte.
+
+Erreur 400 : requête ou données invalides
+
+Diagnostic : un champ obligatoire est absent, une valeur ne respecte pas le format attendu, un numéro existe déjà ou le fichier PDF ne correspond pas aux paramètres choisis.
+Correction : lire le détail retourné par l'API, corriger le formulaire ou le fichier importé et vérifier les données en double avant de renvoyer la requête.
+Reprise : soumettre à nouveau le formulaire ou sélectionner uniquement les éléments valides.
+
+Erreur de connexion frontend/backend
+
+Diagnostic : le navigateur affiche « Network Error » ou « ERR_CONNECTION_REFUSED ». Le serveur Django ou Vite n'est pas lancé, ou l'URL et le port utilisés ne correspondent pas à la configuration.
+Correction : vérifier Django sur le port 8000 et Vite sur le port 3000, puis relancer le service manquant. Contrôler également la configuration proxy de Vite et les origines CORS.
+Reprise : actualiser l'interface avec Ctrl + F5 et refaire la connexion.
+
+Erreur 500 : erreur interne du serveur
+
+Diagnostic : une exception apparaît dans le terminal Django ou dans app.log. Elle peut provenir d'une donnée incohérente, d'une migration manquante, d'une erreur de code ou d'un service indisponible.
+Correction : conserver le message d'erreur, identifier la vue ou le service concerné, corriger la cause puis exécuter python manage.py check et les tests concernés.
+Reprise : redémarrer Django et refaire uniquement le parcours qui avait échoué.
+
+Erreur de connexion à PostgreSQL
+
+Diagnostic : Django ne peut pas joindre la base ou reçoit une erreur d'identifiant, de mot de passe ou de port.
+Correction : vérifier que PostgreSQL 16 est démarré, que le port 5433 est disponible et que les variables POSTGRES_* du fichier .env correspondent à la configuration de PostgreSQL. Appliquer les migrations après correction.
+Reprise : relancer Django puis vérifier la connexion et l'affichage des données.
+
+Erreur de connexion à Garnet ou à Celery
+
+Diagnostic : Celery affiche une erreur de connexion, une combinaison d'identifiant et de mot de passe invalide ou « Lua scripting support disabled ».
+Correction : démarrer Garnet sur le port 6379 avec le même mot de passe que REDIS_URL. Pour Garnet, activer Lua avec l'option --lua, car Celery utilise des scripts Redis pour certains verrous. Relancer ensuite Celery et vérifier le message ready.
+Reprise : relancer le traitement PDF depuis l'interface uniquement lorsque le worker est connecté.
+
+Erreur pendant le découpage ou la publication d'un PDF
+
+Diagnostic : la tâche Celery échoue, reste en attente, signale un fichier manquant ou ne trouve pas la correspondance entre une facture, un contrat et une ligne.
+Correction : vérifier que le PDF est lisible, que le fichier est présent dans le stockage média, que la période et le type de facture sont corrects et que les utilisateurs, contrats et lignes correspondants existent en base. Consulter les messages du worker avant de relancer.
+Reprise : corriger la donnée en erreur, réimporter le bloc si nécessaire et relancer uniquement les factures non traitées. Les factures déjà publiées ne doivent pas être publiées une seconde fois.
+
+PDF manquant lors de la consultation
+
+Diagnostic : la facture apparaît dans la liste mais aucun fichier n'est associé ou le fichier a été déplacé.
+Correction : vérifier le chemin du stockage média, les droits d'écriture et la présence réelle du fichier. Réassocier ou recréer le PDF depuis le traitement de publication si nécessaire.
+Reprise : actualiser la liste puis utiliser l'aperçu ou le téléchargement lorsque le fichier est disponible.
+
+Erreur de notification e-mail
+
+Diagnostic : la facture est publiée mais l'envoi du message échoue, généralement à cause d'une configuration SMTP incorrecte ou d'une adresse invalide.
+Correction : vérifier SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD et SMTP_USE_TLS dans l'environnement, sans afficher les secrets dans les journaux. Contrôler également l'adresse du destinataire.
+Reprise : conserver la facture publiée, corriger la configuration puis renvoyer la notification séparément. Une erreur d'e-mail ne doit pas annuler la publication.
+
+Après chaque correction, il faut vérifier les journaux, redémarrer uniquement les services nécessaires et réaliser un test fonctionnel. Les parcours minimaux sont la connexion, la consultation d'une facture et, pour un agent, l'importation puis la publication d'un petit bloc PDF. Si l'erreur persiste, conserver le message complet, l'heure, le rôle utilisé et l'action exécutée afin de faciliter l'analyse par l'administrateur.

@@ -1,4 +1,11 @@
 import api from './api'
+import {
+  isDashboardDemo,
+  DEMO_ADMIN_STATS,
+  DEMO_AGENT_STATS,
+  DEMO_PAYEUR_STATS,
+  DEMO_EMPLOYE_STATS,
+} from './dashboardDemo'
 
 // Backend Django prêt - Plus besoin des mocks
 
@@ -28,6 +35,30 @@ export const uploadBlocPdf = async (fichier, cycle, periodeDebut, periodeFin, on
 export const getStatutTraitementPdf = async (jobId) => {
   const response = await api.get(`/billing/invoices/pdf-jobs/${jobId}/`)
   return response.data
+}
+
+/**
+ * Génère un gros bloc PDF de démonstration à partir de contrats ou lignes
+ * existants, puis l'envoie au même traitement Celery que les PDF importés.
+ */
+export const genererBlocPdfTest = async (payload) => {
+  const response = await api.post('/billing/invoices/generate-test-block/', payload)
+  return response.data
+}
+
+/** Télécharge le PDF source produit par le générateur de blocs de test. */
+export const telechargerBlocPdfTest = async (jobId, filename = 'bloc_factures_test.pdf') => {
+  const response = await api.get(`/billing/invoices/test-blocks/${jobId}/download/`, {
+    responseType: 'blob',
+  })
+  const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(url)
 }
 
 /**
@@ -129,17 +160,23 @@ export const reinitialiserMotDePasseAdmin = async (id) => {
  * Endpoint: GET /api/billing/stats/admin/
  */
 export const getStatistiques = async () => {
-  const response = await api.get('/billing/stats/admin/')
-  const data = response.data
-  const global = data.statistiques_globales || {}
-  return {
-    ...data,
-    totalContrats: global.total_entreprises || 0,
-    totalLignesActives: global.total_lignes || 0,
-    totalUtilisateursActifs: (data.stats_agents?.agents_actifs || 0) + (data.stats_utilisateurs?.total_payeurs || 0) + (data.stats_utilisateurs?.total_employes || 0),
-    facturationMensuelle: data.evolution_mensuelle || [],
-    historiquePublications: [],
-    dernieresConnexions: [],
+  try {
+    const response = await api.get('/billing/stats/admin/')
+    const data = response.data
+    const global = data.statistiques_globales || {}
+    const normalized = {
+      ...data,
+      totalContrats: global.total_entreprises || 0,
+      totalLignesActives: global.total_lignes || 0,
+      totalUtilisateursActifs: (data.stats_agents?.agents_actifs || 0) + (data.stats_utilisateurs?.total_payeurs || 0) + (data.stats_utilisateurs?.total_employes || 0),
+      facturationMensuelle: data.evolution_mensuelle || [],
+      historiquePublications: [],
+      dernieresConnexions: [],
+    }
+    return isDashboardDemo() ? { ...normalized, ...DEMO_ADMIN_STATS, _demo: true } : normalized
+  } catch (error) {
+    if (isDashboardDemo()) return { ...DEMO_ADMIN_STATS, _demo: true }
+    throw error
   }
 }
 
@@ -148,30 +185,33 @@ export const getStatistiques = async () => {
  * Endpoint: GET /api/billing/stats/payeur/
  */
 export const getStatsPayeur = async () => {
-  const response = await api.get('/billing/stats/payeur/')
-  const data = response.data
-  const stats = data.statistiques || {}
-  const contrat = data.contrat || null
-  return {
-    ...data,
-    // Infos du contrat (vraies données)
-    numeroContrat: contrat?.compte || null,
-    raisonSociale: contrat?.raison_sociale || null,
-    categorieClient: contrat?.categorie || null,
-    nombreEntreprises: contrat?.nombre_entreprises || 0,
-    // Lignes
-    nombreLignesActives: stats.nombre_lignes_actives || 0,
-    nombreLignesTotal: stats.nombre_lignes || 0,
-    // Tableau des lignes pour le dashboard (avec montant réel)
-    lignesDetail: (data.lignes_a_surveiller || []).map(ligne => ({
-      msisdn: ligne.msisdn,
-      utilisateur: ligne.utilisateur || '—',
-      forfait: ligne.cycle || '—',
-      montant: ligne.montant_facture || 0,
-      statut: 'ACTIF',
-    })),
-    lignesASurveiller: [],
-    dernieresSimulations: [],
+  try {
+    const response = await api.get('/billing/stats/payeur/')
+    const data = response.data
+    const stats = data.statistiques || {}
+    const contrat = data.contrat || null
+    const normalized = {
+      ...data,
+      numeroContrat: contrat?.compte || null,
+      raisonSociale: contrat?.raison_sociale || null,
+      categorieClient: contrat?.categorie || null,
+      nombreEntreprises: contrat?.nombre_entreprises || 0,
+      nombreLignesActives: stats.nombre_lignes_actives || 0,
+      nombreLignesTotal: stats.nombre_lignes || 0,
+      lignesDetail: (data.lignes_a_surveiller || []).map(ligne => ({
+        msisdn: ligne.msisdn,
+        utilisateur: ligne.utilisateur || '—',
+        forfait: ligne.cycle || '—',
+        montant: ligne.montant_facture || 0,
+        statut: 'ACTIF',
+      })),
+      lignesASurveiller: [],
+      dernieresSimulations: [],
+    }
+    return isDashboardDemo() ? { ...normalized, ...DEMO_PAYEUR_STATS, _demo: true } : normalized
+  } catch (error) {
+    if (isDashboardDemo()) return { ...DEMO_PAYEUR_STATS, _demo: true }
+    throw error
   }
 }
 
@@ -180,13 +220,19 @@ export const getStatsPayeur = async () => {
  * Endpoint: GET /api/billing/stats/employe/
  */
 export const getStatsEmploye = async () => {
-  const response = await api.get('/billing/stats/employe/')
-  const data = response.data
-  return {
-    ...data,
-    dernieresSimulations: (data.simulations?.dernieres || []).map(simulation => ({
-      date: simulation.date_simulation, montant: simulation.montant_estime
-    }))
+  try {
+    const response = await api.get('/billing/stats/employe/')
+    const data = response.data
+    const normalized = {
+      ...data,
+      dernieresSimulations: (data.simulations?.dernieres || []).map(simulation => ({
+        date: simulation.date_simulation, montant: simulation.montant_estime
+      }))
+    }
+    return isDashboardDemo() ? { ...normalized, ...DEMO_EMPLOYE_STATS, _demo: true } : normalized
+  } catch (error) {
+    if (isDashboardDemo()) return { ...DEMO_EMPLOYE_STATS, _demo: true }
+    throw error
   }
 }
 
@@ -197,37 +243,45 @@ export const getStatsEmploye = async () => {
 export const getStatsAgentFacturation = async () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const isChef = user.role === 'CHEF_FACTURATION'
-  const response = await api.get(isChef ? '/billing/stats/chef/' : '/billing/stats/agent/')
-  if (isChef) {
-    const performance = response.data.performance_equipe || {}
-    return {
-      ...response.data,
-      facturesNonPubliees: 0,
-      erreursDecoupage: 0,
-      lignesSansForfait: 0,
-      servicesActifs: [],
-      historiquePublications: (response.data.dernieres_publications || []).map(publication => ({
-        date: publication.date_publication ? new Date(publication.date_publication).toLocaleDateString('fr-FR') : '-',
-        periode: `${publication.periode_debut || '—'} - ${publication.periode_fin || '—'}`,
-        nbFactures: publication.nombre_lignes_traitees || 0,
-        statut: publication.statut || 'VALIDEE',
-      })),
-      statistiques: {
-        total_publications: performance.total_publications || 0,
-        montant_total: performance.montant_total || 0,
-        lignes_traitees: 0,
-      },
-      evolution_quotidienne: response.data.publications_periode || [],
-      dernieres_publications: response.data.dernieres_publications || [],
+  try {
+    const response = await api.get(isChef ? '/billing/stats/chef/' : '/billing/stats/agent/')
+    let normalized
+    if (isChef) {
+      const performance = response.data.performance_equipe || {}
+      normalized = {
+        ...response.data,
+        facturesNonPubliees: 0,
+        erreursDecoupage: 0,
+        lignesSansForfait: 0,
+        servicesActifs: [],
+        historiquePublications: (response.data.dernieres_publications || []).map(publication => ({
+          date: publication.date_publication ? new Date(publication.date_publication).toLocaleDateString('fr-FR') : '-',
+          periode: `${publication.periode_debut || '—'} - ${publication.periode_fin || '—'}`,
+          nbFactures: publication.nombre_lignes_traitees || 0,
+          statut: publication.statut || 'VALIDEE',
+        })),
+        statistiques: {
+          total_publications: performance.total_publications || 0,
+          montant_total: performance.montant_total || 0,
+          lignes_traitees: 0,
+        },
+        evolution_quotidienne: response.data.publications_periode || [],
+        dernieres_publications: response.data.dernieres_publications || [],
+      }
+    } else {
+      const data = response.data
+      normalized = {
+        ...data,
+        facturesNonPubliees: 0,
+        erreursDecoupage: 0,
+        lignesSansForfait: 0,
+        servicesActifs: [],
+        historiquePublications: (data.dernieres_publications || []).map(publication => ({ date: publication.date_publication ? new Date(publication.date_publication).toLocaleDateString('fr-FR') : '-', periode: `${publication.periode_debut || ''} - ${publication.periode_fin || ''}`, nbFactures: publication.nombre_lignes_traitees || 0, statut: publication.statut || 'VALIDEE' })),
+      }
     }
-  }
-  const data = response.data
-  return {
-    ...data,
-    facturesNonPubliees: 0,
-    erreursDecoupage: 0,
-    lignesSansForfait: 0,
-    servicesActifs: [],
-    historiquePublications: (data.dernieres_publications || []).map(publication => ({ date: publication.date_publication ? new Date(publication.date_publication).toLocaleDateString('fr-FR') : '-', periode: `${publication.periode_debut || ''} - ${publication.periode_fin || ''}`, nbFactures: publication.nombre_lignes_traitees || 0, statut: publication.statut || 'VALIDEE' })),
+    return isDashboardDemo() ? { ...normalized, ...DEMO_AGENT_STATS, _demo: true } : normalized
+  } catch (error) {
+    if (isDashboardDemo()) return { ...DEMO_AGENT_STATS, _demo: true }
+    throw error
   }
 }

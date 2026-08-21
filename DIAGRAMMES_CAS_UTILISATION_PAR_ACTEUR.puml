@@ -1,0 +1,260 @@
+' Diagrammes de cas d'utilisation - Moov e-Factures
+' Version corrigée selon le cours UML : vue métier, cas essentiels,
+' associations simples, <<include>> obligatoire et <<extend>> optionnel.
+
+@startuml Administrateur
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+actor "Administrateur" as admin
+rectangle "Moov e-Factures" {
+  usecase "S'authentifier" as admLogin
+  usecase "Consulter le tableau\nde bord" as admDashboard
+  usecase "Gérer les comptes\nutilisateurs" as admComptes
+  usecase "Gérer les rôles et\npermissions" as admRoles
+  usecase "Gérer le catalogue\nforfaits et services" as admCatalogue
+  usecase "Gérer les contrats" as admContrats
+  usecase "Traiter un bloc\nde factures PDF" as admPdf
+  usecase "Publier des factures" as admPublier
+  usecase "Consulter l'historique\nde publication" as admHistorique
+  usecase "Exporter un contrat\nau format PDF" as admExport
+  usecase "Consulter les journaux\net statistiques" as admSuivi
+  usecase "Réinitialiser un\nmot de passe" as admMdp
+  usecase "Gérer son profil\net le 2FA" as admProfil
+}
+admin -- admLogin
+admin -- admDashboard
+admin -- admComptes
+admin -- admRoles
+admin -- admCatalogue
+admin -- admContrats
+admin -- admPdf
+admin -- admPublier
+admin -- admHistorique
+admin -- admExport
+admin -- admSuivi
+admin -- admProfil
+admMdp .> admComptes : <<extend>>
+@enduml
+
+' Diagramme global : les deux rôles de facturation partagent les cas communs.
+' Le Chef et l'Agent sont spécialisés à partir de l'opérateur de facturation.
+@startuml FacturationChefAgent
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+actor "Opérateur de facturation" as operateur <<abstract>>
+actor "Agent de facturation" as agentGlobal
+actor "Chef de facturation" as chefGlobal
+actor "Service e-mail SMTP" as smtpGlobal <<système externe>>
+
+agentGlobal -|> operateur
+chefGlobal -|> operateur
+
+rectangle "Moov e-Factures" {
+  usecase "S'authentifier" as uLogin
+  usecase "Gérer son profil\net le 2FA" as uProfil
+  usecase "Gérer les contrats" as uContrats
+  usecase "Gérer les lignes\ndu contrat" as uLignes
+  usecase "Affecter un employé\nà une ligne" as uAffecter
+  usecase "Gérer les services\nd'une ligne" as uServices
+  usecase "Gérer les commerciaux" as uCommerciaux
+  usecase "Gérer les payeurs\net les employés" as uComptesClients
+  usecase "Gérer les forfaits,\nservices et tarifs" as uCatalogue
+
+  usecase "Traiter une demande\nde contrat" as uDemande <<abstract>>
+  usecase "Valider une demande\nde contrat" as uValider
+  usecase "Rejeter une demande\nde contrat" as uRejeter
+  usecase "Consulter le détail\nde la demande" as uDetail
+  usecase "Saisir le motif\nde rejet" as uMotif
+
+  usecase "Traiter un bloc\nde factures PDF" as uPdf
+  usecase "Suivre le traitement\ndu bloc PDF" as uSuiviPdf
+  usecase "Publier des factures" as uPublier
+  usecase "Envoyer une notification\npar e-mail" as uEmail
+  usecase "Consulter l'historique\nde publication" as uHistorique
+  usecase "Exporter un contrat\nau format PDF" as uExport
+  usecase "Consulter le tableau\nde bord" as uDashboard
+  usecase "Gérer les agents\nde facturation" as uAgents
+}
+
+' Cas communs hérités par l'Agent et le Chef.
+operateur -- uLogin
+operateur -- uProfil
+operateur -- uContrats
+operateur -- uLignes
+operateur -- uCommerciaux
+operateur -- uComptesClients
+operateur -- uCatalogue
+operateur -- uDemande
+operateur -- uPdf
+operateur -- uSuiviPdf
+operateur -- uPublier
+operateur -- uHistorique
+operateur -- uExport
+operateur -- uDashboard
+
+' Fonctionnalité réservée au Chef de facturation.
+chefGlobal -- uAgents
+
+smtpGlobal -- uEmail
+
+' Sous-fonctions et extensions.
+uAffecter .> uLignes : <<extend>>
+uServices .> uLignes : <<extend>>
+uValider -|> uDemande
+uRejeter -|> uDemande
+uDemande .> uDetail : <<include>>
+uRejeter .> uMotif : <<include>>
+uEmail .> uPublier : <<extend>>
+
+note right of uEmail
+  Seulement si l'option e-mail
+  est sélectionnée lors de la publication.
+end note
+@enduml
+
+@startuml ChefFacturation
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+actor "Chef de facturation" as chef
+actor "Service e-mail SMTP" as smtp <<système externe>>
+rectangle "Moov e-Factures" {
+  usecase "Traiter une demande\nde contrat" as cTraiter <<abstract>>
+  usecase "Valider une demande\nde contrat" as cValider
+  usecase "Rejeter une demande\nde contrat" as cRejeter
+  usecase "Consulter le détail\nde la demande" as cDetail
+  usecase "Saisir le motif\nde rejet" as cMotif
+  usecase "Gérer les contrats" as cContrats
+  usecase "Gérer les agents\nde facturation" as cAgents
+  usecase "Traiter un bloc\nde factures PDF" as cPdf
+  usecase "Publier des factures" as cPublier
+  usecase "Envoyer une notification\npar e-mail" as cEmail
+  usecase "Consulter l'historique\nde publication" as cHistorique
+  usecase "Exporter un contrat\nau format PDF" as cExport
+}
+chef -- cTraiter
+chef -- cContrats
+chef -- cAgents
+chef -- cPdf
+chef -- cPublier
+chef -- cHistorique
+chef -- cExport
+smtp -- cEmail
+cValider -|> cTraiter
+cRejeter -|> cTraiter
+cTraiter .> cDetail : <<include>>
+cRejeter .> cMotif : <<include>>
+cEmail .> cPublier : <<extend>>
+note right of cEmail
+  Seulement si l'option e-mail
+  est sélectionnée lors de la publication.
+end note
+@enduml
+
+@startuml AgentFacturation
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+actor "Agent de facturation" as agent
+actor "Service e-mail SMTP" as smtp <<système externe>>
+rectangle "Moov e-Factures" {
+  usecase "Gérer un contrat" as aContrat
+  usecase "Gérer les lignes\ndu contrat" as aLignes
+  usecase "Affecter un employé\nà une ligne" as aAffecter
+  usecase "Gérer les services\nd'une ligne" as aServices
+  usecase "Gérer les commerciaux" as aCommerciaux
+  usecase "Traiter une demande\nde contrat" as aDemande
+  usecase "Traiter un bloc\nde factures PDF" as aPdf
+  usecase "Suivre le traitement\ndu bloc PDF" as aSuiviPdf
+  usecase "Publier des factures" as aPublier
+  usecase "Envoyer une notification\npar e-mail" as aEmail
+  usecase "Consulter l'historique\nde publication" as aHistorique
+  usecase "Exporter un contrat\nau format PDF" as aExport
+}
+agent -- aContrat
+agent -- aCommerciaux
+agent -- aDemande
+agent -- aPdf
+agent -- aSuiviPdf
+agent -- aPublier
+agent -- aHistorique
+agent -- aExport
+smtp -- aEmail
+aAffecter .> aLignes : <<extend>>
+aServices .> aLignes : <<extend>>
+aEmail .> aPublier : <<extend>>
+note right of aEmail
+  Seulement si l'option e-mail
+  est sélectionnée lors de la publication.
+end note
+@enduml
+
+@startuml Commercial
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+actor "Commercial" as commercial
+rectangle "Moov e-Factures" {
+  usecase "Soumettre une demande\nde contrat" as mSoumettre
+  usecase "Renseigner les informations\ndu contrat proposé" as mInfos
+  usecase "Suivre ses demandes\nde contrat" as mSuivi
+  usecase "Consulter le motif\nde rejet" as mRejet
+  usecase "Consulter ses contrats\nvalidés" as mContrats
+}
+commercial -- mSoumettre
+commercial -- mSuivi
+commercial -- mContrats
+mSoumettre .> mInfos : <<include>>
+mRejet .> mSuivi : <<extend>>
+note right of mRejet
+  Seulement si une demande
+  a été rejetée.
+end note
+@enduml
+
+@startuml Payeur
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+actor "Payeur" as payeur
+rectangle "Moov e-Factures" {
+  usecase "Consulter son contrat\net ses lignes" as pContrat
+  usecase "Consulter les factures\npubliées" as pFactures
+  usecase "Télécharger une\nfacture PDF" as pPdf
+  usecase "Effectuer une simulation\nde facturation" as pSimulation
+  usecase "Consulter l'historique\ndes simulations" as pHistorique
+}
+payeur -- pContrat
+payeur -- pFactures
+payeur -- pSimulation
+payeur -- pHistorique
+pFactures .> pPdf : <<extend>>
+note right of pPdf
+  Si un fichier PDF est associé
+  à la facture.
+end note
+@enduml
+
+@startuml Employe
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+actor "Employé" as employe
+rectangle "Moov e-Factures" {
+  usecase "Consulter ses factures\npubliées" as eFactures
+  usecase "Télécharger une\nfacture PDF" as ePdf
+  usecase "Effectuer une simulation\nde facturation" as eSimulation
+  usecase "Consulter l'historique\ndes simulations" as eHistorique
+}
+employe -- eFactures
+employe -- eSimulation
+employe -- eHistorique
+eFactures .> ePdf : <<extend>>
+note right of ePdf
+  Si un fichier PDF est associé
+  à la facture.
+end note
+@enduml

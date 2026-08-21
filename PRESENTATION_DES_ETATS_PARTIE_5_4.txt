@@ -1,0 +1,22 @@
+5.4. PRÉSENTATION DES ÉTATS
+
+Les états de l'application Moov e-Factures permettent de suivre l'avancement
+des demandes, des factures, des traitements PDF et des notifications. Ils sont
+présentés selon le rôle de l'utilisateur et les droits qui lui sont attribués.
+
+Les tableaux détaillés des états et de leur signification sont regroupés dans
+le document Word « PRESENTATION_DES_ETATS_MOOV_EFACTURES.docx ». Cette
+présentation reprend la structure utilisée dans le mémoire de référence : une
+colonne indique l'état et une seconde colonne explique sa signification.
+
+Les principaux états présentés sont les suivants :
+
+- demande de contrat : en attente de validation, approuvée ou rejetée ;
+- facture : brouillon, en cours, validée, publiée, payée ou annulée ;
+- traitement PDF : en attente, en cours, terminé ou en échec ;
+- notification de facture : envoyée, en échec ou service non configuré.
+
+Ces états permettent à chaque utilisateur de comprendre la situation d'une
+opération et d'identifier l'action à effectuer. Les données affichées restent
+limitées au périmètre du rôle connecté : administration, facturation,
+commercial, payeur ou employé.

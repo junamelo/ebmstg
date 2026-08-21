@@ -6,6 +6,8 @@ import tempfile
 from decimal import Decimal
 from datetime import date, timedelta
 from io import BytesIO
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -13,7 +15,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from rest_framework import serializers
 
-from billing.models import Company, Line, Invoice
+from billing.models import Company, Line, Invoice, TraitementPDF
 from accounts.models import User
 
 try:
@@ -523,6 +525,98 @@ class PDFProcessingTests(TestCase):
         # Vérifier qu'au moins une facture a été matchée
         matching = response.data.get('matching', {})
         self.assertGreater(matching.get('successfully_matched', 0), 0)
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+class TestBlockGeneratorTests(TestCase):
+    """Le bloc de test doit passer par le même découpage que les PDF importés."""
+
+    def setUp(self):
+        if not PDF_AVAILABLE:
+            self.skipTest("PyPDF2 ou reportlab non disponible")
+
+        self.agent = User.objects.create_user(
+            username='agent_bloc_test', email='agent-bloc@test.com',
+            password='test123', role='AGENT_FACTURATION',
+        )
+        self.payeur = User.objects.create_user(
+            username='payeur_bloc_test', email='payeur-bloc@test.com',
+            password='test123', role='PAYEUR',
+        )
+        self.company = Company.objects.create(
+            compte='A7654321', raison_sociale='Entreprise bloc test', payeur=self.payeur,
+        )
+        self.line = Line.objects.create(
+            company=self.company, msisdn='99123456', utilisateur='Employé test',
+            forfait=Decimal('10000'), cycle='HYB',
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.agent)
+
+    def test_pdf_sommaire_genere_est_detecte_et_rapproche(self):
+        from billing.services.pdf_processor import PDFMatcher, PDFProcessor
+        from billing.services.test_block_pdf import generate_test_invoice_block
+
+        invoice = Invoice.objects.create(
+            company=self.company,
+            line=self.line,
+            numero_facture='FAC-TEST-SOM-202608-0001',
+            periode_debut=date(2026, 8, 1),
+            periode_fin=date(2026, 8, 31),
+            montant_ht=Decimal('10000'),
+            montant_tva=Decimal('1800'),
+            montant_ttc=Decimal('11800'),
+            date_emission_pdf=date(2026, 8, 31),
+            date_echeance=date(2026, 9, 30),
+            statut='EN_COURS',
+        )
+        pdf = generate_test_invoice_block([invoice], 'SOM', 'Services de test')
+        result = PDFProcessor.process_bulk_pdf(pdf)
+
+        self.assertTrue(result['success'])
+        self.assertEqual(result['files_created'], 1)
+        identifiers = result['files'][0]['identifiers']
+        self.assertEqual(identifiers['numero_facture'], invoice.numero_facture)
+        self.assertEqual(identifiers['compte'], self.company.compte)
+        self.assertEqual(identifiers['msisdn'], self.line.msisdn)
+
+        matching = PDFMatcher.auto_attach_pdfs(result['files'], Invoice.objects.filter(id=invoice.id))
+        self.assertEqual(matching['matched'], 1)
+        invoice.refresh_from_db()
+        self.assertEqual(invoice.statut, 'VALIDEE')
+        self.assertTrue(invoice.fichier_pdf)
+
+    @patch('billing.tasks.traiter_import_pdf.delay')
+    def test_api_cree_un_bloc_sommaire_et_planifie_le_traitement(self, delay_mock):
+        """L'API crée un seul PDF source et les factures à rapprocher."""
+        delay_mock.return_value = SimpleNamespace(id='celery-test-block-1')
+
+        response = self.client.post(
+            '/api/billing/invoices/generate-test-block/',
+            {
+                'type_facture': 'SOM',
+                'periode_debut': '2026-08-01',
+                'periode_fin': '2026-08-31',
+                'date_emission': '2026-08-31',
+                'taux_tva': '18.00',
+                'items': [{
+                    'company_id': self.company.id,
+                    'line_id': self.line.id,
+                    'montant_ttc': '11800.00',
+                }],
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.data['test_block']['factures_creees'], 1)
+        self.assertEqual(Invoice.objects.filter(statut='EN_COURS').count(), 1)
+        traitement = TraitementPDF.objects.get(id=response.data['job']['id'])
+        self.assertEqual(traitement.cycle, 'TEST')
+        self.assertEqual(traitement.type_facture, 'SOM')
+        self.assertTrue(traitement.fichier_source.name.endswith('.pdf'))
+        self.assertEqual(traitement.task_id, 'celery-test-block-1')
+        delay_mock.assert_called_once_with(str(traitement.id))
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())

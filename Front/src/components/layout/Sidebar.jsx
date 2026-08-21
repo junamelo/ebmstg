@@ -25,6 +25,7 @@ const IconChevron     = ({ collapsed }) => (
 const IconAgents     = () => <i className="ti ti-user-check"       style={{ fontSize: 18 }} />
 const IconContrats   = () => <i className="ti ti-file-text"        style={{ fontSize: 18 }} />
 const IconCommerciaux = () => <i className="ti ti-briefcase"       style={{ fontSize: 18 }} />
+const IconTestBlock = () => <i className="ti ti-flask"            style={{ fontSize: 18 }} />
 
 const menusEmploye = [
   { path: '/dashboard',             label: 'Tableau de bord',     icon: <IconDashboard /> },
@@ -68,6 +69,7 @@ const menusAgentFacturation = [
   { path: '/agent/services',                 label: 'Gestion Services',    icon: <IconServices /> },
   { path: '/agent/forfaits',                 label: 'Gestion Forfaits',    icon: <IconForfaits /> },
   { path: '/agent/publication',              label: 'Publication PDF',     icon: <IconPublication /> },
+  { path: '/agent/generation-bloc-test',     label: 'Bloc PDF de test',    icon: <IconTestBlock /> },
   { path: '/agent/factures-a-publier',       label: 'Factures à publier',  icon: <IconFacturesPublier /> },
   { path: '/agent/publication/historique',   label: 'Historique Pub.',     icon: <IconHistorique /> },
   { path: '/agent/profil',                   label: 'Mon profil',          icon: <IconProfil /> },
@@ -82,6 +84,7 @@ const menusChefFacturation = [
   { path: '/chef/services',                 label: 'Gestion Services',    icon: <IconServices /> },
   { path: '/chef/forfaits',                 label: 'Gestion Forfaits',    icon: <IconForfaits /> },
   { path: '/chef/publication',              label: 'Publication PDF',     icon: <IconPublication /> },
+  { path: '/chef/generation-bloc-test',     label: 'Bloc PDF de test',    icon: <IconTestBlock /> },
   { path: '/chef/factures-a-publier',       label: 'Factures à publier',  icon: <IconFacturesPublier /> },
   { path: '/chef/publication/historique',   label: 'Historique Pub.',     icon: <IconHistorique /> },
   { path: '/chef/profil',                   label: 'Mon profil',          icon: <IconProfil /> },

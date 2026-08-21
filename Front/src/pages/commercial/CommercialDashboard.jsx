@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../services/api'
+import { isDashboardDemo, DEMO_COMMERCIAL_CONTRATS } from '../../services/dashboardDemo'
 
 function StatCard({ label, value }) {
   return (
@@ -26,10 +27,14 @@ export default function CommercialDashboard() {
         params: recherche ? { search: recherche } : undefined,
       })
       const data = response.data?.results || response.data || []
-      setContrats(Array.isArray(data) ? data : [])
+      setContrats(isDashboardDemo() ? DEMO_COMMERCIAL_CONTRATS : (Array.isArray(data) ? data : []))
     } catch (e) {
       console.error('Erreur chargement contrats commercial:', e)
-      setErreur("Impossible de charger vos contrats pour l'instant.")
+      if (isDashboardDemo()) {
+        setContrats(DEMO_COMMERCIAL_CONTRATS)
+      } else {
+        setErreur("Impossible de charger vos contrats pour l'instant.")
+      }
     } finally {
       setChargement(false)
     }

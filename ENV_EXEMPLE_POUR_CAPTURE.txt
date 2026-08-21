@@ -1,0 +1,28 @@
+# ============================================================================
+# Configuration d'environnement - Moov e-Factures
+# Exemple destiné uniquement aux captures du mémoire
+# Ne pas utiliser ces valeurs en production
+# ============================================================================
+
+# Configuration Django
+DJANGO_SECRET_KEY=exemple-cle-secrete-a-remplacer-en-production
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Base de données PostgreSQL
+POSTGRES_DB=moov_billing
+POSTGRES_USER=moov_user
+POSTGRES_PASSWORD=mot_de_passe_securise
+POSTGRES_HOST=127.0.0.1
+POSTGRES_PORT=5433
+
+# Garnet (compatible avec Redis) et Celery
+REDIS_URL=redis://:mot_de_passe_garnet@127.0.0.1:6379/0
+
+# Notification par e-mail - valeurs d'exemple
+SMTP_HOST=smtp.exemple.com
+SMTP_PORT=587
+SMTP_USERNAME=contact@exemple.com
+SMTP_PASSWORD=mot_de_passe_smtp
+SMTP_USE_TLS=True
+SMTP_FROM_EMAIL=contact@exemple.com

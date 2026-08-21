@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { uploadBlocPdf, getHistoriquePublications, getStatutTraitementPdf } from '../../services/adminService'
 import '../admin/Admin.css'
 
 const ACTIVE_PDF_JOB_KEY = 'moov_active_pdf_job'
 
 export default function PublicationPdf() {
+  const location = useLocation()
+  const basePath = location.pathname.startsWith('/chef') ? '/chef' : location.pathname.startsWith('/admin') ? '/admin' : '/agent'
   const [fichier, setFichier] = useState(null)
   // Un fichier mensuel peut regrouper des lignes OP et HYB : aucun filtre cycle.
   const cycle = ''
@@ -207,8 +210,11 @@ export default function PublicationPdf() {
   return (
     <div className="admin-page">
       <div className="page-header">
-        <h1 className="page-title">Publication des factures PDF</h1>
-        <p className="text-muted">Uploadez les gros PDFs mensuels pour découpage automatique et matching avec les factures.</p>
+        <div>
+          <h1 className="page-title">Publication des factures PDF</h1>
+          <p className="text-muted">Uploadez les gros PDFs mensuels pour découpage automatique et matching avec les factures.</p>
+        </div>
+        {basePath !== '/admin' && <Link className="btn btn-outline" to={`${basePath}/generation-bloc-test`}>Générer un bloc de test</Link>}
       </div>
 
       <div className="card">

@@ -7,6 +7,7 @@ import {
 } from 'recharts'
 import { getStatistiques } from '../../services/adminService'
 import { getStatsAppareils } from '../../services/deviceService'
+import { isDashboardDemo } from '../../services/dashboardDemo'
 
 // ── KPI Card avec badge % ──────────────────────────────────────
 function KpiCard({ label, value, evolution, sub, icon, couleur, delay }) {
