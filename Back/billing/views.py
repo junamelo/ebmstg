@@ -272,6 +272,26 @@ class CompanyViewSet(viewsets.ModelViewSet):
         nom_fichier = f"contrat_{company.compte}.pdf".replace('/', '_').replace('\\', '_')
         return FileResponse(contenu, as_attachment=True, filename=nom_fichier, content_type='application/pdf')
 
+    @action(detail=True, methods=['get'], url_path='export-excel')
+    def export_excel(self, request, pk=None):
+        """Génère un fichier Excel de synthèse du contrat et de ses lignes."""
+        company = self.get_object()
+        try:
+            from .services.contract_excel import generer_excel_contrat
+        except ImportError:
+            return Response(
+                {'error': "L'export Excel n'est pas disponible. Installez la dépendance openpyxl."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        contenu = generer_excel_contrat(company)
+        nom_fichier = f"contrat_{company.compte}.xlsx".replace('/', '_').replace('\\', '_')
+        return FileResponse(
+            contenu,
+            as_attachment=True,
+            filename=nom_fichier,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+
         try:
             from reportlab.lib.pagesizes import A4
             from reportlab.lib.units import cm
@@ -1739,8 +1759,21 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         
         invoice_ids = request.data.get('invoice_ids', [])
         notification_channels = request.data.get('notification_channels', [])
-        if not isinstance(notification_channels, list) or any(channel != 'EMAIL' for channel in notification_channels):
+        if not isinstance(notification_channels, list):
             return Response({'error': 'Canaux de notification invalides'}, status=status.HTTP_400_BAD_REQUEST)
+
+        notification_channels = list(dict.fromkeys(
+            str(channel).upper() for channel in notification_channels
+        ))
+        canaux_autorises = {'EMAIL', 'SMS'}
+        if any(channel not in canaux_autorises for channel in notification_channels):
+            return Response(
+                {
+                    'error': 'Canaux de notification invalides',
+                    'canaux_autorises': sorted(canaux_autorises),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         
         if not invoice_ids:
             return Response(
@@ -1863,6 +1896,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         
         notifications = {
             'demandee': bool(notification_channels),
+            'canaux': notification_channels,
             'en_attente': 0,
             'envoyees': 0,
             'non_configurees': 0,
@@ -1871,8 +1905,13 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         if notification_channels:
             try:
                 from .tasks import envoyer_notifications_factures
-                envoyer_notifications_factures.delay(factures_publiees_ids)
-                notifications['en_attente'] = len(factures_publiees_ids)
+                envoyer_notifications_factures.delay(
+                    factures_publiees_ids,
+                    notification_channels,
+                )
+                notifications['en_attente'] = (
+                    len(factures_publiees_ids) * len(notification_channels)
+                )
             except Exception as exc:
                 # La publication reste valide : l'Ã©chec d'un e-mail ne doit pas
                 # annuler la mise Ã  disposition des factures dans le portail.

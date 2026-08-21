@@ -9,3 +9,6 @@ reportlab==4.0.4       # Génération PDF - OPTIONNEL
 # Windows : https://github.com/UB-Mannheim/tesseract/wiki
 # Ubuntu : apt-get install tesseract-ocr
 # Mac : brew install tesseract
+
+# Export Excel des contrats
+openpyxl==3.1.5

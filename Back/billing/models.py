@@ -440,6 +440,7 @@ class NotificationFacture(models.Model):
         SMS = 'SMS', 'SMS'
 
     class Statut(models.TextChoices):
+        EN_ATTENTE = 'EN_ATTENTE', 'En attente'
         ENVOYEE = 'ENVOYEE', 'Envoyée'
         ECHEC = 'ECHEC', 'Échec'
         NON_CONFIGUREE = 'NON_CONFIGUREE', 'Service non configuré'

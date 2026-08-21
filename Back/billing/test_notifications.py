@@ -2,7 +2,9 @@
 Tests pour les notifications Email et SMS
 Valide l'envoi de notifications de disponibilité de factures
 """
-from django.test import TestCase
+import json
+
+from django.test import TestCase, override_settings
 from django.conf import settings
 from django.core import mail
 from unittest.mock import patch, MagicMock
@@ -12,6 +14,7 @@ from datetime import date, timedelta
 from accounts.models import User
 from billing.models import Company, Line, Invoice, NotificationFacture
 from billing.services.notification_service import notifier_facture
+from billing.tasks import envoyer_notifications_factures
 
 
 class EmailNotificationTestCase(TestCase):
@@ -198,6 +201,14 @@ class EmailNotificationTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
 
+@override_settings(
+    MYSMSGATE_API_URL='https://mysmsgate.test/api/v1/send',
+    MYSMSGATE_API_KEY='test-api-key',
+    MYSMSGATE_DEVICE_ID='',
+    MYSMSGATE_SIM_SLOT='',
+    MYSMSGATE_TIMEOUT=3,
+    SMS_DEFAULT_COUNTRY_CODE='228',
+)
 class SMSNotificationTestCase(TestCase):
     """Tests pour les notifications par SMS"""
     
@@ -209,7 +220,7 @@ class SMSNotificationTestCase(TestCase):
             email='payeur@test.com',
             password='testpass123',
             role='PAYEUR',
-            telephone='22879000001'
+            telephone='79000001'
         )
         
         # Créer une entreprise
@@ -232,54 +243,113 @@ class SMSNotificationTestCase(TestCase):
         )
     
     def test_sms_configuration_valide(self):
-        """Test : Les paramètres Vonage sont bien configurés"""
-        self.assertTrue(hasattr(settings, 'VONAGE_API_KEY'))
-        self.assertTrue(hasattr(settings, 'VONAGE_API_SECRET'))
-        self.assertTrue(hasattr(settings, 'VONAGE_SMS_FROM'))
-        
-        # Vérifier que les valeurs sont définies (depuis .env)
-        self.assertNotEqual(settings.VONAGE_API_KEY, '')
-        self.assertNotEqual(settings.VONAGE_API_SECRET, '')
-        self.assertNotEqual(settings.VONAGE_SMS_FROM, '')
+        """La configuration de test MySMSGate ne dépend d'aucun secret réel."""
+        self.assertEqual(settings.MYSMSGATE_API_KEY, 'test-api-key')
+        self.assertEqual(
+            settings.MYSMSGATE_API_URL,
+            'https://mysmsgate.test/api/v1/send',
+        )
+        self.assertEqual(settings.SMS_DEFAULT_COUNTRY_CODE, '228')
     
-    @patch('urllib.request.urlopen')
-    def test_envoi_sms_succes(self, mock_urlopen):
-        """Test : Envoi de SMS avec succès"""
-        # Mocker la réponse Vonage (succès)
+    @patch('billing.services.notification_service.urllib.request.urlopen')
+    def test_envoi_sms_accepte_en_attente_et_normalise_en_e164(self, mock_urlopen):
+        """Une réponse HTTP 202/pending est tracée EN_ATTENTE, pas ENVOYEE."""
         mock_response = MagicMock()
-        mock_response.read.return_value = b'{"messages":[{"status":"0","message-id":"12345"}]}'
+        mock_response.getcode.return_value = 202
+        mock_response.read.return_value = (
+            b'{"success": true, "sms_id": 258, "status": "pending"}'
+        )
         mock_urlopen.return_value.__enter__.return_value = mock_response
-        
-        # Envoyer la notification
+
         resultats = notifier_facture(self.invoice, ['SMS'])
-        
-        # Vérifier qu'un résultat a été créé
+
         self.assertEqual(len(resultats), 1)
         notification = resultats[0]
-        
-        # Vérifier que la notification a été enregistrée
         self.assertEqual(notification.canal, 'SMS')
-        self.assertEqual(notification.destinataire, '22879000001')
-        self.assertEqual(notification.statut, 'ENVOYEE')
-        
-        # Vérifier que l'API Vonage a été appelée
+        self.assertEqual(notification.destinataire, '+22879000001')
+        self.assertEqual(notification.statut, NotificationFacture.Statut.EN_ATTENTE)
+        self.assertIn('sms_id=258', notification.detail)
+        self.assertIn('statut=pending', notification.detail)
+
         mock_urlopen.assert_called_once()
-    
-    @patch('urllib.request.urlopen')
-    def test_envoi_sms_echec_vonage(self, mock_urlopen):
-        """Test : Gestion de l'échec Vonage"""
-        # Mocker la réponse Vonage (échec)
+        request = mock_urlopen.call_args.args[0]
+        payload = json.loads(request.data.decode('utf-8'))
+        self.assertEqual(request.full_url, 'https://mysmsgate.test/api/v1/send')
+        self.assertEqual(request.get_header('Authorization'), 'Bearer test-api-key')
+        self.assertEqual(payload['to'], '+22879000001')
+        self.assertIn('FAC-SMS-001', payload['message'])
+
+    @patch('billing.services.notification_service.urllib.request.urlopen')
+    def test_envoi_sms_echec_mysmsgate(self, mock_urlopen):
+        """Un refus de MySMSGate est conservé en base avec le statut ECHEC."""
         mock_response = MagicMock()
-        mock_response.read.return_value = b'{"messages":[{"status":"5","error-text":"Invalid credentials"}]}'
+        mock_response.getcode.return_value = 200
+        mock_response.read.return_value = (
+            b'{"success": false, "error": "Invalid credentials"}'
+        )
         mock_urlopen.return_value.__enter__.return_value = mock_response
-        
-        # Envoyer la notification
+
         resultats = notifier_facture(self.invoice, ['SMS'])
-        
-        # Vérifier que le statut est ECHEC
+
         self.assertEqual(len(resultats), 1)
-        self.assertEqual(resultats[0].statut, 'ECHEC')
-        self.assertIn('Vonage', resultats[0].detail)
+        self.assertEqual(resultats[0].statut, NotificationFacture.Statut.ECHEC)
+        self.assertIn('MySMSGate', resultats[0].detail)
+        self.assertIn('Invalid credentials', resultats[0].detail)
+
+    @override_settings(MYSMSGATE_API_KEY='')
+    @patch('billing.services.notification_service.urllib.request.urlopen')
+    def test_sms_non_configure_ne_contacte_pas_le_reseau(self, mock_urlopen):
+        """Une clé absente produit une trace NON_CONFIGUREE sans appel réseau."""
+        resultats = notifier_facture(self.invoice, ['SMS'])
+
+        self.assertEqual(len(resultats), 1)
+        self.assertEqual(
+            resultats[0].statut,
+            NotificationFacture.Statut.NON_CONFIGUREE,
+        )
+        self.assertIn('MySMSGate non configuré', resultats[0].detail)
+        mock_urlopen.assert_not_called()
+
+    @patch('billing.services.notification_service.urllib.request.urlopen')
+    def test_sms_employe_utilise_le_msisdn_si_telephone_absent(self, mock_urlopen):
+        """La facture sommaire utilise le MSISDN de la ligne en dernier recours."""
+        employe = User.objects.create_user(
+            username='employe_sms',
+            email='employe.sms@test.com',
+            password='testpass123',
+            role='EMPLOYE',
+            telephone='',
+        )
+        ligne = Line.objects.create(
+            company=self.company,
+            msisdn='99475555',
+            utilisateur='Employé SMS',
+            cycle='HYB',
+            forfait=Decimal('5000'),
+            employe=employe,
+        )
+        invoice_ligne = Invoice.objects.create(
+            company=self.company,
+            line=ligne,
+            numero_facture='FAC-SMS-LIGNE-001',
+            periode_debut=date.today() - timedelta(days=30),
+            periode_fin=date.today(),
+            montant_ttc=Decimal('5900'),
+            date_echeance=date.today() + timedelta(days=30),
+            statut='PUBLIEE',
+        )
+        mock_response = MagicMock()
+        mock_response.getcode.return_value = 202
+        mock_response.read.return_value = (
+            b'{"success": true, "sms_id": 259, "status": "pending"}'
+        )
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
+        resultats = notifier_facture(invoice_ligne, ['SMS'])
+
+        self.assertEqual(resultats[0].destinataire, '+22899475555')
+        payload = json.loads(mock_urlopen.call_args.args[0].data.decode('utf-8'))
+        self.assertEqual(payload['to'], '+22899475555')
     
     def test_sms_sans_telephone(self):
         """Test : Gestion du cas où il n'y a pas de téléphone"""
@@ -318,6 +388,14 @@ class SMSNotificationTestCase(TestCase):
         self.assertIn('Aucun numéro de téléphone', resultats[0].detail)
 
 
+@override_settings(
+    MYSMSGATE_API_URL='https://mysmsgate.test/api/v1/send',
+    MYSMSGATE_API_KEY='test-api-key',
+    MYSMSGATE_DEVICE_ID='',
+    MYSMSGATE_SIM_SLOT='',
+    MYSMSGATE_TIMEOUT=3,
+    SMS_DEFAULT_COUNTRY_CODE='228',
+)
 class NotificationMultiCanauxTestCase(TestCase):
     """Tests pour les notifications multi-canaux (EMAIL + SMS)"""
     
@@ -329,7 +407,7 @@ class NotificationMultiCanauxTestCase(TestCase):
             email='payeur@test.com',
             password='testpass123',
             role='PAYEUR',
-            telephone='22879000002'
+            telephone='79000002'
         )
         
         # Créer une entreprise
@@ -351,12 +429,14 @@ class NotificationMultiCanauxTestCase(TestCase):
             statut='PUBLIEE'
         )
     
-    @patch('urllib.request.urlopen')
+    @patch('billing.services.notification_service.urllib.request.urlopen')
     def test_envoi_email_et_sms(self, mock_urlopen):
         """Test : Envoi simultané d'email et SMS"""
-        # Mocker la réponse Vonage
         mock_response = MagicMock()
-        mock_response.read.return_value = b'{"messages":[{"status":"0"}]}'
+        mock_response.getcode.return_value = 202
+        mock_response.read.return_value = (
+            b'{"success": true, "sms_id": 300, "status": "pending"}'
+        )
         mock_urlopen.return_value.__enter__.return_value = mock_response
         
         # Envoyer les deux canaux
@@ -374,14 +454,22 @@ class NotificationMultiCanauxTestCase(TestCase):
         # Vérifier le SMS
         notif_sms = next((r for r in resultats if r.canal == 'SMS'), None)
         self.assertIsNotNone(notif_sms)
-        self.assertEqual(notif_sms.statut, 'ENVOYEE')
-        self.assertEqual(notif_sms.destinataire, '22879000002')
+        self.assertEqual(notif_sms.statut, NotificationFacture.Statut.EN_ATTENTE)
+        self.assertEqual(notif_sms.destinataire, '+22879000002')
         
         # Vérifier qu'un email a été envoyé
         self.assertEqual(len(mail.outbox), 1)
     
-    def test_persistance_notifications(self):
+    @patch('billing.services.notification_service.urllib.request.urlopen')
+    def test_persistance_notifications(self, mock_urlopen):
         """Test : Les notifications sont bien enregistrées en base"""
+        mock_response = MagicMock()
+        mock_response.getcode.return_value = 202
+        mock_response.read.return_value = (
+            b'{"success": true, "sms_id": 301, "status": "pending"}'
+        )
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
         # Compter les notifications avant
         count_avant = NotificationFacture.objects.count()
         
@@ -395,6 +483,30 @@ class NotificationMultiCanauxTestCase(TestCase):
         # Vérifier qu'elles sont liées à la bonne facture
         notifications = NotificationFacture.objects.filter(invoice=self.invoice)
         self.assertEqual(notifications.count(), 2)
+
+    @patch('billing.services.notification_service.urllib.request.urlopen')
+    def test_tache_celery_respecte_les_canaux_demandes(self, mock_urlopen):
+        """Une tâche demandée en SMS seul n'envoie pas implicitement d'e-mail."""
+        mock_response = MagicMock()
+        mock_response.getcode.return_value = 202
+        mock_response.read.return_value = (
+            b'{"success": true, "sms_id": 302, "status": "pending"}'
+        )
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
+        bilan = envoyer_notifications_factures.run(
+            [str(self.invoice.id)],
+            ['SMS'],
+        )
+
+        self.assertTrue(bilan['demandee'])
+        self.assertEqual(bilan['en_attente'], 1)
+        self.assertEqual(bilan['envoyees'], 0)
+        self.assertEqual(bilan['echecs'], 0)
+        self.assertEqual(len(mail.outbox), 0)
+        notifications = NotificationFacture.objects.filter(invoice=self.invoice)
+        self.assertEqual(notifications.count(), 1)
+        self.assertEqual(notifications.get().canal, NotificationFacture.Canal.SMS)
 
 
 class NotificationMessageTestCase(TestCase):

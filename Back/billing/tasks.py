@@ -29,20 +29,21 @@ def verifier_garnet():
 
 
 @shared_task(name='billing.envoyer_notifications_factures')
-def envoyer_notifications_factures(invoice_ids):
-    """Envoie les e-mails de disponibilitÃ© hors de la requÃªte de publication.
-
-    Le canal SMS est volontairement dÃ©sactivÃ© : seule la notification e-mail
-    reste disponible dans l'application.
-    """
+def envoyer_notifications_factures(invoice_ids, canaux=None):
+    """Envoie les notifications demandées hors de la requête de publication."""
     from .services.notification_service import notifier_facture
 
+    canaux = list(dict.fromkeys(str(canal).upper() for canal in (canaux or [])))
     notifications = []
-    for invoice in Invoice.objects.filter(id__in=invoice_ids).select_related('company', 'line', 'line__employe'):
-        notifications.extend(notifier_facture(invoice, ['EMAIL']))
+    factures = Invoice.objects.filter(id__in=invoice_ids).select_related(
+        'company', 'company__payeur', 'line', 'line__employe'
+    )
+    for invoice in factures:
+        notifications.extend(notifier_facture(invoice, canaux))
 
     return {
-        'demandee': True,
+        'demandee': bool(canaux),
+        'en_attente': sum(item.statut == 'EN_ATTENTE' for item in notifications),
         'envoyees': sum(item.statut == 'ENVOYEE' for item in notifications),
         'non_configurees': sum(item.statut == 'NON_CONFIGUREE' for item in notifications),
         'echecs': sum(item.statut == 'ECHEC' for item in notifications),
@@ -143,14 +144,17 @@ def traiter_import_pdf(self, traitement_id):
             match_result = PDFMatcher.auto_attach_pdfs(
                 result['files'], invoices_query, processed_invoices_query,
                 invoice_type=traitement.type_facture,
+                creer_factures_absentes=True,
             )
             response_data['matching'] = {
                 'total_files': match_result['total_files'],
                 'successfully_matched': match_result['matched'],
+                'created_invoices': len(match_result.get('created', [])),
                 'not_matched': match_result['not_matched'],
                 'skipped_already_processed': len(match_result.get('skipped', [])),
                 'details': {
                     'attached': match_result['attached'],
+                    'created': match_result.get('created', []),
                     'skipped': match_result['skipped'],
                     'errors': match_result['errors'],
                 },

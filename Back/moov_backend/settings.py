@@ -255,9 +255,12 @@ EMAIL_HOST_USER = os.environ.get('SMTP_USERNAME', '')
 EMAIL_HOST_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
 EMAIL_USE_TLS = os.environ.get('SMTP_USE_TLS', 'True').lower() == 'true'
 DEFAULT_FROM_EMAIL = os.environ.get('SMTP_FROM_EMAIL', '')
-VONAGE_API_KEY = os.environ.get('VONAGE_API_KEY', '')
-VONAGE_API_SECRET = os.environ.get('VONAGE_API_SECRET', '')
-VONAGE_SMS_FROM = os.environ.get('VONAGE_SMS_FROM', '')
+MYSMSGATE_API_URL = os.environ.get('MYSMSGATE_API_URL', 'https://mysmsgate.net/api/v1/send')
+MYSMSGATE_API_KEY = os.environ.get('MYSMSGATE_API_KEY', '')
+MYSMSGATE_DEVICE_ID = os.environ.get('MYSMSGATE_DEVICE_ID', '')
+MYSMSGATE_SIM_SLOT = os.environ.get('MYSMSGATE_SIM_SLOT', '')
+MYSMSGATE_TIMEOUT = int(os.environ.get('MYSMSGATE_TIMEOUT', '15'))
+SMS_DEFAULT_COUNTRY_CODE = os.environ.get('SMS_DEFAULT_COUNTRY_CODE', '228')
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'

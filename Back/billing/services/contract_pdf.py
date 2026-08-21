@@ -2,7 +2,9 @@
 
 from html import escape
 from io import BytesIO
+from pathlib import Path
 
+from django.conf import settings
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4, landscape
@@ -10,6 +12,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import (
     Paragraph,
+    Image,
     SimpleDocTemplate,
     Spacer,
     Table,
@@ -21,6 +24,14 @@ BLUE = colors.HexColor('#002a7a')
 ORANGE = colors.HexColor('#f58220')
 LIGHT_BLUE = colors.HexColor('#eaf2ff')
 LIGHT_GREY = colors.HexColor('#f7f7f7')
+
+
+def _logo_moov():
+    """Retourne le logo partage avec le frontend, lorsqu'il est disponible."""
+    logo_path = Path(settings.BASE_DIR).parent / 'Front' / 'src' / 'assets' / 'logo-moov.png'
+    if not logo_path.is_file():
+        return None
+    return Image(str(logo_path), width=3.55 * cm, height=1.55 * cm, kind='proportional')
 
 
 def _text(value):
@@ -65,6 +76,14 @@ def generer_pdf_contrat(company):
         'ContratTitle', parent=styles['Title'], alignment=TA_CENTER,
         textColor=BLUE, fontSize=18, leading=22, spaceAfter=4,
     )
+    header_title = ParagraphStyle(
+        'ContratHeaderTitle', parent=styles['Title'], alignment=TA_CENTER,
+        textColor=colors.white, fontSize=17, leading=20, spaceAfter=2,
+    )
+    header_subtitle = ParagraphStyle(
+        'ContratHeaderSubtitle', parent=styles['Normal'], alignment=TA_CENTER,
+        textColor=colors.HexColor('#dbeafe'), fontSize=9.5, leading=12,
+    )
     subtitle = ParagraphStyle(
         'ContratSubtitle', parent=styles['Normal'], alignment=TA_CENTER,
         textColor=colors.HexColor('#555555'), fontSize=10, spaceAfter=14,
@@ -77,10 +96,28 @@ def generer_pdf_contrat(company):
     label = ParagraphStyle('ContratLabel', parent=cell, fontName='Helvetica-Bold', textColor=BLUE)
     header_cell = ParagraphStyle('ContratHeaderCell', parent=cell, fontName='Helvetica-Bold', textColor=colors.white)
 
-    elements = [
-        Paragraph('MOOV AFRICA - CONTRAT CLIENT', title),
-        Paragraph(f'Code contrat : <b>{_text(company.compte)}</b>', subtitle),
-    ]
+    logo = _logo_moov()
+    logo_cell = logo if logo else Paragraph('', cell)
+    entete = Table(
+        [[
+            logo_cell,
+            Paragraph('CONTRAT CLIENT', header_title),
+            Paragraph(f'Code contrat<br/><b>{_text(company.compte)}</b>', header_subtitle),
+        ]],
+        colWidths=[4.5 * cm, 16.2 * cm, 6.3 * cm],
+        hAlign='LEFT',
+    )
+    entete.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), BLUE),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEFTPADDING', (0, 0), (0, 0), 12),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+        ('TOPPADDING', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 9),
+        ('LINEBELOW', (0, 0), (-1, 0), 3, ORANGE),
+    ]))
+
+    elements = [entete, Spacer(1, 0.35 * cm)]
 
     def info_table(rows):
         data = [[Paragraph(_text(key), label), Paragraph(_text(value), cell)] for key, value in rows]

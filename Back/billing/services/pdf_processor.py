@@ -4,6 +4,8 @@ Permet de découper un gros PDF en factures individuelles par client
 """
 import re
 import os
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
 from typing import List, Dict, Tuple
 from pathlib import Path
 from django.conf import settings
@@ -28,7 +30,7 @@ class PDFProcessor:
     # empêchait le rapprochement des lignes 79xxxxxx.
     MSISDN_PATTERN = r'\b([79][0-9]{7})\b'
     COMPTE_PATTERN = r'\b(A[0-9]{7}|C26[A-Z0-9]{6,10})\b'  # Compte Moov (format A + 7 chiffres OU C26...)
-    NUMERO_FACTURE_PATTERN = r'\b((?:A[0-9]{11,}|FAC-[A-Z0-9\-]+|[A-Z]{3,}[0-9]{8,}))\b'
+    NUMERO_FACTURE_PATTERN = r'\b(FAC-[A-Z0-9\-]+|[A-Z]{3,}[0-9]{8,})\b'
     
     # Limites de sécurité
     MAX_PAGES = 1000  # Limite de pages par PDF
@@ -150,16 +152,58 @@ class PDFProcessor:
         if compte_match:
             identifiers['compte'] = compte_match.group(1)
         
-        # Chercher Numéro facture
-        facture_match = re.search(cls.NUMERO_FACTURE_PATTERN, text)
+        # Chercher le numéro de facture. Dans certains PDF Moov, il est collé
+        # au nom de l'utilisateur (ex. « MARIEA20260601041 ») : on recherche
+        # donc d'abord le format A + 11 chiffres sans exiger de frontière de mot.
+        facture_match = re.search(r'A[0-9]{11,}', text)
+        if not facture_match:
+            facture_match = re.search(cls.NUMERO_FACTURE_PATTERN, text)
         if facture_match:
-            identifiers['numero_facture'] = facture_match.group(1)
+            identifiers['numero_facture'] = facture_match.group(1) if facture_match.lastindex else facture_match.group(0)
 
         dates = re.findall(r'\b(\d{2}/\d{2}/\d{4})\b', text)
+        periode_match = re.search(
+            r'\b(\d{2}/\d{2}/\d{4})\s*-\s*(\d{2}/\d{2}/\d{4})\b',
+            text,
+        )
+        if periode_match:
+            identifiers['periode_debut'] = periode_match.group(1)
+            identifiers['periode_fin'] = periode_match.group(2)
         if len(dates) >= 3:
             # Dans la mise en page Moov : début période, fin période, édition,
             # puis échéance.
             identifiers['date_emission_pdf'] = dates[2]
+        if len(dates) >= 4:
+            identifiers['date_echeance'] = dates[3]
+
+        # La ligne TOTAL contient HT, TVA puis TTC. Le dernier montant est donc
+        # celui qui doit être enregistré dans la facture.
+        total_match = re.search(r'TOTAL\s*:\s*([0-9\s]+)', text, re.IGNORECASE)
+        if total_match:
+            montants = re.findall(r'\d{1,3}(?:\s\d{3})*', total_match.group(1))
+            if montants:
+                identifiers['montant_ttc'] = montants[-1].replace(' ', '')
+            if len(montants) >= 2:
+                identifiers['montant_tva'] = montants[-2].replace(' ', '')
+            if len(montants) >= 3:
+                identifiers['montant_ht'] = montants[-3].replace(' ', '')
+
+        # Une facture globale contient plusieurs sous-totaux. Le « TOTAL » de
+        # la dernière page peut agréger des colonnes de détail et former un
+        # faux très grand nombre à l'extraction. La première page contient les
+        # quatre montants de synthèse : montant courant, impayés, impayés et
+        # total dû. Le premier de ces quatre est le montant TTC de la facture.
+        if 'FACTURE GLOBALE' in text.upper():
+            entete = re.split(r'D.{0,2}TAILS DU MONTANT', text, maxsplit=1, flags=re.IGNORECASE)[0]
+            montants_entete = []
+            for ligne in entete.splitlines():
+                valeur = ' '.join(ligne.replace('\xa0', ' ').split())
+                if re.fullmatch(r'\d{1,3}(?:\s\d{3})+', valeur):
+                    montants_entete.append(valeur.replace(' ', ''))
+            if len(montants_entete) >= 4:
+                identifiers['montant_ttc'] = montants_entete[-4]
+                identifiers['montant_ht'] = '0'
+                identifiers['montant_tva'] = '0'
         
         return identifiers
     
@@ -227,15 +271,22 @@ class PDFProcessor:
             if compte and (current is None or current['identifiers'].get('compte') != compte):
                 if current:
                     blocks.append(current)
-                current = {'start_page': page_num, 'end_page': page_num,
-                           'identifiers': {'compte': compte}, 'pages': [page_num]}
-                if identifiers.get('numero_facture'):
-                    current['identifiers']['numero_facture'] = identifiers['numero_facture']
+                # Conserver toutes les données de la première page du bloc :
+                # elles sont nécessaires pour créer une facture globale si elle
+                # n'existe pas encore en base (période, montant, échéance...).
+                current = {
+                    'start_page': page_num,
+                    'end_page': page_num,
+                    'identifiers': identifiers.copy(),
+                    'pages': [page_num],
+                }
             elif current:
                 current['end_page'] = page_num
                 current['pages'].append(page_num)
-                if 'numero_facture' not in current['identifiers'] and identifiers.get('numero_facture'):
-                    current['identifiers']['numero_facture'] = identifiers['numero_facture']
+                # Certaines informations peuvent apparaître sur une page
+                # suivante : compléter uniquement les valeurs absentes.
+                for cle, valeur in identifiers.items():
+                    current['identifiers'].setdefault(cle, valeur)
             else:
                 warnings.append(f"Page {page_num + 1}: compte entreprise introuvable")
         if current:
@@ -521,21 +572,22 @@ class PDFMatcher:
         Returns:
             Facture trouvée ou None
         """
-        # Priorité 1 : Numéro de facture EXACT
-        if 'numero_facture' in identifiers:
-            invoice = invoices_queryset.filter(
-                numero_facture=identifiers['numero_facture']
-            ).first()
+        # Priorité 1 : MSISDN via relation ligne (pour PDF SOM).
+        # Les PDF Moov peuvent partager un même numéro de facture imprimé pour
+        # plusieurs lignes d'une entreprise ; le MSISDN est alors le seul
+        # identifiant réellement unique de la facture sommaire.
+        if 'msisdn' in identifiers:
+            invoices = invoices_queryset.filter(line__msisdn=identifiers['msisdn'])
+            if identifiers.get('compte'):
+                invoices = invoices.filter(company__compte=identifiers['compte'])
+            invoice = invoices.first()
             if invoice:
                 return invoice
-        
-        # Priorité 2 : MSISDN via relation ligne (pour PDF SOM)
-        # Une facture SOM doit être reliée à la ligne exacte. Rechercher
-        # seulement par entreprise pouvait retourner une autre facture de la
-        # même entreprise lorsque celle-ci possède plusieurs lignes.
-        if 'msisdn' in identifiers:
+
+        # Priorité 2 : Numéro de facture exact, si aucune ligne n'est connue.
+        if identifiers.get('numero_facture'):
             invoice = invoices_queryset.filter(
-                line__msisdn=identifiers['msisdn']
+                numero_facture=identifiers['numero_facture']
             ).first()
             if invoice:
                 return invoice
@@ -555,16 +607,122 @@ class PDFMatcher:
     def match_global_pdf_to_invoice(identifiers: Dict, invoices_queryset):
         """Rapproche une GLO par numéro exact, sinon par compte si non ambigu."""
         if identifiers.get('numero_facture'):
-            invoice = invoices_queryset.filter(numero_facture=identifiers['numero_facture']).first()
+            invoices = invoices_queryset.filter(
+                numero_facture_pdf=identifiers['numero_facture']
+            )
+            if identifiers.get('compte'):
+                invoices = invoices.filter(company__compte=identifiers['compte'])
+            invoice = invoices.first()
+            if invoice:
+                return invoice
+            # Compatibilité avec les factures importées avant l'ajout du champ
+            # numero_facture_pdf.
+            invoice = invoices_queryset.filter(
+                numero_facture=identifiers['numero_facture']
+            ).first()
             if invoice:
                 return invoice
         if identifiers.get('compte'):
             candidates = invoices_queryset.filter(company__compte=identifiers['compte'])[:2]
             return candidates[0] if len(candidates) == 1 else None
         return None
+
+    @staticmethod
+    def _date_depuis_pdf(valeur):
+        return datetime.strptime(valeur, '%d/%m/%Y').date()
+
+    @classmethod
+    def creer_facture_depuis_pdf(cls, identifiers: Dict, invoice_type: str):
+        """Crée une facture en attente si le contrat/la ligne existe déjà.
+
+        Cette solution évite de bloquer un import lorsque les contrats et les
+        lignes sont présents mais qu'aucune facture provisoire n'a été créée
+        avant la réception du bloc PDF.
+        """
+        from ..models import Company, Invoice, Line
+
+        requis = ('periode_debut', 'periode_fin', 'date_echeance')
+        if invoice_type == 'SOM':
+            requis = ('numero_facture', *requis)
+        manquants = [champ for champ in requis if not identifiers.get(champ)]
+        if manquants:
+            return None, f"Informations PDF insuffisantes : {', '.join(manquants)}"
+
+        try:
+            periode_debut = cls._date_depuis_pdf(identifiers['periode_debut'])
+            periode_fin = cls._date_depuis_pdf(identifiers['periode_fin'])
+            date_echeance = cls._date_depuis_pdf(identifiers['date_echeance'])
+            montant_ht = Decimal(identifiers.get('montant_ht', '0'))
+            montant_tva = Decimal(identifiers.get('montant_tva', '0'))
+            montant_ttc = Decimal(identifiers.get('montant_ttc', '0'))
+        except (ValueError, InvalidOperation):
+            return None, 'Informations de date ou de montant invalides dans le PDF'
+
+        compte = identifiers.get('compte')
+        line = None
+        if invoice_type == 'SOM':
+            msisdn = identifiers.get('msisdn')
+            if not msisdn:
+                return None, 'MSISDN absent de la facture sommaire'
+            lignes = Line.objects.select_related('company').filter(msisdn=msisdn)
+            if compte:
+                lignes = lignes.filter(company__compte=compte)
+            line = lignes.first()
+            if not line:
+                return None, 'Aucune ligne active ne correspond au MSISDN et au compte du PDF'
+            company = line.company
+        else:
+            if not compte:
+                return None, 'Compte entreprise absent de la facture globale'
+            company = Company.objects.filter(compte=compte).first()
+            if not company:
+                return None, 'Aucun contrat ne correspond au compte du PDF'
+
+        numero_pdf = identifiers.get('numero_facture', '')
+        numero_interne = numero_pdf
+        if invoice_type == 'SOM':
+            # Le champ numero_facture est unique en base ; l'identifiant imprimé
+            # pouvant être commun à plusieurs lignes, on le complète en interne
+            # avec le MSISDN. L'interface affiche toujours numero_facture_pdf.
+            numero_interne = f'{numero_pdf}-{line.msisdn}'
+        else:
+            # Le même numéro imprimé peut exister sur les factures sommaires
+            # et la facture globale d'un contrat. Le numéro interne global est
+            # donc préfixé ; le vrai numéro reste numero_facture_pdf.
+            numero_interne = (
+                f'GLO-{numero_pdf or company.compte}-{company.compte}-'
+                f'{periode_debut:%Y%m%d}-{periode_fin:%Y%m%d}'
+            )
+
+        try:
+            invoice = Invoice.objects.create(
+                company=company,
+                line=line,
+                numero_facture=numero_interne,
+                numero_facture_pdf=numero_pdf,
+                periode_debut=periode_debut,
+                periode_fin=periode_fin,
+                montant_ht=montant_ht,
+                montant_tva=montant_tva,
+                montant_ttc=montant_ttc,
+                date_echeance=date_echeance,
+                statut='EN_COURS',
+                commentaire='Facture créée automatiquement lors du rapprochement du bloc PDF.',
+            )
+        except Exception as exc:
+            return None, f'Création de facture impossible : {exc}'
+
+        return invoice, ''
     
     @classmethod
-    def auto_attach_pdfs(cls, created_files: List[Dict], invoices_queryset, processed_invoices_queryset=None, invoice_type='SOM') -> Dict:
+    def auto_attach_pdfs(
+        cls,
+        created_files: List[Dict],
+        invoices_queryset,
+        processed_invoices_queryset=None,
+        invoice_type='SOM',
+        creer_factures_absentes=False,
+    ) -> Dict:
         """
         Attacher automatiquement les PDF découpés aux factures
         
@@ -581,6 +739,7 @@ class PDFMatcher:
             'matched': 0,
             'not_matched': 0,
             'attached': [],
+            'created': [],
             'skipped': [],
             'errors': []
         }
@@ -608,6 +767,18 @@ class PDFMatcher:
             
             # Sinon, chercher dans les factures EN_COURS
             invoice = matcher(identifiers, invoices_queryset)
+            creation_erreur = ''
+            if not invoice and creer_factures_absentes:
+                invoice, creation_erreur = cls.creer_facture_depuis_pdf(
+                    identifiers,
+                    invoice_type,
+                )
+                if invoice:
+                    results['created'].append({
+                        'invoice_id': str(invoice.id),
+                        'numero_facture': invoice.numero_facture,
+                        'filename': file_info['filename'],
+                    })
             
             if invoice:
                 try:
@@ -621,9 +792,10 @@ class PDFMatcher:
                         )
                     
                     # Changer statut si nécessaire
-                    # Une facture SOM est reliée à sa ligne, afin que seul
-                    # l'employé titulaire de ce MSISDN puisse la consulter.
-                    if 'msisdn' in identifiers and not invoice.line_id:
+                    # Seule une facture SOM est reliée à une ligne : une GLO
+                    # peut aussi afficher un MSISDN de contact dans son en-tête,
+                    # sans pour autant appartenir à cette ligne.
+                    if invoice_type == 'SOM' and 'msisdn' in identifiers and not invoice.line_id:
                         from ..models import Line
                         line = Line.objects.filter(
                             company=invoice.company,
@@ -662,7 +834,7 @@ class PDFMatcher:
                 results['not_matched'] += 1
                 results['errors'].append({
                     'filename': file_info['filename'],
-                    'error': 'Aucune facture correspondante trouvée',
+                    'error': creation_erreur or 'Aucune facture correspondante trouvée',
                     'identifiers': identifiers
                 })
         

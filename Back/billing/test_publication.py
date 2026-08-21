@@ -9,6 +9,7 @@ from decimal import Decimal
 from datetime import date
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.base import ContentFile
+from unittest.mock import patch
 
 from accounts.models import User
 from .models import Company, Line, Invoice, HistoriqueFacturation, Publication
@@ -91,6 +92,24 @@ class PublicationWorkflowTests(TestCase):
         )
         
         self.client = APIClient()
+
+    def _creer_facture_prete_notifications(self, suffixe):
+        """Crée une facture publiable sans dépendre d'un PDF réel."""
+        return Invoice.objects.create(
+            company=self.company,
+            line=self.line1,
+            numero_facture=f'FAC-NOTIF-{suffixe}',
+            periode_debut=date(2026, 7, 1),
+            periode_fin=date(2026, 7, 31),
+            montant_ht=Decimal('10000'),
+            montant_tva=Decimal('1800'),
+            montant_ttc=Decimal('11800'),
+            date_echeance=date(2026, 8, 30),
+            statut='VALIDEE',
+            # L'endpoint vérifie la présence du chemin, sans ouvrir le fichier.
+            # Une valeur de FileField suffit donc et n'écrit rien dans MEDIA_ROOT.
+            fichier_pdf=f'invoices/notification_{suffixe}.pdf',
+        )
     
     def test_01_facture_validee_avec_pdf(self):
         """Test : Facture VALIDEE avec PDF peut être publiée"""
@@ -337,6 +356,75 @@ class PublicationWorkflowTests(TestCase):
             type_action='PUBLICATION'
         )
         self.assertEqual(historiques.count(), 3)
+
+    @patch('billing.tasks.envoyer_notifications_factures.delay')
+    def test_08a_publication_sms_transmise_a_celery(self, mock_delay):
+        """Le canal SMS accepté par l'API est transmis tel quel à Celery."""
+        invoice = self._creer_facture_prete_notifications('SMS')
+        self.client.force_authenticate(user=self.agent)
+
+        response = self.client.post(
+            reverse('invoice-publier-masse'),
+            {
+                'invoice_ids': [str(invoice.id)],
+                'notification_channels': ['SMS'],
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['notifications']['canaux'], ['SMS'])
+        self.assertEqual(response.data['notifications']['en_attente'], 1)
+        mock_delay.assert_called_once_with([str(invoice.id)], ['SMS'])
+        invoice.refresh_from_db()
+        self.assertEqual(invoice.statut, 'PUBLIEE')
+
+    @patch('billing.tasks.envoyer_notifications_factures.delay')
+    def test_08b_publication_email_sms_normalises_et_dedupliques(self, mock_delay):
+        """Les canaux sont insensibles à la casse et envoyés une seule fois."""
+        invoice = self._creer_facture_prete_notifications('MULTI')
+        self.client.force_authenticate(user=self.agent)
+
+        response = self.client.post(
+            reverse('invoice-publier-masse'),
+            {
+                'invoice_ids': [str(invoice.id)],
+                'notification_channels': ['email', 'SMS', 'EMAIL', 'sms'],
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data['notifications']['canaux'],
+            ['EMAIL', 'SMS'],
+        )
+        self.assertEqual(response.data['notifications']['en_attente'], 2)
+        mock_delay.assert_called_once_with(
+            [str(invoice.id)],
+            ['EMAIL', 'SMS'],
+        )
+
+    @patch('billing.tasks.envoyer_notifications_factures.delay')
+    def test_08c_publication_canal_inconnu_refuse(self, mock_delay):
+        """Un canal non pris en charge est rejeté avant toute publication."""
+        invoice = self._creer_facture_prete_notifications('INVALIDE')
+        self.client.force_authenticate(user=self.agent)
+
+        response = self.client.post(
+            reverse('invoice-publier-masse'),
+            {
+                'invoice_ids': [str(invoice.id)],
+                'notification_channels': ['WHATSAPP'],
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['canaux_autorises'], ['EMAIL', 'SMS'])
+        mock_delay.assert_not_called()
+        invoice.refresh_from_db()
+        self.assertEqual(invoice.statut, 'VALIDEE')
     
     def test_09_liste_factures_a_publier(self):
         """Test : Endpoint factures_a_publier retourne uniquement VALIDEE"""
