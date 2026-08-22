@@ -151,6 +151,21 @@ class PDFProcessor:
         compte_match = re.search(cls.COMPTE_PATTERN, text)
         if compte_match:
             identifiers['compte'] = compte_match.group(1)
+            # Sur les factures sommaires Moov, la raison sociale est imprimée
+            # sur la ligne immédiatement après le compte. Cette donnée sert
+            # uniquement à préremplir un contrat créé lors d'un import massif.
+            suite = text[compte_match.end():]
+            for ligne in suite.splitlines():
+                candidat = ' '.join(ligne.replace('\xa0', ' ').split())
+                if not candidat:
+                    continue
+                if (
+                    '@' not in candidat
+                    and not re.fullmatch(r'[79][0-9]{7}', candidat)
+                    and not re.search(r'\b(?:FACTURE|P[ÉE]RIODE|[ÉE]DITION|[ÉE]CH[ÉE]ANCE)\b', candidat, re.IGNORECASE)
+                ):
+                    identifiers['raison_sociale'] = candidat[:200]
+                    break
         
         # Chercher le numéro de facture. Dans certains PDF Moov, il est collé
         # au nom de l'utilisateur (ex. « MARIEA20260601041 ») : on recherche
@@ -175,6 +190,22 @@ class PDFProcessor:
             identifiers['date_emission_pdf'] = dates[2]
         if len(dates) >= 4:
             identifiers['date_echeance'] = dates[3]
+
+        # Le montant figurant dans l'en-tête d'une facture individuelle est
+        # fiable. Certains PDF aplatissent les trois colonnes HT/TVA/TTC de la
+        # ligne TOTAL en une seule suite de chiffres, ce qui produit alors un
+        # montant TTC absurde. On privilégie donc le dernier montant isolé
+        # présent juste avant le tableau de détails.
+        montant_ttc_entete_individuel = None
+        if 'FACTURE INDIVIDUELLE' in text.upper():
+            entete = re.split(r'D.{0,2}TAILS DU MONTANT', text, maxsplit=1, flags=re.IGNORECASE)[0]
+            montants_entete = []
+            for ligne in entete.splitlines():
+                valeur = ' '.join(ligne.replace('\xa0', ' ').split())
+                if re.fullmatch(r'\d{1,3}(?:\s\d{3})*', valeur):
+                    montants_entete.append(valeur.replace(' ', ''))
+            if montants_entete:
+                montant_ttc_entete_individuel = montants_entete[-1]
 
         # La ligne TOTAL contient HT, TVA puis TTC. Le dernier montant est donc
         # celui qui doit être enregistré dans la facture.
@@ -204,6 +235,9 @@ class PDFProcessor:
                 identifiers['montant_ttc'] = montants_entete[-4]
                 identifiers['montant_ht'] = '0'
                 identifiers['montant_tva'] = '0'
+
+        if montant_ttc_entete_individuel:
+            identifiers['montant_ttc'] = montant_ttc_entete_individuel
         
         return identifiers
     
@@ -642,8 +676,6 @@ class PDFMatcher:
         from ..models import Company, Invoice, Line
 
         requis = ('periode_debut', 'periode_fin', 'date_echeance')
-        if invoice_type == 'SOM':
-            requis = ('numero_facture', *requis)
         manquants = [champ for champ in requis if not identifiers.get(champ)]
         if manquants:
             return None, f"Informations PDF insuffisantes : {', '.join(manquants)}"
@@ -683,8 +715,14 @@ class PDFMatcher:
         if invoice_type == 'SOM':
             # Le champ numero_facture est unique en base ; l'identifiant imprimé
             # pouvant être commun à plusieurs lignes, on le complète en interne
-            # avec le MSISDN. L'interface affiche toujours numero_facture_pdf.
-            numero_interne = f'{numero_pdf}-{line.msisdn}'
+            # avec le MSISDN. Lorsque le numéro est absent du PDF, une référence
+            # interne stable est générée ; l'interface n'affiche alors pas de
+            # faux numéro PDF.
+            numero_interne = (
+                f'{numero_pdf}-{line.msisdn}'
+                if numero_pdf
+                else f'SOM-{company.compte}-{line.msisdn}-{periode_debut:%Y%m%d}-{periode_fin:%Y%m%d}'
+            )
         else:
             # Le même numéro imprimé peut exister sur les factures sommaires
             # et la facture globale d'un contrat. Le numéro interne global est
